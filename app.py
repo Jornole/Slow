@@ -1,89 +1,147 @@
 import streamlit as st
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
-import matplotlib.pyplot as plt
 
-st.set_page_config(page_title="HSP / Slow Processing Test", layout="wide")
+st.set_page_config(page_title="HSP / Slow Processing Test", layout="centered")
 
-st.title("HSP / Slow Processing Test")
-st.write("Svar på 20 spørgsmål (0 = Slet ikke, 4 = Meget ofte)")
+# -----------------------------
+# GLOBAL CSS (grøn baggrund + hvid tekst + horisontale knapper)
+# -----------------------------
+st.markdown("""
+<style>
+body {
+    background-color: #1E8C3A !important;
+    color: white !important;
+}
 
+html, body, [class*="css"]  {
+    background-color: #1E8C3A !important;
+    color: white !important;
+}
+
+.question-text {
+    font-size: 1.1rem;
+    color: white;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+div.stButton > button {
+    background-color: white !important;
+    color: black !important;
+    padding: 8px 0px;
+    border-radius: 10px;
+    width: 100%;
+    font-size: 1.1rem;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# -----------------------------
+# SPØRGSMÅL (20 stk)
+# -----------------------------
 questions = [
-    "Jeg bemærker nemt subtile detaljer i omgivelserne.",
-    "Jeg reflekterer dybt over mine oplevelser.",
-    "Jeg bliver følelsesmæssigt påvirket af andres stemninger.",
-    "Jeg har et rigt indre liv og stærk intuition.",
-    "Jeg bemærker hurtigt ændringer i omgivelserne eller stemninger.",
-    "Jeg tager mig tid til at overveje mine beslutninger grundigt.",
-    "Jeg er opmærksom på nuancer i andres følelser.",
-    "Jeg foretrækker rolige miljøer fremfor hektiske.",
-    "Jeg arbejder bedst, når jeg får tid til at tænke tingene igennem.",
-    "Jeg lærer bedst, når tempoet er roligt.",
-    "Jeg kan bevare overblikket selv under hurtigt tempo.",
-    "Jeg kan hurtigt tilpasse mig skift mellem opgaver.",
-    "Jeg kan håndtere mange informationer på én gang uden stress.",
-    "Jeg kan træffe beslutninger hurtigt, når det kræves.",
-    "Jeg kan multitaske uden at miste fokus.",
-    "Jeg kan reagere hurtigt i sociale situationer uden at tøve.",
-    "Jeg kan bearbejde nye informationer hurtigt og præcist.",
-    "Jeg bliver sjældent mentalt træt af komplekse opgaver.",
-    "Jeg kan handle effektivt, selv når tempoet er højt.",
-    "Jeg kan bevare klarhed og koncentration under pres."
+    "Jeg bliver let overvældet af indtryk.",
+    "Jeg opdager små detaljer, som andre ofte overser.",
+    "Jeg bruger længere tid på at tænke ting igennem.",
+    "Jeg foretrækker rolige omgivelser.",
+    "Jeg reagerer stærkt på uventede afbrydelser.",
+    "Jeg bearbejder information dybt og grundigt.",
+    "Jeg har brug for ekstra tid til at omstille mig.",
+    "Jeg bliver hurtigt mentalt udmattet.",
+    "Jeg er meget opmærksom på stemninger hos andre.",
+    "Jeg foretrækker at gøre én ting ad gangen.",
+    "Jeg påvirkes lettere af støj end de fleste.",
+    "Jeg trives bedst med tydelige rammer og struktur.",
+    "Jeg bruger lang tid på at komme i gang med nye opgaver.",
+    "Jeg har svært ved at sortere irrelevante stimuli fra.",
+    "Jeg bliver let påvirket af andres humør.",
+    "Jeg bruger lang tid på at træffe beslutninger.",
+    "Jeg foretrækker dybe samtaler frem for smalltalk.",
+    "Jeg kan have svært ved at skifte fokus hurtigt.",
+    "Jeg føler mig ofte overstimuleret.",
+    "Jeg bliver let distraheret, når der sker meget omkring mig."
 ]
 
+# -----------------------------
+# FUNKTION: Vandrette svar-knapper (0–4)
+# -----------------------------
+def horizontal_scale(question, key):
+    st.markdown(f"<div class='question-text'>{question}</div>", unsafe_allow_html=True)
+
+    if key not in st.session_state:
+        st.session_state[key] = None
+
+    cols = st.columns(5)
+    for i, col in enumerate(cols):
+        with col:
+            if st.button(str(i), key=f"{key}_{i}"):
+                st.session_state[key] = i
+
+    return st.session_state[key]
+
+# -----------------------------
+# BESVARELSE
+# -----------------------------
+st.title("HSP / Slow Processing Test")
+st.write("Vælg en værdi for hvert spørgsmål (0 = aldrig, 4 = altid).")
+
 answers = []
-for i, q in enumerate(questions,1):
-    answers.append(st.radio(f"{i}. {q}", options=[0,1,2,3,4], index=0, key=f"q{i}"))
+for i, q in enumerate(questions):
+    answers.append(horizontal_scale(q, f"q_{i}"))
 
-if st.button("Se resultat"):
-    total_score = sum(answers)
-    if total_score <= 26:
-        profil = "Slow processor-træk"
-        fortolkning = ("Langsommere informationsbearbejdning. Arbejder bedst i roligt tempo "
-                       "og reflekterer grundigt. Styrker: grundighed og opmærksomhed på detaljer.")
-        color = 'blue'
-    elif total_score <= 53:
-        profil = "Mellemprofil"
-        fortolkning = ("Blandet profil med både hurtige og langsomme bearbejdningstræk. "
-                       "Fleksibel og tilpasningsdygtig.")
-        color = 'orange'
+# -----------------------------
+# RESULTATBEREGNING
+# -----------------------------
+def interpret_score(score):
+    if score <= 15:
+        return "Du scorer meget lavt – dette peger mod **Slow Processor**."
+    elif score <= 35:
+        return "Du ligger i **balanceret område** mellem Slow Processing og HSP."
     else:
-        profil = "HSP-træk"
-        fortolkning = ("Høj sensitivitet. Dybere bearbejdning, stærk opmærksomhed på detaljer "
-                       "og følelser. Styrker: empati, intuition, dyb refleksion.")
-        color = 'red'
+        return "Du scorer højt – dette peger mod **HSP (højsensitiv)**."
 
-    st.subheader("Resultat")
-    st.write(f"**Total score:** {total_score} / 80")
-    st.write(f"**Din profil:** {profil}")
-    st.write(f"**Fortolkning:** {fortolkning}")
-    
-    # Grafisk søjlediagram
-    fig, ax = plt.subplots(figsize=(6,1))
-    ax.barh([0], [total_score], color=color)
-    ax.set_xlim(0,80)
-    ax.set_yticks([])
-    ax.set_xlabel("Score (0-80)")
-    st.pyplot(fig)
-    
-    # PDF-download
+total_score = sum([a for a in answers if a is not None]) if all(a is not None for a in answers) else None
+
+# -----------------------------
+# RESULTATVISNING
+# -----------------------------
+if total_score is not None:
+    st.header("Dit resultat")
+    st.subheader(f"Samlet score: **{total_score} / 80**")
+    st.write(interpret_score(total_score))
+
+# -----------------------------
+# PDF-GENERERING
+# -----------------------------
+def generate_pdf(score):
     buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4)
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
     styles = getSampleStyleSheet()
-    story = []
-    title_style = ParagraphStyle('title', parent=styles['Title'], fontSize=20)
-    normal_style = ParagraphStyle('normal', parent=styles['BodyText'], fontSize=12)
 
-    story.append(Paragraph("HSP / Slow Processing Test - Rapport", title_style))
-    story.append(Spacer(1,12))
-    story.append(Paragraph(f"Total score: {total_score} / 80", normal_style))
-    story.append(Paragraph(f"Profil: {profil}", normal_style))
-    story.append(Spacer(1,12))
-    story.append(Paragraph(f"Fortolkning: {fortolkning}", normal_style))
+    story = []
+    story.append(Paragraph("<b>HSP / Slow Processing Test – Resultatrapport</b>", styles["Title"]))
+    story.append(Spacer(1, 12))
+
+    story.append(Paragraph(f"Samlet score: <b>{score} / 80</b>", styles["Heading2"]))
+    story.append(Paragraph(interpret_score(score), styles["BodyText"]))
+    story.append(Spacer(1, 12))
+
+    story.append(Paragraph("<b>Besvarelser:</b>", styles["Heading2"]))
+    for i, q in enumerate(questions):
+        story.append(Paragraph(f"{i+1}. {q} – Svar: {answers[i]}", styles["BodyText"]))
 
     doc.build(story)
     buffer.seek(0)
-    
-    st.download_button("Download PDF-rapport", buffer, "rapport.pdf", "application/pdf")
+    return buffer
+
+if total_score is not None:
+    if st.download_button(
+        "Download PDF-rapport",
+        data=generate_pdf(total_score),
+        file_name="HSP_SlowProcessing_Rapport.pdf",
+        mime="application/pdf"
+    ):
+        st.success("PDF downloadet!")
