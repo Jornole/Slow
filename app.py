@@ -7,10 +7,10 @@ from io import BytesIO
 # -------------------------------------------------------------
 # OPSÆTNING
 # -------------------------------------------------------------
-st.set_page_config(page_title="HSP / Slow Processing Test", layout="centered")
+st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# STYLING
+# STYLING (baggrund, tekst, sliders, knapper)
 # -------------------------------------------------------------
 st.markdown("""
 <style>
@@ -30,28 +30,69 @@ h1, h2, h3, p, label {
     margin-top: 12px;
 }
 
-/* Slider – medium size */
+/* Slider – medium størrelse */
 .stSlider > div > div > div {
     height: 14px !important;
 }
-
 .stSlider > div > div > div > div {
     height: 14px !important;
 }
-
 .stSlider > div > div > div::before {
     height: 14px !important;
 }
-
 /* Slider knob */
 .stSlider > div > div > div > div > div {
-    width: 20px !important;  
-    height: 20px !important; 
+    width: 20px !important;
+    height: 20px !important;
+}
+
+/* Røde knapper (reset og PDF) */
+div.stButton > button, div.stDownloadButton > button {
+    background-color: #C62828 !important;
+    color: white !important;
+    border-radius: 8px;
+    border: none;
+    padding: 0.5rem 1.2rem;
+    font-weight: 600;
+}
+div.stButton > button:hover, div.stDownloadButton > button:hover {
+    background-color: #B71C1C !important;
+    color: white !important;
 }
 </style>
 """, unsafe_allow_html=True)
 
+# -------------------------------------------------------------
+# LOGO (forudsætter at du har gemt logoet som 'logo.png' i repoet)
+# -------------------------------------------------------------
+st.image("logo.png", use_column_width=True)
 
+# -------------------------------------------------------------
+# TITEL + INTROTEKST
+# -------------------------------------------------------------
+st.title("HSP / Slow Processor Test")
+
+st.markdown("""
+Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige og sansemæssige indtryk, 
+og hvordan dit mentale tempo påvirker dine reaktioner i hverdagen.  
+Den undersøger også, om dine reaktioner typisk er mere intuitiv, impulsstyret eller mere eftertænksomt bearbejdende.
+
+Spørgsmålene handler om:
+- din modtagelighed over for stimuli  
+- dit refleksionsniveau og din intuitive respons  
+- dit naturlige tempo – fra impulsstyret til langsomt og dybdegående  
+- og den måde du organiserer og sorterer indtryk på  
+
+Du besvarer 20 udsagn på en skala fra **0 (aldrig)** til **4 (altid)**.
+
+Når du er færdig, får du:
+- Din **samlede score**  
+- En **profil**: HSP, Slow Processor eller en mellemprofil  
+- En kort psykologisk beskrivelse af dine **styrker og udfordringer**  
+- Mulighed for at hente en **PDF-rapport** med alle dine svar  
+
+Testen er <u>**ikke en diagnose**</u> – men et psykologisk værktøj til selvindsigt, der kan hjælpe dig med bedre at forstå dine naturlige reaktions-, bearbejdnings- og beslutningsmønstre.
+""", unsafe_allow_html=True)
 
 # -------------------------------------------------------------
 # SPØRGSMÅL
@@ -63,7 +104,7 @@ questions = [
     "Jeg foretrækker rolige omgivelser.",
     "Jeg reagerer stærkt på uventede afbrydelser.",
     "Jeg bearbejder information dybt og grundigt.",
-    "Jeg har brug for ekstra tid til at omstille mig.",
+    "Jeg har brug for mere tid til at omstille mig.",
     "Jeg bliver hurtigt mentalt udmattet.",
     "Jeg er meget opmærksom på stemninger hos andre.",
     "Jeg foretrækker at gøre én ting ad gangen.",
@@ -79,22 +120,19 @@ questions = [
     "Jeg bliver let distraheret, når der sker meget omkring mig."
 ]
 
-
-st.title("HSP / Slow Processing Test")
-st.write("Vælg en værdi for hvert spørgsmål (0 = aldrig, 4 = altid).")
-
-
-
 # -------------------------------------------------------------
 # SESSION STATE
 # -------------------------------------------------------------
 if "answers" not in st.session_state:
     st.session_state.answers = [0] * len(questions)
 
-
+def reset_answers():
+    st.session_state.answers = [0] * len(questions)
+    for i in range(len(questions)):
+        st.session_state[f"q_{i}"] = 0
 
 # -------------------------------------------------------------
-# INDSAML BESVARELSER
+# INDSAML BESVARELSER (SLIDERS)
 # -------------------------------------------------------------
 answers = []
 for i, q in enumerate(questions):
@@ -103,19 +141,19 @@ for i, q in enumerate(questions):
     st.session_state.answers[i] = val
     answers.append(val)
 
-
+# Reset-knap
+st.button("Nulstil svar", on_click=reset_answers)
 
 # -------------------------------------------------------------
-# FORTOLKNING OG STATEMENTS
+# FORTOLKNING
 # -------------------------------------------------------------
-def interpret_score(score):
+def interpret_score(score: int) -> str:
     if score <= 26:
         return "Slow Processor"
     elif score <= 53:
         return "Mellemprofil"
     else:
         return "HSP"
-
 
 STATEMENTS = {
     "HSP": [
@@ -136,14 +174,13 @@ STATEMENTS = {
     ],
     "Mellemprofil": [
         "Du har en god balance mellem følsomhed og overskuelighed.",
-        "Du kan både arbejde hurtigt og langsomt, alt efter situationen.",
-        "Du kan håndtere moderate mængder af stimuli uden at blive overvældet.",
+        "Du kan både arbejde hurtigt og langsomt, afhængigt af situationen.",
+        "Du kan håndtere moderate mængder stimuli uden at blive overvældet.",
         "Du kan til tider føle dig lidt presset, men sjældent for meget.",
         "Du kan både være empatisk og logisk i din tilgang.",
         "Du er fleksibel og kan tilpasse dig forskellige miljøer."
     ]
 }
-
 
 # -------------------------------------------------------------
 # RESULTAT
@@ -159,18 +196,16 @@ st.write("### Karakteristika for din profil:")
 for s in STATEMENTS[profile]:
     st.write(f"- {s}")
 
-
-
 # -------------------------------------------------------------
 # PDF GENERERING
 # -------------------------------------------------------------
-def generate_pdf(score, profile):
+def generate_pdf(score: int, profile: str) -> BytesIO:
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter)
     styles = getSampleStyleSheet()
     story = []
 
-    story.append(Paragraph("HSP / Slow Processing Test – Resultatrapport", styles["Title"]))
+    story.append(Paragraph("HSP / Slow Processor Test – Resultatrapport", styles["Title"]))
     story.append(Spacer(1, 12))
 
     story.append(Paragraph(f"Samlet score: {score} / 80", styles["Heading2"]))
@@ -190,10 +225,10 @@ def generate_pdf(score, profile):
     buffer.seek(0)
     return buffer
 
-
 st.download_button(
     "Download PDF-rapport",
     data=generate_pdf(total_score, profile),
-    file_name="HSP_SlowProcessing_Rapport.pdf",
+    file_name="HSP_SlowProcessor_Rapport.pdf",
     mime="application/pdf"
 )
+```0
