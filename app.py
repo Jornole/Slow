@@ -4,11 +4,14 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
 
+# -------------------------------------------------------------
+# OPSÆTNING
+# -------------------------------------------------------------
 st.set_page_config(page_title="HSP / Slow Processing Test", layout="centered")
 
-# -------------------------
-# Stil (større sliders + farver)
-# -------------------------
+# -------------------------------------------------------------
+# STYLING
+# -------------------------------------------------------------
 st.markdown("""
 <style>
 html, body, .stApp {
@@ -27,30 +30,32 @@ h1, h2, h3, p, label {
     margin-top: 12px;
 }
 
-/* Gør slideren større */
+/* Slider – medium size */
 .stSlider > div > div > div {
-    height: 22px !important;
+    height: 14px !important;
 }
 
 .stSlider > div > div > div > div {
-    height: 22px !important;
+    height: 14px !important;
 }
 
 .stSlider > div > div > div::before {
-    height: 22px !important;
+    height: 14px !important;
 }
 
+/* Slider knob */
 .stSlider > div > div > div > div > div {
-    width: 28px !important;  
-    height: 28px !important; 
+    width: 20px !important;  
+    height: 20px !important; 
 }
-
 </style>
 """, unsafe_allow_html=True)
 
-# -------------------------
-# Spørgsmål
-# -------------------------
+
+
+# -------------------------------------------------------------
+# SPØRGSMÅL
+# -------------------------------------------------------------
 questions = [
     "Jeg bliver let overvældet af indtryk.",
     "Jeg opdager små detaljer, som andre ofte overser.",
@@ -74,18 +79,23 @@ questions = [
     "Jeg bliver let distraheret, når der sker meget omkring mig."
 ]
 
+
 st.title("HSP / Slow Processing Test")
 st.write("Vælg en værdi for hvert spørgsmål (0 = aldrig, 4 = altid).")
 
-# -------------------------
-# Session state initialisering
-# -------------------------
+
+
+# -------------------------------------------------------------
+# SESSION STATE
+# -------------------------------------------------------------
 if "answers" not in st.session_state:
     st.session_state.answers = [0] * len(questions)
 
-# -------------------------
-# Indsaml svar (og opdater session state)
-# -------------------------
+
+
+# -------------------------------------------------------------
+# INDSAML BESVARELSER
+# -------------------------------------------------------------
 answers = []
 for i, q in enumerate(questions):
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
@@ -93,49 +103,97 @@ for i, q in enumerate(questions):
     st.session_state.answers[i] = val
     answers.append(val)
 
-# -------------------------
-# Fortolkning
-# -------------------------
+
+
+# -------------------------------------------------------------
+# FORTOLKNING OG STATEMENTS
+# -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
-        return "Du scorer lavt – dette peger mod Slow Processor-træk."
+        return "Slow Processor"
     elif score <= 53:
-        return "Du ligger i mellemprofil (blandet træk)."
+        return "Mellemprofil"
     else:
-        return "Du scorer højt – dette peger mod HSP (højsensitiv)."
+        return "HSP"
 
-# -------------------------
-# Resultat
-# -------------------------
+
+STATEMENTS = {
+    "HSP": [
+        "Du registrerer subtile detaljer og stemninger med stor præcision.",
+        "Du bearbejder information dybt og reflekteret.",
+        "Du har stærke empatiske og sociale antenner.",
+        "Du kan let blive overstimuleret, hvis der sker meget omkring dig.",
+        "Du kan føle behov for mere ro end andre.",
+        "Du bruger ofte meget mental energi på at tilpasse dig omgivelser."
+    ],
+    "Slow Processor": [
+        "Du trives bedst, når tempoet er roligt og struktureret.",
+        "Du arbejder omhyggeligt og grundigt, når du har tiden til det.",
+        "Du har god udholdenhed, når omgivelserne er stabile.",
+        "Du kan føle dig presset i høje tempoer og skiftende miljøer.",
+        "Du har brug for mere tid til at tænke, beslutte og omstille dig.",
+        "Du kan let miste fokus, hvis der kommer mange indtryk på samme tid."
+    ],
+    "Mellemprofil": [
+        "Du har en god balance mellem følsomhed og overskuelighed.",
+        "Du kan både arbejde hurtigt og langsomt, alt efter situationen.",
+        "Du kan håndtere moderate mængder af stimuli uden at blive overvældet.",
+        "Du kan til tider føle dig lidt presset, men sjældent for meget.",
+        "Du kan både være empatisk og logisk i din tilgang.",
+        "Du er fleksibel og kan tilpasse dig forskellige miljøer."
+    ]
+}
+
+
+# -------------------------------------------------------------
+# RESULTAT
+# -------------------------------------------------------------
 total_score = sum(st.session_state.answers)
+profile = interpret_score(total_score)
 
 st.header("Dit resultat")
 st.subheader(f"Samlet score: **{total_score} / 80**")
-st.write(interpret_score(total_score))
+st.write(f"Profil: **{profile}**")
 
-# -------------------------
-# PDF-generering
-# -------------------------
-def generate_pdf(score):
+st.write("### Karakteristika for din profil:")
+for s in STATEMENTS[profile]:
+    st.write(f"- {s}")
+
+
+
+# -------------------------------------------------------------
+# PDF GENERERING
+# -------------------------------------------------------------
+def generate_pdf(score, profile):
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter)
     styles = getSampleStyleSheet()
     story = []
+
     story.append(Paragraph("HSP / Slow Processing Test – Resultatrapport", styles["Title"]))
     story.append(Spacer(1, 12))
+
     story.append(Paragraph(f"Samlet score: {score} / 80", styles["Heading2"]))
-    story.append(Paragraph(interpret_score(score), styles["BodyText"]))
+    story.append(Paragraph(f"Profil: {profile}", styles["Heading2"]))
     story.append(Spacer(1, 12))
+
+    story.append(Paragraph("Karakteristika:", styles["Heading2"]))
+    for s in STATEMENTS[profile]:
+        story.append(Paragraph(f"- {s}", styles["BodyText"]))
+    story.append(Spacer(1, 12))
+
     story.append(Paragraph("Besvarelser:", styles["Heading2"]))
     for idx, q in enumerate(questions):
         story.append(Paragraph(f"{idx+1}. {q} – Svar: {st.session_state.answers[idx]}", styles["BodyText"]))
+
     doc.build(story)
     buffer.seek(0)
     return buffer
 
+
 st.download_button(
     "Download PDF-rapport",
-    data=generate_pdf(total_score),
+    data=generate_pdf(total_score, profile),
     file_name="HSP_SlowProcessing_Rapport.pdf",
     mime="application/pdf"
 )
