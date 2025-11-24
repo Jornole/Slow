@@ -6,48 +6,34 @@ from io import BytesIO
 
 st.set_page_config(page_title="HSP / Slow Processing Test", layout="centered")
 
-
-# -----------------------------------------------------------
-# CSS – BAGGRUNDSFARVE, TEKST, KNAPPER, HORISONTAL LAYOUT
-# -----------------------------------------------------------
+# -------------------------
+# Stil (baggrund + tekst)
+# -------------------------
 st.markdown("""
 <style>
-
 html, body, .stApp {
-    background-color: #1A6333 !important;  /* Grøn mockup-farve */
+    background-color: #1A6333 !important;  /* mockup-farve */
     color: white !important;
 }
-
+h1, h2, h3, p, label {
+    color: white !important;
+}
 .question-text {
-    font-size: 1.2rem;
+    font-size: 1.05rem;
     font-weight: 600;
     color: white;
-    margin-bottom: 10px;
+    margin-bottom: 6px;
+    margin-top: 10px;
 }
-
-/* Gør kolonner mere mobilvenlige */
-.css-1kyxreq, .css-1r6slb0, .css-12ttj6m {
-    flex-direction: row !important;
+.block {
+    padding: 10px 0px;
 }
-
-/* Knapper i horisontal række */
-div.stButton > button {
-    background-color: white !important;
-    color: black !important;
-    padding: 12px;
-    border-radius: 10px;
-    border: none;
-    font-size: 1.1rem;
-    width: 100%;
-}
-
 </style>
 """, unsafe_allow_html=True)
 
-
-# -----------------------------------------------------------
-# SPØRGSMÅL (20)
-# -----------------------------------------------------------
+# -------------------------
+# Spørgsmål
+# -------------------------
 questions = [
     "Jeg bliver let overvældet af indtryk.",
     "Jeg opdager små detaljer, som andre ofte overser.",
@@ -71,85 +57,55 @@ questions = [
     "Jeg bliver let distraheret, når der sker meget omkring mig."
 ]
 
-
-# -----------------------------------------------------------
-# FUNKTION: 5 HORIZONTAL KNAPPER
-# -----------------------------------------------------------
-def horizontal_scale(question, key):
-    st.markdown(f"<div class='question-text'>{question}</div>", unsafe_allow_html=True)
-
-    if key not in st.session_state:
-        st.session_state[key] = None
-
-    cols = st.columns(5)  # 5 kolonner = 5 vandrette knapper
-    for i, col in enumerate(cols):
-        with col:
-            if st.button(str(i), key=f"{key}_{i}"):
-                st.session_state[key] = i
-
-    return st.session_state[key]
-
-
-# -----------------------------------------------------------
-# UI
-# -----------------------------------------------------------
 st.title("HSP / Slow Processing Test")
 st.write("Vælg en værdi for hvert spørgsmål (0 = aldrig, 4 = altid).")
 
-
-# -----------------------------------------------------------
-# INDSAML SVAR
-# -----------------------------------------------------------
+# -------------------------
+# Indsaml svar med slider
+# -------------------------
 answers = []
 for i, q in enumerate(questions):
-    answers.append(horizontal_scale(q, f"q_{i}"))
+    st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
+    # Slider: horisontal, mobilvenlig, viser valg 0-4
+    val = st.slider("", min_value=0, max_value=4, value=0, step=1, key=f"q_{i}")
+    answers.append(val)
 
-
-# -----------------------------------------------------------
-# SCOREFORTOLKNING
-# -----------------------------------------------------------
+# -------------------------
+# Fortolkning
+# -------------------------
 def interpret_score(score):
-    if score <= 15:
-        return "Du scorer meget lavt – dette peger mod **Slow Processor**."
-    elif score <= 35:
-        return "Du ligger i **balanceret område** mellem Slow Processing og HSP."
+    if score <= 26:
+        return "Du scorer lavt – dette peger mod Slow Processor-træk."
+    elif score <= 53:
+        return "Du ligger i mellemprofil (blandet træk)."
     else:
-        return "Du scorer højt – dette peger mod **HSP (højsensitiv)**."
+        return "Du scorer højt – dette peger mod HSP (højsensitiv)."
 
-
-# Kun vis resultat, hvis ALT er besvaret
-if all(a is not None for a in answers):
+# -------------------------
+# Vis resultat og PDF
+# -------------------------
+if all(isinstance(a, int) for a in answers):
     total_score = sum(answers)
-
     st.header("Dit resultat")
     st.subheader(f"Samlet score: **{total_score} / 80**")
     st.write(interpret_score(total_score))
 
-
-    # -----------------------------------------------------------
-    # PDF-GENERERING
-    # -----------------------------------------------------------
     def generate_pdf(score):
         buffer = BytesIO()
         doc = SimpleDocTemplate(buffer, pagesize=letter)
         styles = getSampleStyleSheet()
-
         story = []
-        story.append(Paragraph("<b>HSP / Slow Processing Test – Resultatrapport</b>", styles["Title"]))
+        story.append(Paragraph("HSP / Slow Processing Test – Resultatrapport", styles["Title"]))
         story.append(Spacer(1, 12))
-
-        story.append(Paragraph(f"Samlet score: <b>{score} / 80</b>", styles["Heading2"]))
+        story.append(Paragraph(f"Samlet score: {score} / 80", styles["Heading2"]))
         story.append(Paragraph(interpret_score(score), styles["BodyText"]))
         story.append(Spacer(1, 12))
-
-        story.append(Paragraph("<b>Besvarelser:</b>", styles["Heading2"]))
-        for i, q in enumerate(questions):
-            story.append(Paragraph(f"{i+1}. {q} – Svar: {answers[i]}", styles["BodyText"]))
-
+        story.append(Paragraph("Besvarelser:", styles["Heading2"]))
+        for idx, q in enumerate(questions):
+            story.append(Paragraph(f"{idx+1}. {q} – Svar: {answers[idx]}", styles["BodyText"]))
         doc.build(story)
         buffer.seek(0)
         return buffer
-
 
     st.download_button(
         "Download PDF-rapport",
