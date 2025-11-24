@@ -1,3 +1,24 @@
+import streamlit as st
+
+st.set_page_config(page_title="TEST", layout="centered")
+
+# --- CSS TEST ---
+st.markdown("""
+<style>
+html, body, .stApp {
+    background-color: #1A6333 !important;
+    color: white !important;
+}
+
+.short-slider .stSlider {
+    width: 50% !important;
+    margin-left: 0 !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# --- LOGO TEST (SVG inside markdown) ---
+st.markdown("""
 <div style='text-align:center; margin-bottom:25px;'>
 <svg xmlns="http://www.w3.org/2000/svg" width="260" height="260" viewBox="0 0 200 200">
 
@@ -26,3 +47,11 @@
 
 </svg>
 </div>
+""", unsafe_allow_html=True)
+
+# --- SLIDER TEST ---
+st.markdown("<div class='short-slider'>", unsafe_allow_html=True)
+val = st.slider("Test slider", 0, 10, 5)
+st.markdown("</div>", unsafe_allow_html=True)
+
+st.write("Slider:", val)
