@@ -1,16 +1,17 @@
 import streamlit as st
+import os
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
 
 # -------------------------------------------------------------
-# OPSÆTNING
+# APP OPSÆTNING
 # -------------------------------------------------------------
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# STYLING (baggrund, tekst, sliders, knapper)
+# GLOBAL STYLING
 # -------------------------------------------------------------
 st.markdown("""
 <style>
@@ -40,13 +41,12 @@ h1, h2, h3, p, label {
 .stSlider > div > div > div::before {
     height: 14px !important;
 }
-/* Slider knob */
 .stSlider > div > div > div > div > div {
     width: 20px !important;
     height: 20px !important;
 }
 
-/* Røde knapper (reset og PDF) */
+/* Røde knapper */
 div.stButton > button, div.stDownloadButton > button {
     background-color: #C62828 !important;
     color: white !important;
@@ -63,19 +63,25 @@ div.stButton > button:hover, div.stDownloadButton > button:hover {
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# LOGO (forudsætter at du har gemt logoet som 'logo.png' i repoet)
+# LOGO – ROBUST INDLAESNING
 # -------------------------------------------------------------
-st.image("logo.png", use_column_width=True)
+logo_path = os.path.join(os.getcwd(), "logo.png")
+
+if os.path.exists(logo_path):
+    st.image(logo_path, use_column_width=True)
+else:
+    st.warning("Logo (logo.png) blev ikke fundet i mappen. Sørg for at logo.png ligger i samme mappe som app.py.")
 
 # -------------------------------------------------------------
-# TITEL + INTROTEKST
+# INTROTEKST
 # -------------------------------------------------------------
 st.title("HSP / Slow Processor Test")
 
 st.markdown("""
 Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige og sansemæssige indtryk, 
 og hvordan dit mentale tempo påvirker dine reaktioner i hverdagen.  
-Den undersøger også, om dine reaktioner typisk er mere intuitiv, impulsstyret eller mere eftertænksomt bearbejdende.
+Den undersøger også, om dine reaktioner typisk er mere intuitiv, impulsstyret 
+eller mere eftertænksomt bearbejdende.
 
 Spørgsmålene handler om:
 - din modtagelighed over for stimuli  
@@ -91,7 +97,9 @@ Når du er færdig, får du:
 - En kort psykologisk beskrivelse af dine **styrker og udfordringer**  
 - Mulighed for at hente en **PDF-rapport** med alle dine svar  
 
-Testen er <u>**ikke en diagnose**</u> – men et psykologisk værktøj til selvindsigt, der kan hjælpe dig med bedre at forstå dine naturlige reaktions-, bearbejdnings- og beslutningsmønstre.
+Testen er <u>**ikke en diagnose**</u> – men et psykologisk værktøj til selvindsigt, 
+der kan hjælpe dig med bedre at forstå dine naturlige reaktions-, bearbejdnings- 
+og beslutningsmønstre.
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
@@ -132,7 +140,7 @@ def reset_answers():
         st.session_state[f"q_{i}"] = 0
 
 # -------------------------------------------------------------
-# INDSAML BESVARELSER (SLIDERS)
+# SLIDERS (BESVARELSER)
 # -------------------------------------------------------------
 answers = []
 for i, q in enumerate(questions):
@@ -147,7 +155,7 @@ st.button("Nulstil svar", on_click=reset_answers)
 # -------------------------------------------------------------
 # FORTOLKNING
 # -------------------------------------------------------------
-def interpret_score(score: int) -> str:
+def interpret_score(score):
     if score <= 26:
         return "Slow Processor"
     elif score <= 53:
@@ -159,76 +167,4 @@ STATEMENTS = {
     "HSP": [
         "Du registrerer subtile detaljer og stemninger med stor præcision.",
         "Du bearbejder information dybt og reflekteret.",
-        "Du har stærke empatiske og sociale antenner.",
-        "Du kan let blive overstimuleret, hvis der sker meget omkring dig.",
-        "Du kan føle behov for mere ro end andre.",
-        "Du bruger ofte meget mental energi på at tilpasse dig omgivelser."
-    ],
-    "Slow Processor": [
-        "Du trives bedst, når tempoet er roligt og struktureret.",
-        "Du arbejder omhyggeligt og grundigt, når du har tiden til det.",
-        "Du har god udholdenhed, når omgivelserne er stabile.",
-        "Du kan føle dig presset i høje tempoer og skiftende miljøer.",
-        "Du har brug for mere tid til at tænke, beslutte og omstille dig.",
-        "Du kan let miste fokus, hvis der kommer mange indtryk på samme tid."
-    ],
-    "Mellemprofil": [
-        "Du har en god balance mellem følsomhed og overskuelighed.",
-        "Du kan både arbejde hurtigt og langsomt, afhængigt af situationen.",
-        "Du kan håndtere moderate mængder stimuli uden at blive overvældet.",
-        "Du kan til tider føle dig lidt presset, men sjældent for meget.",
-        "Du kan både være empatisk og logisk i din tilgang.",
-        "Du er fleksibel og kan tilpasse dig forskellige miljøer."
-    ]
-}
-
-# -------------------------------------------------------------
-# RESULTAT
-# -------------------------------------------------------------
-total_score = sum(st.session_state.answers)
-profile = interpret_score(total_score)
-
-st.header("Dit resultat")
-st.subheader(f"Samlet score: **{total_score} / 80**")
-st.write(f"Profil: **{profile}**")
-
-st.write("### Karakteristika for din profil:")
-for s in STATEMENTS[profile]:
-    st.write(f"- {s}")
-
-# -------------------------------------------------------------
-# PDF GENERERING
-# -------------------------------------------------------------
-def generate_pdf(score: int, profile: str) -> BytesIO:
-    buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=letter)
-    styles = getSampleStyleSheet()
-    story = []
-
-    story.append(Paragraph("HSP / Slow Processor Test – Resultatrapport", styles["Title"]))
-    story.append(Spacer(1, 12))
-
-    story.append(Paragraph(f"Samlet score: {score} / 80", styles["Heading2"]))
-    story.append(Paragraph(f"Profil: {profile}", styles["Heading2"]))
-    story.append(Spacer(1, 12))
-
-    story.append(Paragraph("Karakteristika:", styles["Heading2"]))
-    for s in STATEMENTS[profile]:
-        story.append(Paragraph(f"- {s}", styles["BodyText"]))
-    story.append(Spacer(1, 12))
-
-    story.append(Paragraph("Besvarelser:", styles["Heading2"]))
-    for idx, q in enumerate(questions):
-        story.append(Paragraph(f"{idx+1}. {q} – Svar: {st.session_state.answers[idx]}", styles["BodyText"]))
-
-    doc.build(story)
-    buffer.seek(0)
-    return buffer
-
-st.download_button(
-    "Download PDF-rapport",
-    data=generate_pdf(total_score, profile),
-    file_name="HSP_SlowProcessor_Rapport.pdf",
-    mime="application/pdf"
-)
-```0
+        "Du har
