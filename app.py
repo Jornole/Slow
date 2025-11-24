@@ -27,7 +27,14 @@ h1, h2, h3, p, label {
     margin-bottom: 6px;
     margin-top: 12px;
 }
-/* Slider – medium størrelse */
+
+/* Kortere sliders (ca. 1/3 bredde) og venstrejusteret */
+.short-slider .stSlider {
+    width: 35% !important;
+    margin-left: 0 !important;
+}
+
+/* Slider knob og spor styling */
 .stSlider > div > div > div {
     height: 14px !important;
 }
@@ -41,6 +48,7 @@ h1, h2, h3, p, label {
     width: 20px !important;
     height: 20px !important;
 }
+
 /* Røde knapper */
 div.stButton > button, div.stDownloadButton > button {
     background-color: #C62828 !important;
@@ -58,31 +66,9 @@ div.stButton > button:hover, div.stDownloadButton > button:hover {
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# "LOGO" LAVET MED HTML/CSS (ingen billedfil nødvendig)
+# RIGTIGT LOGO (PNG-FIL I REPOET)
 # -------------------------------------------------------------
-st.markdown(
-    """
-    <div style="display:flex;align-items:center;justify-content:center;margin-bottom:20px;">
-      <div style="
-          background-color:#145324;
-          border-radius:999px;
-          padding:14px 24px;
-          display:flex;
-          align-items:center;
-          gap:14px;
-      ">
-        <span style="font-size:1.8rem;">🧠</span>
-        <div style="display:flex;flex-direction:column;line-height:1.1;">
-          <span style="font-weight:700;font-size:1.2rem;">HSP / Slow Processor</span>
-          <span style="font-size:0.9rem;">Test</span>
-        </div>
-        <span style="font-size:1.4rem;">🐇</span>
-        <span style="font-size:1.4rem;">🐌</span>
-      </div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+st.image("logo.png", use_column_width=True)
 
 # -------------------------------------------------------------
 # INTROTEKST
@@ -165,7 +151,11 @@ for i, q in enumerate(questions):
         f"<div class='question-text'>{i+1}. {q}</div>",
         unsafe_allow_html=True,
     )
+
+    st.markdown('<div class="short-slider">', unsafe_allow_html=True)
     val = st.slider("", 0, 4, value=st.session_state.answers[i], key=f"q_{i}")
+    st.markdown('</div>', unsafe_allow_html=True)
+
     st.session_state.answers[i] = val
     answers.append(val)
 
