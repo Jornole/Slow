@@ -41,8 +41,9 @@ div.stButton > button:hover, div.stDownloadButton > button:hover {
 
 /* SLIDER = 2/3 bredde og venstrejusteret */
 .short-slider .stSlider {
-    width: 66% !important;
+    width: 55% !important;
     margin-left: 0 !important;
+    padding-left: 0 !important;
 }
 
 /* Slider højde + knob */
@@ -65,7 +66,7 @@ div.stButton > button:hover, div.stDownloadButton > button:hover {
 col_logo, col_title = st.columns([1, 4])
 
 with col_logo:
-    st.image("logo.png", width=65)   # ← logo i 1/4 størrelse
+    st.image("logo.png", width=80)   # <-- doubleret størrelse
 
 with col_title:
     st.markdown("<h1 style='margin-top: 10px;'>HSP / Slow Processor Test</h1>", unsafe_allow_html=True)
@@ -143,7 +144,7 @@ for i, q in enumerate(questions):
 st.button("Nulstil svar", on_click=reset_answers)
 
 # -------------------------------------------------------------
-# PROFILE + SCORE
+# SCORE + PROFILE
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
