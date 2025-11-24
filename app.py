@@ -66,42 +66,45 @@ div.stButton > button:hover, div.stDownloadButton > button:hover {
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# RIGTIGT LOGO (PNG-FIL I REPOET)
+# SVG LOGO (ingen filer nødvendig)
 # -------------------------------------------------------------
-st.image("logo.png", use_column_width=True)
+st.markdown("""
+<div style='text-align:center; margin-bottom:30px;'>
+<svg width="240" height="240" viewBox="0 0 200 200">
+  <!-- Hjerneform -->
+  <ellipse cx="100" cy="100" rx="80" ry="60" fill="#2e8a48" stroke="#5bcf7a" stroke-width="4"/>
+  
+  <!-- Tekst -->
+  <text x="100" y="80" font-size="18" fill="white" text-anchor="middle" font-weight="700">
+    HSP / Slow
+  </text>
+  <text x="100" y="105" font-size="16" fill="white" text-anchor="middle">
+    Processor Test
+  </text>
+
+  <!-- Hare (venstre) -->
+  <text x="60" y="140" font-size="28">🐇</text>
+
+  <!-- Snegl (højre) -->
+  <text x="125" y="140" font-size="28">🐌</text>
+</svg>
+</div>
+""", unsafe_allow_html=True)
 
 # -------------------------------------------------------------
 # INTROTEKST
 # -------------------------------------------------------------
 st.title("HSP / Slow Processor Test")
 
-st.markdown(
-    """
-Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige og sansemæssige indtryk, 
-og hvordan dit mentale tempo påvirker dine reaktioner i hverdagen.  
-Den undersøger også, om dine reaktioner typisk er mere intuitiv, impulsstyret 
-eller mere eftertænksomt bearbejdende.
-
-Spørgsmålene handler om:
-- din modtagelighed over for stimuli  
-- dit refleksionsniveau og din intuitive respons  
-- dit naturlige tempo – fra impulsstyret til langsomt og dybdegående  
-- og den måde du organiserer og sorterer indtryk på  
+st.markdown("""
+Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige 
+og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner 
+i hverdagen.
 
 Du besvarer 20 udsagn på en skala fra **0 (aldrig)** til **4 (altid)**.
 
-Når du er færdig, får du:
-- Din **samlede score**  
-- En **profil**: HSP, Slow Processor eller en mellemprofil  
-- En kort psykologisk beskrivelse af dine **styrker og udfordringer**  
-- Mulighed for at hente en **PDF-rapport** med alle dine svar  
-
-Testen er <u>**ikke en diagnose**</u> – men et psykologisk værktøj til selvindsigt, 
-der kan hjælpe dig med bedre at forstå dine naturlige reaktions-, bearbejdnings- 
-og beslutningsmønstre.
-""",
-    unsafe_allow_html=True,
-)
+Testen er <u>**ikke en diagnose**</u>, men et psykologisk værktøj til selvindsigt.
+""", unsafe_allow_html=True)
 
 # -------------------------------------------------------------
 # SPØRGSMÅL
@@ -126,35 +129,24 @@ questions = [
     "Jeg foretrækker dybe samtaler frem for smalltalk.",
     "Jeg kan have svært ved at skifte fokus hurtigt.",
     "Jeg føler mig ofte overstimuleret.",
-    "Jeg bliver let distraheret, når der sker meget omkring mig.",
+    "Jeg bliver let distraheret, når der sker meget omkring mig."
 ]
 
-# -------------------------------------------------------------
-# SESSION STATE
-# -------------------------------------------------------------
 if "answers" not in st.session_state:
     st.session_state.answers = [0] * len(questions)
-
 
 def reset_answers():
     st.session_state.answers = [0] * len(questions)
     for i in range(len(questions)):
         st.session_state[f"q_{i}"] = 0
 
-
-# -------------------------------------------------------------
-# SLIDERS (BESVARELSER)
-# -------------------------------------------------------------
 answers = []
 for i, q in enumerate(questions):
-    st.markdown(
-        f"<div class='question-text'>{i+1}. {q}</div>",
-        unsafe_allow_html=True,
-    )
-
-    st.markdown('<div class="short-slider">', unsafe_allow_html=True)
+    st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
+    
+    st.markdown("<div class='short-slider'>", unsafe_allow_html=True)
     val = st.slider("", 0, 4, value=st.session_state.answers[i], key=f"q_{i}")
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
     st.session_state.answers[i] = val
     answers.append(val)
@@ -162,57 +154,19 @@ for i, q in enumerate(questions):
 st.button("Nulstil svar", on_click=reset_answers)
 
 # -------------------------------------------------------------
-# FORTOLKNING
-# -------------------------------------------------------------
-def interpret_score(score: int) -> str:
-    if score <= 26:
-        return "Slow Processor"
-    elif score <= 53:
-        return "Mellemprofil"
-    else:
-        return "HSP"
-
-
-STATEMENTS = {
-    "HSP": [
-        "Du registrerer subtile detaljer og stemninger.",
-        "Du bearbejder indtryk dybt og reflekteret.",
-        "Du har stærke empatiske antenner.",
-        "Du kan let blive overstimuleret.",
-        "Du har ofte brug for mere ro end andre.",
-        "Du bruger meget mental energi på sociale og følelsesmæssige indtryk.",
-    ],
-    "Slow Processor": [
-        "Du trives bedst med ro og fast struktur.",
-        "Du arbejder omhyggeligt og grundigt, når du får tid.",
-        "Du har god udholdenhed i stabile miljøer.",
-        "Hurtigt tempo og mange skift kan opleves som pressende.",
-        "Du har brug for mere tid til at tænke, beslutte og omstille dig.",
-        "Du kan blive mentalt træt af mange samtidige indtryk.",
-    ],
-    "Mellemprofil": [
-        "Du har en god balance mellem tempo og følsomhed.",
-        "Du kan både arbejde hurtigt og langsomt, alt efter situationen.",
-        "Du håndterer stimuli moderat godt uden ofte at blive overvældet.",
-        "Du kan føle dig presset indimellem, men sjældent for meget.",
-        "Du kan både være empatisk og logisk i din tilgang.",
-        "Du tilpasser dig relativt let forskellige miljøer.",
-    ],
-}
-
-# -------------------------------------------------------------
 # RESULTAT
 # -------------------------------------------------------------
-total_score = sum(st.session_state.answers)
-profile = interpret_score(total_score)
+def interpret_score(score: int) -> str:
+    if score <= 26: return "Slow Processor"
+    if score <= 53: return "Mellemprofil"
+    return "HSP"
+
+total = sum(st.session_state.answers)
+profile = interpret_score(total)
 
 st.header("Dit resultat")
-st.subheader(f"Samlet score: **{total_score} / 80**")
+st.subheader(f"Score: **{total} / 80**")
 st.write(f"Profil: **{profile}**")
-
-st.write("### Karakteristika for din profil:")
-for s in STATEMENTS[profile]:
-    st.write(f"- {s}")
 
 # -------------------------------------------------------------
 # PDF GENERERING
@@ -223,40 +177,23 @@ def generate_pdf(score: int, profile: str) -> BytesIO:
     styles = getSampleStyleSheet()
     story = []
 
-    story.append(
-        Paragraph(
-            "HSP / Slow Processor Test – Resultatrapport",
-            styles["Title"],
-        )
-    )
+    story.append(Paragraph("HSP / Slow Processor Test – Rapport", styles["Title"]))
     story.append(Spacer(1, 12))
-
     story.append(Paragraph(f"Samlet score: {score} / 80", styles["Heading2"]))
     story.append(Paragraph(f"Profil: {profile}", styles["Heading2"]))
     story.append(Spacer(1, 12))
 
-    story.append(Paragraph("Karakteristika:", styles["Heading2"]))
-    for s in STATEMENTS[profile]:
-        story.append(Paragraph(f"- {s}", styles["BodyText"]))
-    story.append(Spacer(1, 12))
-
     story.append(Paragraph("Besvarelser:", styles["Heading2"]))
-    for idx, q in enumerate(questions):
-        story.append(
-            Paragraph(
-                f"{idx+1}. {q} – Svar: {st.session_state.answers[idx]}",
-                styles["BodyText"],
-            )
-        )
+    for i, q in enumerate(questions):
+        story.append(Paragraph(f"{i+1}. {q} – Svar: {st.session_state.answers[i]}", styles["BodyText"]))
 
     doc.build(story)
     buffer.seek(0)
     return buffer
 
-
 st.download_button(
     "Download PDF-rapport",
-    data=generate_pdf(total_score, profile),
+    data=generate_pdf(total, profile),
     file_name="HSP_SlowProcessor_Rapport.pdf",
-    mime="application/pdf",
+    mime="application/pdf"
 )
