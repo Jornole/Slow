@@ -66,27 +66,31 @@ div.stButton > button:hover, div.stDownloadButton > button:hover {
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# SVG LOGO (ingen filer nødvendig)
+# SVG LOGO
 # -------------------------------------------------------------
 st.markdown("""
-<div style='text-align:center; margin-bottom:30px;'>
-<svg width="240" height="240" viewBox="0 0 200 200">
-  <!-- Hjerneform -->
-  <ellipse cx="100" cy="100" rx="80" ry="60" fill="#2e8a48" stroke="#5bcf7a" stroke-width="4"/>
-  
-  <!-- Tekst -->
-  <text x="100" y="80" font-size="18" fill="white" text-anchor="middle" font-weight="700">
-    HSP / Slow
-  </text>
-  <text x="100" y="105" font-size="16" fill="white" text-anchor="middle">
-    Processor Test
-  </text>
+<div style='text-align:center; margin-bottom:25px;'>
+<svg width="260" height="260" viewBox="0 0 200 200">
+    <!-- Brain shape -->
+    <ellipse cx="100" cy="100" rx="85" ry="70" fill="#136B3F" stroke="#3ECF8E" stroke-width="6" />
 
-  <!-- Hare (venstre) -->
-  <text x="60" y="140" font-size="28">🐇</text>
+    <!-- Inner brain lines -->
+    <path d="M40 80 Q60 60 80 80" stroke="#3ECF8E" stroke-width="4" fill="none"/>
+    <path d="M120 80 Q140 60 160 80" stroke="#3ECF8E" stroke-width="4" fill="none"/>
+    <path d="M40 120 Q60 140 80 120" stroke="#3ECF8E" stroke-width="4" fill="none"/>
+    <path d="M120 120 Q140 140 160 120" stroke="#3ECF8E" stroke-width="4" fill="none"/>
 
-  <!-- Snegl (højre) -->
-  <text x="125" y="140" font-size="28">🐌</text>
+    <!-- Text -->
+    <text x="100" y="75" font-size="20" fill="white" text-anchor="middle" font-weight="700">
+        HSP / Slow
+    </text>
+    <text x="100" y="100" font-size="16" fill="white" text-anchor="middle">
+        Processor Test
+    </text>
+
+    <!-- Animals -->
+    <text x="65" y="145" font-size="34" text-anchor="middle">🐇</text>
+    <text x="135" y="145" font-size="34" text-anchor="middle">🐌</text>
 </svg>
 </div>
 """, unsafe_allow_html=True)
@@ -140,10 +144,13 @@ def reset_answers():
     for i in range(len(questions)):
         st.session_state[f"q_{i}"] = 0
 
+# -------------------------------------------------------------
+# SLIDERS
+# -------------------------------------------------------------
 answers = []
 for i, q in enumerate(questions):
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
-    
+
     st.markdown("<div class='short-slider'>", unsafe_allow_html=True)
     val = st.slider("", 0, 4, value=st.session_state.answers[i], key=f"q_{i}")
     st.markdown("</div>", unsafe_allow_html=True)
@@ -161,11 +168,11 @@ def interpret_score(score: int) -> str:
     if score <= 53: return "Mellemprofil"
     return "HSP"
 
-total = sum(st.session_state.answers)
-profile = interpret_score(total)
+total_score = sum(st.session_state.answers)
+profile = interpret_score(total_score)
 
 st.header("Dit resultat")
-st.subheader(f"Score: **{total} / 80**")
+st.subheader(f"Score: **{total_score} / 80**")
 st.write(f"Profil: **{profile}**")
 
 # -------------------------------------------------------------
@@ -193,7 +200,7 @@ def generate_pdf(score: int, profile: str) -> BytesIO:
 
 st.download_button(
     "Download PDF-rapport",
-    data=generate_pdf(total, profile),
+    data=generate_pdf(total_score, profile),
     file_name="HSP_SlowProcessor_Rapport.pdf",
     mime="application/pdf"
 )
