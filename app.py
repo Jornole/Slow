@@ -10,29 +10,40 @@ from io import BytesIO
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# GLOBAL STYLING (GRØN BAGGRUND, RØDE KNAPPER, KORTE SLIDERS)
+# GLOBAL STYLING
 # -------------------------------------------------------------
 st.markdown("""
 <style>
 html, body, .stApp {
     background-color: #1A6333 !important;
     color: white !important;
+    font-family: "Arial", sans-serif !important;
 }
 
-h1, h2, h3, p, label {
+/* Røde knapper */
+div.stButton > button, div.stDownloadButton > button {
+    background-color: #C62828 !important;
     color: white !important;
+    border-radius: 8px;
+    border: none;
+    padding: 0.55rem 1.2rem;
+    font-weight: 600;
+}
+div.stButton > button:hover, div.stDownloadButton > button:hover {
+    background-color: #B71C1C !important;
 }
 
+/* Spørgsmålstekst */
 .question-text {
-    font-size: 1.05rem;
+    font-size: 1.06rem;
     font-weight: 600;
     margin-bottom: 6px;
-    margin-top: 12px;
+    margin-top: 14px;
 }
 
-/* Kortere sliders (ca. 1/3 bredde) og venstrejusteret */
+/* Slider container */
 .short-slider .stSlider {
-    width: 35% !important;
+    width: 50% !important;   /* VALG C — halv længde */
     margin-left: 0 !important;
 }
 
@@ -47,25 +58,11 @@ h1, h2, h3, p, label {
     width: 20px !important;
     height: 20px !important;
 }
-
-/* Røde knapper (nulstil + PDF) */
-div.stButton > button, div.stDownloadButton > button {
-    background-color: #C62828 !important;
-    color: white !important;
-    border-radius: 8px;
-    border: none;
-    padding: 0.5rem 1.2rem;
-    font-weight: 600;
-}
-div.stButton > button:hover, div.stDownloadButton > button:hover {
-    background-color: #B71C1C !important;
-    color: white !important;
-}
 </style>
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# SVG-LOGO (GRØN HJERNE + HVIDE TEGNEDE DYR INDENI)
+# SVG-LOGO (GRØN HJERNE + HVIDE TEGNEDE DYR)
 # -------------------------------------------------------------
 svg_logo = """
 <div style='text-align:center; margin-bottom:25px;'>
@@ -92,27 +89,19 @@ svg_logo = """
   </text>
 
   <!-- Hvid tegnet hare (løber mod højre) -->
-  <g transform="translate(65,140) scale(0.9)">
-    <!-- krop -->
+  <g transform="translate(70,145) scale(0.9)">
     <ellipse cx="0" cy="0" rx="10" ry="6" fill="white" />
-    <!-- hoved -->
     <circle cx="10" cy="-2" r="4" fill="white" />
-    <!-- ører -->
     <rect x="8" y="-16" width="2" height="10" fill="white" />
     <rect x="11" y="-16" width="2" height="10" fill="white" />
-    <!-- bagben -->
     <ellipse cx="-8" cy="3" rx="4" ry="3" fill="white" />
   </g>
 
-  <!-- Hvid tegnet snegl (på vej mod højre) -->
-  <g transform="translate(135,140) scale(0.9)">
-    <!-- skal -->
+  <!-- Hvid tegnet snegl -->
+  <g transform="translate(130,145) scale(0.9)">
     <circle cx="0" cy="0" r="7" fill="white" />
-    <!-- krop -->
     <rect x="0" y="-2" width="10" height="4" fill="white" />
-    <!-- hoved -->
     <circle cx="11" cy="0" r="3" fill="white" />
-    <!-- følehorn -->
     <line x1="11" y1="-2" x2="13" y2="-6" stroke="white" stroke-width="1.5" />
     <line x1="11" y1="-2" x2="9" y2="-6" stroke="white" stroke-width="1.5" />
   </g>
@@ -136,15 +125,13 @@ intuitive og impulsstyrede eller mere eftertænksomme og bearbejdende.
 
 Spørgsmålene handler om:
 - din modtagelighed over for stimuli  
-- dit refleksionsniveau og din intuitive respons  
+- dit refleksionsniveau og intuitive respons  
 - dit naturlige tempo – fra impulsstyret til langsomt og dybdegående  
 - og den måde du organiserer og sorterer indtryk på  
 
 Du besvarer 20 udsagn på en skala fra **0 (aldrig)** til **4 (altid)**.
 
-Testen er <u>**ikke en diagnose**</u>, men et psykologisk værktøj til selvindsigt, 
-som kan hjælpe dig til bedre at forstå dine mønstre for reaktion, bearbejdning 
-og beslutning.
+Testen er <u>**ikke en diagnose**</u>, men et psykologisk værktøj til selvindsigt.
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
@@ -185,15 +172,11 @@ def reset_answers():
         st.session_state[f"q_{i}"] = 0
 
 # -------------------------------------------------------------
-# SLIDERS (KORTE, VENSTREJUSTERET)
+# SLIDERS
 # -------------------------------------------------------------
 answers = []
 for i, q in enumerate(questions):
-    st.markdown(
-        f"<div class='question-text'>{i+1}. {q}</div>",
-        unsafe_allow_html=True,
-    )
-
+    st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
     st.markdown("<div class='short-slider'>", unsafe_allow_html=True)
     val = st.slider("", 0, 4, value=st.session_state.answers[i], key=f"q_{i}")
     st.markdown("</div>", unsafe_allow_html=True)
@@ -204,7 +187,7 @@ for i, q in enumerate(questions):
 st.button("Nulstil svar", on_click=reset_answers)
 
 # -------------------------------------------------------------
-# PROFIL-FORTOLKNING
+# RESULTAT + 6 STATEMENTS
 # -------------------------------------------------------------
 def interpret_score(score: int) -> str:
     if score <= 26:
@@ -233,17 +216,14 @@ STATEMENTS = {
     ],
     "Mellemprofil": [
         "Du har en relativt god balance mellem tempo og følsomhed.",
-        "Du kan både arbejde hurtigt og langsomt, alt efter opgaven og situationen.",
-        "Du håndterer stimuli moderat godt uden alt for ofte at blive overvældet.",
-        "Du kan føle dig presset i perioder, men kommer typisk tilbage i balance igen.",
-        "Du kan både være empatisk og analytisk i din måde at tænke og reagere på.",
-        "Du tilpasser dig generelt forskellige miljøer og krav uden at miste dig selv."
+        "Du kan både arbejde hurtigt og langsomt, alt efter opgaven.",
+        "Du håndterer stimuli moderat godt uden ofte at blive overvældet.",
+        "Du kan føle dig presset i perioder, men kommer typisk tilbage i balance.",
+        "Du kan både være empatisk og analytisk i din måde at reagere på.",
+        "Du tilpasser dig generelt forskellige miljøer uden større problemer."
     ]
 }
 
-# -------------------------------------------------------------
-# RESULTAT
-# -------------------------------------------------------------
 total_score = sum(st.session_state.answers)
 profile = interpret_score(total_score)
 
@@ -277,12 +257,8 @@ def generate_pdf(score: int, profile: str) -> BytesIO:
 
     story.append(Paragraph("Besvarelser:", styles["Heading2"]))
     for i, q in enumerate(questions):
-        story.append(
-            Paragraph(
-                f"{i+1}. {q} – Svar: {st.session_state.answers[i]}",
-                styles["BodyText"],
-            )
-        )
+        story.append(Paragraph(f"{i+1}. {q} – Svar: {st.session_state.answers[i]}",
+                               styles["BodyText"]))
 
     doc.build(story)
     buffer.seek(0)
@@ -292,5 +268,5 @@ st.download_button(
     "Download PDF-rapport",
     data=generate_pdf(total_score, profile),
     file_name="HSP_SlowProcessor_Rapport.pdf",
-    mime="application/pdf",
+    mime="application/pdf"
 )
