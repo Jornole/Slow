@@ -1,6 +1,25 @@
 import streamlit as st
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import getSampleStyleSheet
+from io import BytesIO
 
-st.set_page_config(layout="centered", page_title="Test")
+st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
+
+st.markdown("""
+<style>
+html, body, .stApp {
+    background-color: #1A6333 !important;
+    color: white !important;
+}
+.question-text {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-top: 12px;
+    margin-bottom: 6px;
+}
+</style>
+""", unsafe_allow_html=True)
 
 svg_logo = """
 <div style='text-align:center; margin-bottom:25px;'>
@@ -20,8 +39,66 @@ svg_logo = """
 
 st.markdown(svg_logo, unsafe_allow_html=True)
 
-st.write("Hvis logoet vises ovenfor, virker dette.")
+st.title("HSP / Slow Processor Test")
 
-val = st.slider("Test slider", 0, 10, 5)
+st.markdown("""
+Denne test giver dig et indblik i, hvordan du bearbejder både
+følelsesmæssige og sansemæssige indtryk, og hvordan dit mentale tempo
+påvirker dine reaktioner i hverdagen.
 
-st.write("Slider vaerdi:", val)
+Testen er <u>ikke en diagnose</u>, men et psykologisk værktøj til selvindsigt.
+""", unsafe_allow_html=True)
+
+questions = [
+    "Jeg bliver let overvældet af indtryk.",
+    "Jeg opdager små detaljer, som andre ofte overser.",
+    "Jeg bruger længere tid på at tænke ting igennem.",
+    "Jeg foretrækker rolige omgivelser.",
+    "Jeg reagerer stærkt på uventede afbrydelser.",
+    "Jeg bearbejder information dybt og grundigt.",
+    "Jeg har brug for mere tid til at omstille mig.",
+    "Jeg bliver hurtigt mentalt udmattet.",
+    "Jeg er meget opmærksom på stemninger hos andre.",
+    "Jeg foretrækker at gøre én ting ad gangen.",
+    "Jeg påvirkes lettere af støj end de fleste.",
+    "Jeg trives bedst med tydelige rammer og struktur.",
+    "Jeg bruger lang tid på at komme i gang med nye opgaver.",
+    "Jeg har svært ved at sortere irrelevante stimuli fra.",
+    "Jeg bliver let påvirket af andres humør.",
+    "Jeg bruger lang tid på at træffe beslutninger.",
+    "Jeg foretrækker dybe samtaler frem for smalltalk.",
+    "Jeg kan have svært ved at skifte fokus hurtigt.",
+    "Jeg føler mig ofte overstimuleret.",
+    "Jeg bliver let distraheret, når der sker meget omkring mig."
+]
+
+if "answers" not in st.session_state:
+    st.session_state.answers = [0] * 20
+
+def reset_answers():
+    st.session_state.answers = [0] * 20
+    for i in range(20):
+        st.session_state[f"q_{i}"] = 0
+
+answers = []
+for i, q in enumerate(questions):
+    st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
+    val = st.slider("", 0, 4, value=st.session_state.answers[i], key=f"q_{i}")
+    st.session_state.answers[i] = val
+    answers.append(val)
+
+st.button("Nulstil svar", on_click=reset_answers)
+
+def interpret_score(score):
+    if score <= 26:
+        return "Slow Processor"
+    if score <= 53:
+        return "Mellemprofil"
+    return "HSP"
+
+total = sum(st.session_state.answers)
+profile = interpret_score(total)
+
+st.header("Dit resultat")
+st.subheader(f"Score: {total} / 80")
+st.subheader(f"Profil: {profile}")
