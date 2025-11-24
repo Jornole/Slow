@@ -167,4 +167,75 @@ STATEMENTS = {
     "HSP": [
         "Du registrerer subtile detaljer og stemninger med stor præcision.",
         "Du bearbejder information dybt og reflekteret.",
-        "Du har
+        "Du har stærke empatiske og sociale antenner.",
+        "Du kan let blive overstimuleret, hvis der sker meget omkring dig.",
+        "Du kan føle behov for mere ro end andre.",
+        "Du bruger ofte meget mental energi på at tilpasse dig omgivelser."
+    ],
+    "Slow Processor": [
+        "Du trives bedst, når tempoet er roligt og struktureret.",
+        "Du arbejder omhyggeligt og grundigt, når du har tiden til det.",
+        "Du har god udholdenhed, når omgivelserne er stabile.",
+        "Du kan føle dig presset i høje tempoer og skiftende miljøer.",
+        "Du har brug for mere tid til at tænke, beslutte og omstille dig.",
+        "Du kan let miste fokus, hvis der kommer mange indtryk på samme tid."
+    ],
+    "Mellemprofil": [
+        "Du har en god balance mellem følsomhed og overskuelighed.",
+        "Du kan både arbejde hurtigt og langsomt, afhængigt af situationen.",
+        "Du kan håndtere moderate mængder stimuli uden at blive overvældet.",
+        "Du kan til tider føle dig lidt presset, men sjældent for meget.",
+        "Du kan både være empatisk og logisk i din tilgang.",
+        "Du er fleksibel og kan tilpasse dig forskellige miljøer."
+    ]
+}
+
+# -------------------------------------------------------------
+# RESULTAT
+# -------------------------------------------------------------
+total_score = sum(st.session_state.answers)
+profile = interpret_score(total_score)
+
+st.header("Dit resultat")
+st.subheader(f"Samlet score: **{total_score} / 80**")
+st.write(f"Profil: **{profile}**")
+
+st.write("### Karakteristika for din profil:")
+for s in STATEMENTS[profile]:
+    st.write(f"- {s}")
+
+# -------------------------------------------------------------
+# PDF GENERERING
+# -------------------------------------------------------------
+def generate_pdf(score, profile):
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
+    styles = getSampleStyleSheet()
+    story = []
+
+    story.append(Paragraph("HSP / Slow Processor Test – Resultatrapport", styles["Title"]))
+    story.append(Spacer(1, 12))
+
+    story.append(Paragraph(f"Samlet score: {score} / 80", styles["Heading2"]))
+    story.append(Paragraph(f"Profil: {profile}", styles["Heading2"]))
+    story.append(Spacer(1, 12))
+
+    story.append(Paragraph("Karakteristika:", styles["Heading2"]))
+    for s in STATEMENTS[profile]:
+        story.append(Paragraph(f"- {s}", styles["BodyText"]))
+    story.append(Spacer(1, 12))
+
+    story.append(Paragraph("Besvarelser:", styles["Heading2"]))
+    for idx, q in enumerate(questions):
+        story.append(Paragraph(f"{idx+1}. {q} – Svar: {st.session_state.answers[idx]}", styles["BodyText"]))
+
+    doc.build(story)
+    buffer.seek(0)
+    return buffer
+
+st.download_button(
+    "Download PDF-rapport",
+    data=generate_pdf(total_score, profile),
+    file_name="HSP_SlowProcessor_Rapport.pdf",
+    mime="application/pdf"
+)
