@@ -30,7 +30,7 @@ h1, h2, h3, p, label {
     margin-top: 12px;
 }
 
-/* Kortere sliders (1/3 bredde) + venstrejusteret */
+/* Sliders kortere */
 .short-slider .stSlider {
     width: 35% !important;
     margin-left: 0 !important;
@@ -64,11 +64,12 @@ div.stButton > button:hover, div.stDownloadButton > button:hover {
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# SVG LOGO (INDENFOR HJERNEN, DYRENE HVIDE, SKALERET KORREKT)
+# SVG LOGO (KORREKT INDLEJRET)
 # -------------------------------------------------------------
 st.markdown("""
 <div style='text-align:center; margin-bottom:25px;'>
 <svg width="260" height="260" viewBox="0 0 200 200">
+
     <!-- Brain shape -->
     <ellipse cx="100" cy="100" rx="85" ry="70"
              fill="#136B3F" stroke="#3ECF8E" stroke-width="6" />
@@ -92,6 +93,7 @@ st.markdown("""
     <!-- White animals -->
     <text x="65" y="145" font-size="34" fill="white" text-anchor="middle">🐇</text>
     <text x="135" y="145" font-size="34" fill="white" text-anchor="middle">🐌</text>
+
 </svg>
 </div>
 """, unsafe_allow_html=True)
