@@ -5,12 +5,12 @@ from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
 
 # -------------------------------------------------------------
-# APP SETTINGS
+# PAGE SETTINGS
 # -------------------------------------------------------------
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# GLOBAL STYLE (GREEN + SHORT SLIDERS + RED BUTTONS)
+# GLOBAL STYLING
 # -------------------------------------------------------------
 st.markdown("""
 <style>
@@ -35,16 +35,17 @@ div.stButton > button:hover, div.stDownloadButton > button:hover {
 .question-text {
     font-size: 1.06rem;
     font-weight: 600;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
     margin-top: 14px;
 }
 
+/* SLIDER = 2/3 bredde og venstrejusteret */
 .short-slider .stSlider {
-    width: 50% !important;     /* 50% = VALG C */
+    width: 66% !important;
     margin-left: 0 !important;
 }
 
-/* slider height + knob size */
+/* Slider højde + knob */
 .stSlider > div > div > div {
     height: 14px !important;
 }
@@ -59,15 +60,19 @@ div.stButton > button:hover, div.stDownloadButton > button:hover {
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# LOGO (uploadet PNG)
+# LOGO + TITLE SIDE BY SIDE
 # -------------------------------------------------------------
-st.image("logo.png", width=260)
+col_logo, col_title = st.columns([1, 4])
+
+with col_logo:
+    st.image("logo.png", width=65)   # ← logo i 1/4 størrelse
+
+with col_title:
+    st.markdown("<h1 style='margin-top: 10px;'>HSP / Slow Processor Test</h1>", unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# INTRO TEXT
+# INTROTEXT
 # -------------------------------------------------------------
-st.title("HSP / Slow Processor Test")
-
 st.markdown("""
 Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige 
 og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner 
@@ -123,7 +128,7 @@ def reset_answers():
         st.session_state[f"q_{i}"] = 0
 
 # -------------------------------------------------------------
-# SLIDERS
+# SLIDER SECTION
 # -------------------------------------------------------------
 answers = []
 for i, q in enumerate(questions):
@@ -138,7 +143,7 @@ for i, q in enumerate(questions):
 st.button("Nulstil svar", on_click=reset_answers)
 
 # -------------------------------------------------------------
-# SCORE + PROFILE
+# PROFILE + SCORE
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
@@ -187,7 +192,7 @@ for s in STATEMENTS[profile]:
     st.write(f"- {s}")
 
 # -------------------------------------------------------------
-# PDF EXPORT
+# PDF DOWNLOAD
 # -------------------------------------------------------------
 def generate_pdf(score, profile):
     buffer = BytesIO()
