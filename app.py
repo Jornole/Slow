@@ -10,7 +10,7 @@ from io import BytesIO
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# GLOBAL CSS (FINAL + FIXED)
+# GLOBAL CSS
 # -------------------------------------------------------------
 st.markdown("""
 <style>
@@ -21,22 +21,17 @@ html, body, .stApp {
     font-family: Arial, sans-serif !important;
 }
 
-/* ---- LOGO CENTERED ---- */
+/* CENTERED LOGO CONTAINER */
 .logo-wrapper {
-    width: 100%;
     display: flex;
     justify-content: center;
-    margin-top: 20px;
-    margin-bottom: 10px;
-}
-.logo-wrapper img {
-    width: 180px;
-    height: auto;
+    margin-top: 25px;
+    margin-bottom: 15px;
 }
 
 /* MAIN TITLE */
 .main-title {
-    font-size: 2.4rem;
+    font-size: 2.3rem;
     font-weight: 800;
     text-align: center;
     margin-top: 5px;
@@ -51,26 +46,23 @@ html, body, .stApp {
     margin-bottom: 10px;
 }
 
-/* HORIZONTAL RADIO BUTTONS */
+/* HORIZONTAL RADIO LAYOUT */
 div[role='radiogroup'] {
     display: flex !important;
     gap: 20px !important;
-    margin-bottom: 10px;
+    justify-content: flex-start !important;
+    margin-bottom: 4px;
 }
 
-/* ---- RED BUTTONS (RESET + PDF) ---- */
-.stButton > button,
-.stDownloadButton > button {
+/* RED BUTTONS (RESET & PDF) */
+button[kind="primary"] {
     background-color: #C62828 !important;
     color: white !important;
     border-radius: 8px !important;
     padding: 0.6rem 1.4rem !important;
-    border: none !important;
     font-weight: 600 !important;
 }
-
-.stButton > button:hover,
-.stDownloadButton > button:hover {
+button[kind="primary"]:hover {
     background-color: #B71C1C !important;
 }
 
@@ -78,11 +70,11 @@ div[role='radiogroup'] {
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# LOGO (CENTERED)
+# LOGO (RAW GITHUB URL — ALWAYS WORKS)
 # -------------------------------------------------------------
 st.markdown("""
 <div class="logo-wrapper">
-    <img src="logo.png">
+    <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="180">
 </div>
 """, unsafe_allow_html=True)
 
@@ -97,7 +89,6 @@ st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_
 st.markdown("""
 Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige 
 og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner.
-
 Testen undersøger, om dine reaktioner er mere intuitive og impulsstyrede – 
 eller mere langsomme, bearbejdende og eftertænksomme.
 
@@ -163,7 +154,7 @@ if st.button("Nulstil svar"):
     st.experimental_rerun()
 
 # -------------------------------------------------------------
-# PROFILE INTERPRETATION
+# INTERPRETATION
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
@@ -215,7 +206,7 @@ for s in PROFILE_TEXT[profile]:
     st.write(f"- {s}")
 
 # -------------------------------------------------------------
-# PDF REPORT
+# PDF EXPORT
 # -------------------------------------------------------------
 def generate_pdf(score, profile):
     buffer = BytesIO()
