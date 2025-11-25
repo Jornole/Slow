@@ -21,13 +21,6 @@ html, body, .stApp {
     font-family: Arial, sans-serif !important;
 }
 
-/* TEKSTEN VED SIDEN AF LOGO */
-.header-text-small {
-    font-size: 1.05rem;
-    font-weight: 700;
-    line-height: 1.25;
-}
-
 /* MAIN TITLE */
 .main-title {
     font-size: 2.3rem;
@@ -37,7 +30,7 @@ html, body, .stApp {
     margin-bottom: 25px;
 }
 
-/* QUESTIONS */
+/* QUESTION TEXT */
 .question-text {
     font-size: 1.1rem;
     font-weight: 600;
@@ -52,7 +45,7 @@ div[role='radiogroup'] {
     margin-bottom: 4px;
 }
 
-/* RØDE KNAPPER (RESET + PDF) */
+/* RED BUTTONS */
 div.stButton > button, div.stDownloadButton > button {
     background-color: #C62828 !important;
     color: white !important;
@@ -69,21 +62,11 @@ div.stButton > button:hover, div.stDownloadButton > button:hover {
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# HEADER (LOGO + TEKST I KOLONNER)
+# CENTERED LOGO
 # -------------------------------------------------------------
-col_logo, col_head = st.columns([0.25, 0.75])
-
-with col_logo:
-    # BRUGER st.image IGEN → logo.png bliver fundet
-    st.image("logo.png", width=90)
-
-with col_head:
-    st.markdown("""
-    <div class="header-text-small">
-        HSP / SLOW<br>
-        Processor Test
-    </div>
-    """, unsafe_allow_html=True)
+st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
+st.image("logo.png", width=150)
+st.markdown("</div>", unsafe_allow_html=True)
 
 # -------------------------------------------------------------
 # MAIN TITLE
@@ -141,14 +124,15 @@ if "answers" not in st.session_state:
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
-    v = st.radio(
+
+    choice = st.radio(
         "",
         [0, 1, 2, 3, 4],
         key=f"q_{i}",
         horizontal=True,
         label_visibility="collapsed"
     )
-    st.session_state.answers[i] = v
+    st.session_state.answers[i] = choice
 
 # -------------------------------------------------------------
 # RESET BUTTON
@@ -158,7 +142,7 @@ if st.button("Nulstil svar"):
     st.experimental_rerun()
 
 # -------------------------------------------------------------
-# RESULT
+# PROFILE INTERPRETATION
 # -------------------------------------------------------------
 def interpret_score(score: int) -> str:
     if score <= 26:
@@ -195,6 +179,9 @@ PROFILE_TEXT = {
     ]
 }
 
+# -------------------------------------------------------------
+# RESULT
+# -------------------------------------------------------------
 score = sum(st.session_state.answers)
 profile = interpret_score(score)
 
@@ -222,9 +209,10 @@ def generate_pdf(score, profile):
 
     for s in PROFILE_TEXT[profile]:
         story.append(Paragraph(f"- {s}", styles["BodyText"]))
-    story.append(Spacer(1, 12))
 
+    story.append(Spacer(1, 12))
     story.append(Paragraph("Dine svar:", styles["Heading2"]))
+
     for i, q in enumerate(questions):
         story.append(Paragraph(f"{i+1}. {q} – Svar: {st.session_state.answers[i]}", styles["BodyText"]))
 
