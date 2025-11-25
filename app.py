@@ -21,16 +21,19 @@ html, body, .stApp {
     font-family: Arial, sans-serif !important;
 }
 
-/* Header text right of logo */
+/* HEADER TEXT RIGHT OF LOGO */
 .header-text {
     font-size: 1.4rem;
     font-weight: 700;
-    line-height: 1.1;
-    padding-top: 18px;       /* vertical centering relative to 100px logo */
+    line-height: 1.15;
     padding-left: 12px;
+    height: 100px;                 
+    display: flex;
+    flex-direction: column;
+    justify-content: center;       
 }
 
-/* Main title under header */
+/* MAIN TITLE */
 .main-title {
     font-size: 2.2rem;
     font-weight: 800;
@@ -39,7 +42,7 @@ html, body, .stApp {
     margin-bottom: 25px;
 }
 
-/* Question text */
+/* QUESTION TEXT */
 .question-text {
     font-size: 1.05rem;
     font-weight: 600;
@@ -47,11 +50,10 @@ html, body, .stApp {
     margin-bottom: 6px;
 }
 
-/* Røde knapper */
+/* RED BUTTONS */
 div.stButton > button, div.stDownloadButton > button {
     background-color: #C62828 !important;
     color: white !important;
-    border: none !important;
     border-radius: 8px !important;
     padding: 0.55rem 1.3rem !important;
     font-weight: 600;
@@ -60,7 +62,7 @@ div.stButton > button:hover, div.stDownloadButton > button:hover {
     background-color: #B71C1C !important;
 }
 
-/* Slider tweaks */
+/* SLIDER STYLING */
 .stSlider > div > div > div {
     height: 14px !important;
 }
@@ -76,12 +78,12 @@ div.stButton > button:hover, div.stDownloadButton > button:hover {
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# HEADER: LOGO LEFT, TEXT VERTICALLY CENTERED RIGHT
+# HEADER – LOGO + LITTLE TITLE
 # -------------------------------------------------------------
-col_logo, col_title = st.columns([120, 1])   # 120px left, rest right
+col_logo, col_title = st.columns([0.25, 0.75])
 
 with col_logo:
-    st.image("logo.png", width=70)
+    st.image("logo.png", width=100)
 
 with col_title:
     st.markdown("""
@@ -101,9 +103,9 @@ st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_
 # -------------------------------------------------------------
 st.markdown("""
 Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige 
-og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner 
-i hverdagen. Testen undersøger, om dine reaktioner er mere intuitive og 
-impulsstyrede – eller mere langsomme, bearbejdende og eftertænksomme.
+og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner.
+Testen undersøger, om dine reaktioner er mere intuitive og impulsstyrede – 
+eller mere langsomme, bearbejdende og eftertænksomme.
 
 Du besvarer 20 udsagn på en skala fra **0 (aldrig)** til **4 (altid)**.
 
@@ -148,7 +150,7 @@ def reset_answers():
         st.session_state[f"q_{i}"] = 0
 
 # -------------------------------------------------------------
-# SLIDERS – 2/3 LEFT, 1/3 EMPTY
+# SLIDERS – 2/3 AF BREDDEN
 # -------------------------------------------------------------
 answers = []
 for i, q in enumerate(questions):
@@ -158,7 +160,7 @@ for i, q in enumerate(questions):
         unsafe_allow_html=True,
     )
 
-    col_slider, col_empty = st.columns([2, 1])  # 2/3 left, 1/3 empty right
+    col_slider, col_empty = st.columns([2, 1])  # 2/3 slider, 1/3 tom plads
 
     with col_slider:
         val = st.slider(
