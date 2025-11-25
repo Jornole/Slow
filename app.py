@@ -4,6 +4,9 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
 
+# -------------------------------------------------------------
+# BASIC SETUP
+# -------------------------------------------------------------
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
@@ -11,6 +14,7 @@ st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 # -------------------------------------------------------------
 st.markdown("""
 <style>
+
 html, body, .stApp {
     background-color: #1A6333 !important;
     color: white !important;
@@ -25,7 +29,7 @@ html, body, .stApp {
     margin-bottom: 10px;
 }
 
-/* SMALL TITLE */
+/* SMALL HEADER TEXT */
 .header-text-small {
     font-size: 1.05rem;
     font-weight: 700;
@@ -49,45 +53,34 @@ html, body, .stApp {
     margin-bottom: 6px;
 }
 
-/* RED BUTTONS (answer buttons) */
-.answer-btn {
-    background-color: #C62828;
-    border-radius: 8px;
-    padding: 10px 16px;
-    font-weight: 700;
-    cursor: pointer;
-    text-align: center;
-    width: 48px;
-}
-.answer-btn:hover {
-    background-color: #B71C1C;
-}
-
-/* FLEX ROW for answer buttons */
-.answer-row {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 10px;
-}
-
-/* Red control buttons */
-div.stButton > button, div.stDownloadButton > button {
+/* RED BUTTONS (HORIZONTAL RADIO HACK) */
+.horizontal-radio > label > div {
     background-color: #C62828 !important;
-    color: white !important;
     border-radius: 8px !important;
-    padding: 0.55rem 1.3rem !important;
-    font-weight: 600;
+    padding: 10px 14px !important;
+    margin-right: 10px;
+    color: white !important;
+    font-weight: 700;
+    width: 48px;
+    text-align: center;
 }
-div.stButton > button:hover, div.stDownloadButton > button:hover {
+.horizontal-radio > label > div:hover {
     background-color: #B71C1C !important;
 }
+
+/* INLINE RADIO */
+.horizontal-radio > label {
+    display: inline-flex !important;
+    align-items: center;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# HEADER WITH LOGO + TEXT
+# HEADER (LOGO + TEXT)
 # -------------------------------------------------------------
-st.markdown(f"""
+st.markdown("""
 <div class="header-wrapper">
     <img src="logo.png" width="100">
     <div class="header-text-small">
@@ -147,33 +140,33 @@ questions = [
 if "answers" not in st.session_state:
     st.session_state.answers = [0]*len(questions)
 
-def set_answer(q_idx, value):
-    st.session_state.answers[q_idx] = value
-
 # -------------------------------------------------------------
-# RENDER QUESTIONS WITH FLEX BUTTONS
+# RENDER QUESTIONS WITH HORIZONTAL RADIO
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
 
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    # Render button row
-    st.markdown("<div class='answer-row'>", unsafe_allow_html=True)
-    cols = st.columns(5)
+    choice = st.radio(
+        "",
+        options=[0,1,2,3,4],
+        horizontal=True,
+        key=f"q_{i}",
+        label_visibility="collapsed"
+    )
 
-    for n in range(5):
-        btn_html = f"<div class='answer-btn'>{n}</div>"
-        if cols[n].button(btn_html, key=f"btn_{i}_{n}", help="", use_container_width=False):
-            set_answer(i, n)
-
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    st.write(f"Valgt: {st.session_state.answers[i]}")
-
-st.button("Nulstil svar", on_click=lambda: st.session_state.answers.__setitem__(slice(None), [0]*len(questions)))
+    st.session_state.answers[i] = choice
+    st.write(f"Valgt: {choice}")
 
 # -------------------------------------------------------------
-# RESULT
+# RESET BUTTON
+# -------------------------------------------------------------
+if st.button("Nulstil svar"):
+    st.session_state.answers = [0]*len(questions)
+    st.experimental_rerun()
+
+# -------------------------------------------------------------
+# PROFILE INTERPRETATION
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
@@ -210,6 +203,9 @@ PROFILE_TEXT = {
     ]
 }
 
+# -------------------------------------------------------------
+# RESULT
+# -------------------------------------------------------------
 total_score = sum(st.session_state.answers)
 profile = interpret_score(total_score)
 
