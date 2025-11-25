@@ -73,7 +73,7 @@ div.stButton > button:hover, div.stDownloadButton > button:hover {
 # CENTERED LOGO (WORKING VERSION)
 # -------------------------------------------------------------
 st.markdown('<div class="center-logo">', unsafe_allow_html=True)
-st.image("logo.png", width=150)
+st.image("logo.png", width=40)
 st.markdown('</div>', unsafe_allow_html=True)
 
 # -------------------------------------------------------------
