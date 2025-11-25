@@ -4,14 +4,9 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
 
-# -------------------------------------------------------------
-# BASIC SETUP
-# -------------------------------------------------------------
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
-# -------------------------------------------------------------
-# CLEAN CSS – kun 2 ting: baggrund + røde knapper
-# -------------------------------------------------------------
+# --- GLOBAL CSS: Kun baggrund + knapper (INGEN ændringer til layout)
 st.markdown("""
 <style>
 html, body, .stApp {
@@ -19,36 +14,30 @@ html, body, .stApp {
     color: white !important;
 }
 
-/* Røde knapper */
-.stButton > button {
+/* Røde knapper – stabil metode */
+.stButton > button, .stDownloadButton > button {
     background-color: #C62828 !important;
     color: white !important;
     font-weight: 600 !important;
     border-radius: 8px !important;
     padding: 0.6rem 1.4rem !important;
+    border: none !important;
 }
-.stButton > button:hover {
+.stButton > button:hover, .stDownloadButton > button:hover {
     background-color: #B71C1C !important;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# -------------------------------------------------------------
-# LOGO – STREAMLIT-CENTERING (aldri svigter!)
-# -------------------------------------------------------------
-st.markdown("###")
-st.image("logo.png", width=260, use_container_width=False)
-st.markdown("<div style='height:15px;'></div>", unsafe_allow_html=True)
+# --- LOGO (den gamle, fungerende metode)
+# Dette er præcis som du havde det før tingene gik galt:
+st.image("logo.png", width=220)
 
-# -------------------------------------------------------------
-# TITLE
-# -------------------------------------------------------------
+# --- Title
 st.markdown("<h1 style='text-align:center; font-weight:800;'>DIN PERSONLIGE PROFIL</h1>",
             unsafe_allow_html=True)
 
-# -------------------------------------------------------------
-# INTRO
-# -------------------------------------------------------------
+# --- Intro text
 st.markdown("""
 Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige 
 og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner.
@@ -58,9 +47,7 @@ Du besvarer 20 udsagn på en skala fra **0 (aldrig)** til **4 (altid)**.
 Testen er <u>**ikke en diagnose**</u>, men et psykologisk værktøj til selvindsigt.
 """, unsafe_allow_html=True)
 
-# -------------------------------------------------------------
-# QUESTIONS
-# -------------------------------------------------------------
+# --- Questions
 questions = [
     "Jeg bliver let overvældet af indtryk.",
     "Jeg opdager små detaljer, som andre ofte overser.",
@@ -90,23 +77,18 @@ if "answers" not in st.session_state:
 for i, q in enumerate(questions):
     st.subheader(f"{i+1}. {q}")
     st.session_state.answers[i] = st.radio(
-        "Vælg:",
+        "",
         [0,1,2,3,4],
-        index=st.session_state.answers[i],
         horizontal=True,
-        key=f"q_{i}"
+        key=f"q{i}",
     )
 
-# -------------------------------------------------------------
-# RESET BUTTON
-# -------------------------------------------------------------
+# --- Reset
 if st.button("Nulstil svar"):
     st.session_state.answers = [0]*len(questions)
     st.experimental_rerun()
 
-# -------------------------------------------------------------
-# RESULT
-# -------------------------------------------------------------
+# --- Scoring
 def interpret_score(score):
     if score <= 26:
         return "Slow Processor"
@@ -115,41 +97,14 @@ def interpret_score(score):
     else:
         return "HSP"
 
-PROFILE_TEXT = {
-    "HSP": [
-        "Du registrerer flere nuancer i både indtryk og stemninger.",
-        "Du bearbejder oplevelser dybt og grundigt.",
-        "Du reagerer stærkt på stimuli og kan blive overstimuleret.",
-        "Du har en rig indre verden.",
-        "Du er empatisk og opmærksom på andre."
-    ],
-    "Slow Processor": [
-        "Du arbejder bedst i roligt tempo.",
-        "Du bearbejder indtryk grundigt, men langsomt.",
-        "Du har brug for ekstra tid til beslutninger.",
-        "Du trives med faste rammer."
-    ],
-    "Mellemprofil": [
-        "Du veksler mellem hurtig og langsom bearbejdning.",
-        "Du håndterer stimuli uden at blive overvældet.",
-        "Du har en god balance.",
-        "Du tilpasser dig forskellige miljøer."
-    ]
-}
-
 score = sum(st.session_state.answers)
 profile = interpret_score(score)
 
 st.header("Dit resultat")
 st.subheader(f"Score: {score} / 80")
 st.write(f"**Profil: {profile}**")
-st.write("### Karakteristika for din profil:")
-for s in PROFILE_TEXT[profile]:
-    st.write(f"- {s}")
 
-# -------------------------------------------------------------
-# PDF EXPORT
-# -------------------------------------------------------------
+# --- PDF
 def generate_pdf(score, profile):
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter)
@@ -157,12 +112,9 @@ def generate_pdf(score, profile):
     story = []
 
     story.append(Paragraph("HSP / Slow Processor Test – Rapport", styles["Title"]))
-    story.append(Paragraph(f"Score: {score} / 80", styles["Heading2"]))
+    story.append(Paragraph(f"Score: {score}", styles["Heading2"]))
     story.append(Paragraph(f"Profil: {profile}", styles["Heading2"]))
     story.append(Spacer(1, 12))
-
-    for s in PROFILE_TEXT[profile]:
-        story.append(Paragraph(f"- {s}", styles["BodyText"]))
 
     doc.build(story)
     buffer.seek(0)
@@ -172,5 +124,5 @@ st.download_button(
     "Download PDF-rapport",
     data=generate_pdf(score, profile),
     file_name="rapport.pdf",
-    mime="application/pdf"
+    mime="application/pdf",
 )
