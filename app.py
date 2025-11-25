@@ -76,7 +76,7 @@ div.stButton > button:hover, div.stDownloadButton > button:hover {
 col_logo, col_title = st.columns([0.25, 0.75])
 
 with col_logo:
-    st.image("logo.png", width=100)
+    st.image("logo.png", width=70)
 
 with col_title:
     st.markdown("""
