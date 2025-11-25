@@ -4,23 +4,44 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
 
-# -------------------------------------------------------------
-# APP SETUP
-# -------------------------------------------------------------
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# GLOBAL STYLING
+# GLOBAL CSS
 # -------------------------------------------------------------
 st.markdown("""
 <style>
-
 html, body, .stApp {
     background-color: #1A6333 !important;
     color: white !important;
     font-family: Arial, sans-serif !important;
 }
 
+/* HEADER FLEX */
+.header-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 10px;
+}
+
+/* SMALL TITLE */
+.header-text-small {
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+/* MAIN TITLE */
+.main-title {
+    font-size: 2.2rem;
+    font-weight: 800;
+    text-align: center;
+    margin-top: 5px;
+    margin-bottom: 25px;
+}
+
+/* QUESTION TEXT */
 .question-text {
     font-size: 1.05rem;
     font-weight: 600;
@@ -28,7 +49,28 @@ html, body, .stApp {
     margin-bottom: 6px;
 }
 
-/* RED BUTTONS */
+/* RED BUTTONS (answer buttons) */
+.answer-btn {
+    background-color: #C62828;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+    width: 48px;
+}
+.answer-btn:hover {
+    background-color: #B71C1C;
+}
+
+/* FLEX ROW for answer buttons */
+.answer-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+/* Red control buttons */
 div.stButton > button, div.stDownloadButton > button {
     background-color: #C62828 !important;
     color: white !important;
@@ -39,48 +81,28 @@ div.stButton > button, div.stDownloadButton > button {
 div.stButton > button:hover, div.stDownloadButton > button:hover {
     background-color: #B71C1C !important;
 }
-
 </style>
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# HEADER – LOGO + SMALL HEADER
+# HEADER WITH LOGO + TEXT
 # -------------------------------------------------------------
-logo_col, text_col = st.columns([0.22, 0.78])
-
-with logo_col:
-    st.image("logo.png", width=100)
-
-with text_col:
-    st.markdown("""
-    <div style="
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        height: 100%;
-        margin-top: 6px;
-        padding-left: 5px;
-    ">
-        <span style="font-size: 1.05rem; font-weight: 700; line-height: 1.1;">
-            HSP / SLOW
-        </span>
-        <span style="font-size: 0.95rem;">
-            Processor Test
-        </span>
+st.markdown(f"""
+<div class="header-wrapper">
+    <img src="logo.png" width="100">
+    <div class="header-text-small">
+        HSP / SLOW<br>Processor Test
     </div>
-    """, unsafe_allow_html=True)
+</div>
+""", unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# MID-TITLE
+# MAIN TITLE
 # -------------------------------------------------------------
-st.markdown(
-    '<div style="font-size:2.2rem; font-weight:800; text-align:center; margin-top:5px; margin-bottom:25px;">'
-    'DIN PERSONLIGE PROFIL</div>',
-    unsafe_allow_html=True
-)
+st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# INTROTEXT
+# INTRO TEXT
 # -------------------------------------------------------------
 st.markdown("""
 Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige 
@@ -123,39 +145,37 @@ questions = [
 # SESSION STATE
 # -------------------------------------------------------------
 if "answers" not in st.session_state:
-    st.session_state.answers = [0] * len(questions)
+    st.session_state.answers = [0]*len(questions)
 
-def reset_answers():
-    st.session_state.answers = [0] * len(questions)
+def set_answer(q_idx, value):
+    st.session_state.answers[q_idx] = value
 
 # -------------------------------------------------------------
-# ANSWER BUTTONS (0–4 horizontally)
+# RENDER QUESTIONS WITH FLEX BUTTONS
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
 
-    st.markdown(
-        f"<div class='question-text'>{i+1}. {q}</div>",
-        unsafe_allow_html=True,
-    )
+    st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    # Horizontal flex layout for answer buttons
-    st.markdown("<div style='display:flex; gap:12px; margin-bottom:8px;'>", unsafe_allow_html=True)
-
+    # Render button row
+    st.markdown("<div class='answer-row'>", unsafe_allow_html=True)
     cols = st.columns(5)
+
     for n in range(5):
-        if cols[n].button(str(n), key=f"btn_{i}_{n}"):
-            st.session_state.answers[i] = n
+        btn_html = f"<div class='answer-btn'>{n}</div>"
+        if cols[n].button(btn_html, key=f"btn_{i}_{n}", help="", use_container_width=False):
+            set_answer(i, n)
 
     st.markdown("</div>", unsafe_allow_html=True)
 
     st.write(f"Valgt: {st.session_state.answers[i]}")
 
-st.button("Nulstil svar", on_click=reset_answers)
+st.button("Nulstil svar", on_click=lambda: st.session_state.answers.__setitem__(slice(None), [0]*len(questions)))
 
 # -------------------------------------------------------------
-# PROFILE INTERPRETATION
+# RESULT
 # -------------------------------------------------------------
-def interpret_score(score: int) -> str:
+def interpret_score(score):
     if score <= 26:
         return "Slow Processor"
     elif score <= 53:
@@ -190,9 +210,6 @@ PROFILE_TEXT = {
     ]
 }
 
-# -------------------------------------------------------------
-# RESULT
-# -------------------------------------------------------------
 total_score = sum(st.session_state.answers)
 profile = interpret_score(total_score)
 
@@ -207,31 +224,24 @@ for s in PROFILE_TEXT[profile]:
 # -------------------------------------------------------------
 # PDF REPORT
 # -------------------------------------------------------------
-def generate_pdf(score: int, profile: str) -> BytesIO:
+def generate_pdf(score, profile):
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter)
     styles = getSampleStyleSheet()
     story = []
 
     story.append(Paragraph("HSP / Slow Processor Test – Rapport", styles["Title"]))
-    story.append(Spacer(1, 12))
     story.append(Paragraph(f"Samlet score: {score} / 80", styles["Heading2"]))
     story.append(Paragraph(f"Profil: {profile}", styles["Heading2"]))
     story.append(Spacer(1, 12))
 
-    story.append(Paragraph("Karakteristika:", styles["Heading2"]))
     for s in PROFILE_TEXT[profile]:
         story.append(Paragraph(f"- {s}", styles["BodyText"]))
     story.append(Spacer(1, 12))
 
     story.append(Paragraph("Dine svar:", styles["Heading2"]))
     for i, q in enumerate(questions):
-        story.append(
-            Paragraph(
-                f"{i+1}. {q} – Svar: {st.session_state.answers[i]}",
-                styles["BodyText"],
-            )
-        )
+        story.append(Paragraph(f"{i+1}. {q} – Svar: {st.session_state.answers[i]}", styles["BodyText"]))
 
     doc.build(story)
     buffer.seek(0)
@@ -241,5 +251,5 @@ st.download_button(
     "Download PDF-rapport",
     data=generate_pdf(total_score, profile),
     file_name="HSP_SlowProcessor_Rapport.pdf",
-    mime="application/pdf",
+    mime="application/pdf"
 )
