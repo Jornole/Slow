@@ -66,7 +66,7 @@ div.stButton > button:hover, div.stDownloadButton > button:hover {
 col_logo, col_title = st.columns([1, 4])
 
 with col_logo:
-    st.image("logo.png", width=160)   # <-- doubleret størrelse
+    st.image("logo.png", width=120)   # <-- doubleret størrelse
 
 with col_title:
     st.markdown("<h1 style='margin-top: 10px;'>HSP / Slow Processor Test</h1>", unsafe_allow_html=True)
