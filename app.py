@@ -10,7 +10,7 @@ from io import BytesIO
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# GLOBAL CSS
+# GLOBAL CSS (FINAL FIXED VERSION)
 # -------------------------------------------------------------
 st.markdown("""
 <style>
@@ -21,24 +21,34 @@ html, body, .stApp {
     font-family: Arial, sans-serif !important;
 }
 
-/* HEADER FLEX */
+/* HEADER WRAPPER: LOGO + TEXT */
 .header-wrapper {
     display: flex;
     align-items: center;
-    gap: 15px;
-    margin-bottom: 10px;
+    gap: 18px;
+    margin-bottom: 5px;
+    flex-wrap: nowrap;                 /* Prevent logo being pushed off screen */
 }
 
-/* SMALL HEADER TEXT */
+/* LOGO FIX */
+.header-wrapper img {
+    width: 95px;
+    height: auto;
+    flex-shrink: 0;                    /* Prevent collapse */
+}
+
+/* RIGHT-SIDE TEXT */
 .header-text-small {
-    font-size: 1.05rem;
+    font-size: 1.1rem;
     font-weight: 700;
-    line-height: 1.2;
+    line-height: 1.25;
+    max-width: 220px;                  /* Ensures proper fit */
+    white-space: nowrap;               /* Prevents wrapping */
 }
 
 /* MAIN TITLE */
 .main-title {
-    font-size: 2.2rem;
+    font-size: 2.3rem;
     font-weight: 800;
     text-align: center;
     margin-top: 5px;
@@ -47,31 +57,30 @@ html, body, .stApp {
 
 /* QUESTION TEXT */
 .question-text {
-    font-size: 1.05rem;
+    font-size: 1.1rem;
     font-weight: 600;
-    margin-top: 14px;
-    margin-bottom: 6px;
+    margin-top: 18px;
+    margin-bottom: 10px;
 }
 
-/* RED BUTTONS (HORIZONTAL RADIO HACK) */
-.horizontal-radio > label > div {
+/* HORIZONTAL RADIO LAYOUT */
+div[role='radiogroup'] {
+    display: flex !important;
+    gap: 20px !important;
+    justify-content: flex-start !important;
+    margin-bottom: 4px;
+}
+
+/* RESET + PDF BUTTONS */
+button[kind="primary"] {
     background-color: #C62828 !important;
-    border-radius: 8px !important;
-    padding: 10px 14px !important;
-    margin-right: 10px;
     color: white !important;
-    font-weight: 700;
-    width: 48px;
-    text-align: center;
+    border-radius: 8px !important;
+    padding: 0.6rem 1.4rem !important;
+    font-weight: 600 !important;
 }
-.horizontal-radio > label > div:hover {
+button[kind="primary"]:hover {
     background-color: #B71C1C !important;
-}
-
-/* INLINE RADIO */
-.horizontal-radio > label {
-    display: inline-flex !important;
-    align-items: center;
 }
 
 </style>
@@ -82,7 +91,7 @@ html, body, .stApp {
 # -------------------------------------------------------------
 st.markdown("""
 <div class="header-wrapper">
-    <img src="logo.png" width="100">
+    <img src="logo.png">
     <div class="header-text-small">
         HSP / SLOW<br>Processor Test
     </div>
@@ -138,10 +147,10 @@ questions = [
 # SESSION STATE
 # -------------------------------------------------------------
 if "answers" not in st.session_state:
-    st.session_state.answers = [0]*len(questions)
+    st.session_state.answers = [0] * len(questions)
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS WITH HORIZONTAL RADIO
+# RENDER QUESTIONS WITH HORIZONTAL RADIO BUTTONS
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
 
@@ -149,20 +158,19 @@ for i, q in enumerate(questions):
 
     choice = st.radio(
         "",
-        options=[0,1,2,3,4],
-        horizontal=True,
+        options=[0, 1, 2, 3, 4],
         key=f"q_{i}",
+        horizontal=True,
         label_visibility="collapsed"
     )
 
     st.session_state.answers[i] = choice
-    st.write(f"Valgt: {choice}")
 
 # -------------------------------------------------------------
 # RESET BUTTON
 # -------------------------------------------------------------
 if st.button("Nulstil svar"):
-    st.session_state.answers = [0]*len(questions)
+    st.session_state.answers = [0] * len(questions)
     st.experimental_rerun()
 
 # -------------------------------------------------------------
