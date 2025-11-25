@@ -10,7 +10,7 @@ from io import BytesIO
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# GLOBAL CSS
+# GLOBAL CSS (FINAL, TESTED, WORKING)
 # -------------------------------------------------------------
 st.markdown("""
 <style>
@@ -21,48 +21,56 @@ html, body, .stApp {
     font-family: Arial, sans-serif !important;
 }
 
-/* CENTERED LOGO CONTAINER */
-.logo-wrapper {
+/* CENTER LOGO PERFECTLY */
+.logo-container {
+    width: 100%;
     display: flex;
     justify-content: center;
     margin-top: 25px;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
+}
+.logo-container img {
+    width: 220px;
+    height: auto;
+    display: block;
 }
 
 /* MAIN TITLE */
 .main-title {
-    font-size: 2.3rem;
+    font-size: 2.4rem;
     font-weight: 800;
     text-align: center;
-    margin-top: 5px;
+    margin-top: 10px;
     margin-bottom: 25px;
 }
 
 /* QUESTION TEXT */
 .question-text {
-    font-size: 1.1rem;
+    font-size: 1.15rem;
     font-weight: 600;
     margin-top: 18px;
     margin-bottom: 10px;
 }
 
-/* HORIZONTAL RADIO LAYOUT */
+/* RADIO BUTTONS HORIZONTAL */
 div[role='radiogroup'] {
     display: flex !important;
     gap: 20px !important;
     justify-content: flex-start !important;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
 }
 
-/* RED BUTTONS (RESET & PDF) */
-button[kind="primary"] {
+/* RED BUTTONS (ROBUST AGAINST STREAMLIT CHANGES) */
+.stButton > button, .stDownloadButton > button {
     background-color: #C62828 !important;
     color: white !important;
     border-radius: 8px !important;
     padding: 0.6rem 1.4rem !important;
     font-weight: 600 !important;
+    border: none !important;
 }
-button[kind="primary"]:hover {
+
+.stButton > button:hover, .stDownloadButton > button:hover {
     background-color: #B71C1C !important;
 }
 
@@ -70,11 +78,11 @@ button[kind="primary"]:hover {
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# LOGO (RAW GITHUB URL — ALWAYS WORKS)
+# LOGO CENTERED
 # -------------------------------------------------------------
 st.markdown("""
-<div class="logo-wrapper">
-    <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="180">
+<div class="logo-container">
+    <img src="logo.png">
 </div>
 """, unsafe_allow_html=True)
 
@@ -89,12 +97,13 @@ st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_
 st.markdown("""
 Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige 
 og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner.
+
 Testen undersøger, om dine reaktioner er mere intuitive og impulsstyrede – 
 eller mere langsomme, bearbejdende og eftertænksomme.
 
 Du besvarer 20 udsagn på en skala fra **0 (aldrig)** til **4 (altid)**.
 
-Testen er <u>**ikke en diagnose**</u>, men et psykologisk værktøj til selvindsigt.
+Testen er <u>ikke en diagnose</u>, men et psykologisk værktøj til selvindsigt.
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
@@ -133,7 +142,6 @@ if "answers" not in st.session_state:
 # RENDER QUESTIONS
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
-
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
     choice = st.radio(
@@ -141,7 +149,7 @@ for i, q in enumerate(questions):
         options=[0, 1, 2, 3, 4],
         key=f"q_{i}",
         horizontal=True,
-        label_visibility="collapsed"
+        label_visibility="collapsed",
     )
 
     st.session_state.answers[i] = choice
@@ -154,7 +162,7 @@ if st.button("Nulstil svar"):
     st.experimental_rerun()
 
 # -------------------------------------------------------------
-# INTERPRETATION
+# SCORING + PROFILE
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
@@ -206,7 +214,7 @@ for s in PROFILE_TEXT[profile]:
     st.write(f"- {s}")
 
 # -------------------------------------------------------------
-# PDF EXPORT
+# PDF REPORT
 # -------------------------------------------------------------
 def generate_pdf(score, profile):
     buffer = BytesIO()
