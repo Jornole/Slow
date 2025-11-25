@@ -41,7 +41,7 @@ div.stButton > button:hover, div.stDownloadButton > button:hover {
 
 /* SLIDER = 2/3 bredde og venstrejusteret */
 .short-slider .stSlider {
-    width: 55% !important;
+    width: 5% !important;
     margin-left: 0 !important;
     padding-left: 0 !important;
 }
