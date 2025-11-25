@@ -38,14 +38,14 @@ html, body, .stApp {
     margin-bottom: 10px;
 }
 
-/* HORIZONTAL RADIO */
+/* HORIZONTAL RADIO BUTTONS */
 div[role='radiogroup'] {
     display: flex !important;
     gap: 22px !important;
-    margin-bottom: 4px;
+    margin-bottom: 4px !important;
 }
 
-/* RØDE KNAPPER (RESET + PDF) */
+/* RED BUTTONS (RESET + PDF) */
 div.stButton > button, div.stDownloadButton > button {
     background-color: #C62828 !important;
     color: white !important;
@@ -58,16 +58,25 @@ div.stButton > button:hover, div.stDownloadButton > button:hover {
     background-color: #B71C1C !important;
 }
 
+/* CENTERED LOGO */
+.logo-box {
+    width: 100%;
+    text-align: center;
+    margin-top: 15px;
+    margin-bottom: 10px;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# CENTERED LOGO (MIDTERSTE KOLONNE)
+# PERFECT CENTERED LOGO
 # -------------------------------------------------------------
-col_left, col_center, col_right = st.columns([1, 2, 1])
-
-with col_center:
-    st.image("logo.png", width=150)
+st.markdown("""
+<div class="logo-box">
+    <img src="logo.png" width="150">
+</div>
+""", unsafe_allow_html=True)
 
 # -------------------------------------------------------------
 # MAIN TITLE
