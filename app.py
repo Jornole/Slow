@@ -4,10 +4,13 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
 
+# -------------------------------------------------------------
+# BASIC SETUP
+# -------------------------------------------------------------
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# GLOBAL CSS (FIXED)
+# GLOBAL CSS
 # -------------------------------------------------------------
 st.markdown("""
 <style>
@@ -18,14 +21,7 @@ html, body, .stApp {
     font-family:Arial, sans-serif !important;
 }
 
-/* CENTER LOGO */
-.center-logo {
-    width:100%;
-    text-align:center;
-    margin-top:10px;
-}
-
-/* TITLE */
+/* MAIN TITLE */
 .main-title {
     font-size:2.3rem;
     font-weight:800;
@@ -34,7 +30,7 @@ html, body, .stApp {
     margin-bottom:25px;
 }
 
-/* QUESTIONS */
+/* QUESTION TEXT */
 .question-text {
     font-size:1.1rem;
     font-weight:600;
@@ -46,15 +42,18 @@ html, body, .stApp {
 div[role='radiogroup'] {
     display:flex !important;
     gap:22px !important;
+    justify-content:flex-start !important;
+    margin-bottom:6px !important;
 }
 
-/* FORCE RED BUTTONS (reset + pdf) */
+/* RØDE KNAPPER (reset + pdf) */
 div.stButton > button, div.stDownloadButton > button {
     background-color:#C62828 !important;
     color:white !important;
     border-radius:8px !important;
     padding:0.65rem 1.4rem !important;
     font-weight:600 !important;
+    border:none !important;
 }
 div.stButton > button:hover, div.stDownloadButton > button:hover {
     background-color:#B71C1C !important;
@@ -64,11 +63,11 @@ div.stButton > button:hover, div.stDownloadButton > button:hover {
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# LOGO (TRUE CENTERED)
+# LOGO – CENTRERET MED COLUMNS (KAN IKKE SNYDE)
 # -------------------------------------------------------------
-st.markdown("<div class='center-logo'>", unsafe_allow_html=True)
-st.image("logo.png", width=150)
-st.markdown("</div>", unsafe_allow_html=True)
+col1, col2, col3 = st.columns([1, 2, 1])
+with col2:
+    st.image("logo.png", width=150)
 
 # -------------------------------------------------------------
 # MAIN TITLE
@@ -115,45 +114,51 @@ questions = [
     "Jeg bliver let distraheret, når der sker meget omkring mig."
 ]
 
+# -------------------------------------------------------------
+# SESSION STATE
+# -------------------------------------------------------------
 if "answers" not in st.session_state:
-    st.session_state.answers = [0]*len(questions)
+    st.session_state.answers = [0] * len(questions)
 
+# -------------------------------------------------------------
+# RENDER QUESTIONS
+# -------------------------------------------------------------
 for i, q in enumerate(questions):
-    st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
+    st.markdown(
+        f"<div class='question-text'>{i+1}. {q}</div>",
+        unsafe_allow_html=True
+    )
 
-    ans = st.radio(
+    choice = st.radio(
         "",
-        options=[0,1,2,3,4],
-        horizontal=True,
+        options=[0, 1, 2, 3, 4],
         key=f"q_{i}",
+        horizontal=True,
         label_visibility="collapsed"
     )
-    st.session_state.answers[i] = ans
+
+    st.session_state.answers[i] = choice
 
 # -------------------------------------------------------------
 # RESET BUTTON
 # -------------------------------------------------------------
 if st.button("Nulstil svar"):
-    st.session_state.answers = [0]*len(questions)
+    st.session_state.answers = [0] * len(questions)
     st.experimental_rerun()
 
 # -------------------------------------------------------------
-# RESULT
+# SCORING + PROFILE TEXT
 # -------------------------------------------------------------
-def interpret_score(s):
-    if s <= 26: return "Slow Processor"
-    elif s <= 53: return "Mellemprofil"
-    return "HSP"
-
-score = sum(st.session_state.answers)
-profile = interpret_score(score)
-
-st.header("Dit resultat")
-st.subheader(f"Score: {score} / 80")
-st.write(f"**Profil: {profile}**")
+def interpret_score(score: int) -> str:
+    if score <= 26:
+        return "Slow Processor"
+    elif score <= 53:
+        return "Mellemprofil"
+    else:
+        return "HSP"
 
 PROFILE_TEXT = {
-    "HSP":[
+    "HSP": [
         "Du registrerer flere nuancer i både indtryk og stemninger.",
         "Du bearbejder oplevelser dybt og grundigt.",
         "Du reagerer stærkt på stimuli og kan blive overstimuleret.",
@@ -161,7 +166,7 @@ PROFILE_TEXT = {
         "Du er empatisk og opmærksom på andre.",
         "Du har brug for ro og pauser for at lade op."
     ],
-    "Slow Processor":[
+    "Slow Processor": [
         "Du arbejder bedst i roligt tempo og med forudsigelighed.",
         "Du bearbejder indtryk grundigt, men langsomt.",
         "Du har brug for ekstra tid til omstilling og beslutninger.",
@@ -169,7 +174,7 @@ PROFILE_TEXT = {
         "Du kan føle dig presset, når tingene går hurtigt.",
         "Du har god udholdenhed, når du arbejder i dit eget tempo."
     ],
-    "Mellemprofil":[
+    "Mellemprofil": [
         "Du veksler naturligt mellem hurtig og langsom bearbejdning.",
         "Du håndterer de fleste stimuli uden at blive overvældet.",
         "Du har en god balance mellem intuition og eftertænksomhed.",
@@ -179,12 +184,22 @@ PROFILE_TEXT = {
     ]
 }
 
+total_score = sum(st.session_state.answers)
+profile = interpret_score(total_score)
+
+# -------------------------------------------------------------
+# RESULT VISUALISATION
+# -------------------------------------------------------------
+st.header("Dit resultat")
+st.subheader(f"Score: {total_score} / 80")
+st.write(f"**Profil: {profile}**")
+
 st.write("### Karakteristika for din profil:")
 for s in PROFILE_TEXT[profile]:
     st.write(f"- {s}")
 
 # -------------------------------------------------------------
-# PDF DOWNLOAD
+# PDF GENERATION
 # -------------------------------------------------------------
 def generate_pdf(score, profile):
     buffer = BytesIO()
@@ -195,16 +210,17 @@ def generate_pdf(score, profile):
     story.append(Paragraph("HSP / Slow Processor Test – Rapport", styles["Title"]))
     story.append(Paragraph(f"Samlet score: {score} / 80", styles["Heading2"]))
     story.append(Paragraph(f"Profil: {profile}", styles["Heading2"]))
-    story.append(Spacer(1,12))
+    story.append(Spacer(1, 12))
 
+    story.append(Paragraph("Karakteristika:", styles["Heading2"]))
     for s in PROFILE_TEXT[profile]:
         story.append(Paragraph(f"- {s}", styles["BodyText"]))
+    story.append(Spacer(1, 12))
 
-    story.append(Spacer(1,12))
     story.append(Paragraph("Dine svar:", styles["Heading2"]))
-
     for i, q in enumerate(questions):
-        story.append(Paragraph(f"{i+1}. {q} – Svar: {st.session_state.answers[i]}", styles["BodyText"]))
+        answer = st.session_state.answers[i]
+        story.append(Paragraph(f"{i+1}. {q} – Svar: {answer}", styles["BodyText"]))
 
     doc.build(story)
     buffer.seek(0)
@@ -212,7 +228,7 @@ def generate_pdf(score, profile):
 
 st.download_button(
     "Download PDF-rapport",
-    data=generate_pdf(score, profile),
+    data=generate_pdf(total_score, profile),
     file_name="HSP_SlowProcessor_Rapport.pdf",
     mime="application/pdf"
 )
