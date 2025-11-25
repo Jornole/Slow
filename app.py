@@ -3,27 +3,40 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
-import base64
 
 # -------------------------------------------------------------
-# PAGE SETUP
+# BASIC SETUP
 # -------------------------------------------------------------
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# GLOBAL CSS
+# GLOBAL CSS (FINAL + FIXED)
 # -------------------------------------------------------------
 st.markdown("""
 <style>
+
 html, body, .stApp {
     background-color: #1A6333 !important;
     color: white !important;
     font-family: Arial, sans-serif !important;
 }
 
+/* ---- LOGO CENTERED ---- */
+.logo-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+.logo-wrapper img {
+    width: 180px;
+    height: auto;
+}
+
 /* MAIN TITLE */
 .main-title {
-    font-size: 2.3rem;
+    font-size: 2.4rem;
     font-weight: 800;
     text-align: center;
     margin-top: 5px;
@@ -38,44 +51,38 @@ html, body, .stApp {
     margin-bottom: 10px;
 }
 
-/* HORIZONTAL RADIO GROUP */
+/* HORIZONTAL RADIO BUTTONS */
 div[role='radiogroup'] {
     display: flex !important;
     gap: 20px !important;
-    justify-content: flex-start !important;
-    margin-bottom: 4px;
+    margin-bottom: 10px;
 }
 
-/* BUTTONS: RESET & PDF – RED */
-button[kind="primary"], .stDownloadButton button {
+/* ---- RED BUTTONS (RESET + PDF) ---- */
+.stButton > button,
+.stDownloadButton > button {
     background-color: #C62828 !important;
     color: white !important;
     border-radius: 8px !important;
     padding: 0.6rem 1.4rem !important;
+    border: none !important;
     font-weight: 600 !important;
 }
 
-button[kind="primary"]:hover, .stDownloadButton button:hover {
+.stButton > button:hover,
+.stDownloadButton > button:hover {
     background-color: #B71C1C !important;
 }
+
 </style>
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# LOAD LOGO AS BASE64 (CANNOT FAIL)
+# LOGO (CENTERED)
 # -------------------------------------------------------------
-def load_logo_base64():
-    with open("logo.png", "rb") as f:
-        return base64.b64encode(f.read()).decode()
-
-logo_b64 = load_logo_base64()
-
-# -------------------------------------------------------------
-# CENTERED LOGO (WORKS ON ALL DEVICES)
-# -------------------------------------------------------------
-st.markdown(f"""
-<div style="display:flex; justify-content:center; margin-top:25px; margin-bottom:10px;">
-    <img src="data:image/png;base64,{logo_b64}" style="width:165px; border-radius:12px;" />
+st.markdown("""
+<div class="logo-wrapper">
+    <img src="logo.png">
 </div>
 """, unsafe_allow_html=True)
 
@@ -90,6 +97,7 @@ st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_
 st.markdown("""
 Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige 
 og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner.
+
 Testen undersøger, om dine reaktioner er mere intuitive og impulsstyrede – 
 eller mere langsomme, bearbejdende og eftertænksomme.
 
@@ -134,11 +142,12 @@ if "answers" not in st.session_state:
 # RENDER QUESTIONS
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
+
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
     choice = st.radio(
         "",
-        options=[0,1,2,3,4],
+        options=[0, 1, 2, 3, 4],
         key=f"q_{i}",
         horizontal=True,
         label_visibility="collapsed"
@@ -154,7 +163,7 @@ if st.button("Nulstil svar"):
     st.experimental_rerun()
 
 # -------------------------------------------------------------
-# INTERPRETATION
+# PROFILE INTERPRETATION
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
@@ -206,7 +215,7 @@ for s in PROFILE_TEXT[profile]:
     st.write(f"- {s}")
 
 # -------------------------------------------------------------
-# PDF GENERATION
+# PDF REPORT
 # -------------------------------------------------------------
 def generate_pdf(score, profile):
     buffer = BytesIO()
