@@ -5,7 +5,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
 
 # -------------------------------------------------------------
-# PAGE SETUP
+# PAGE CONFIG
 # -------------------------------------------------------------
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
@@ -21,24 +21,16 @@ html, body, .stApp {
     font-family: Arial, sans-serif !important;
 }
 
-/* CENTER THE LOGO */
-.logo-center {
-    display: flex;
-    justify-content: center;
-    margin-top: 20px;
-    margin-bottom: 10px;
-}
-
 /* MAIN TITLE */
 .main-title {
     font-size: 2.3rem;
     font-weight: 800;
     text-align: center;
-    margin-top: 5px;
+    margin-top: 10px;
     margin-bottom: 25px;
 }
 
-/* QUESTION TEXT */
+/* QUESTION */
 .question-text {
     font-size: 1.1rem;
     font-weight: 600;
@@ -46,11 +38,10 @@ html, body, .stApp {
     margin-bottom: 10px;
 }
 
-/* HORIZONTAL RADIO FIX */
+/* RADIO horiz */
 div[role='radiogroup'] {
     display: flex !important;
     gap: 22px !important;
-    justify-content: flex-start !important;
     margin-bottom: 4px;
 }
 
@@ -70,13 +61,11 @@ div[role='radiogroup'] {
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# LOGO (CENTERED)
+# PERFECT CENTERED LOGO
 # -------------------------------------------------------------
-st.markdown("""
-<div class="logo-center">
-    <img src="logo.png" style="width:150px; border-radius:12px;">
-</div>
-""", unsafe_allow_html=True)
+c1, c2, c3 = st.columns([1, 2, 1])
+with c2:
+    st.image("logo.png", width=160)   # <-- Streamlit loader = VIRKER
 
 # -------------------------------------------------------------
 # MAIN TITLE
@@ -84,17 +73,18 @@ st.markdown("""
 st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# INTRO TEXT
+# INTROTEXT
 # -------------------------------------------------------------
 st.markdown("""
 Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige 
 og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner.
+
 Testen undersøger, om dine reaktioner er mere intuitive og impulsstyrede – 
 eller mere langsomme, bearbejdende og eftertænksomme.
 
 Du besvarer 20 udsagn på en skala fra **0 (aldrig)** til **4 (altid)**.
 
-Testen er <u>**ikke en diagnose**</u>, men et psykologisk værktøj til selvindsigt.
+Testen er <u>ikke en diagnose</u>, men et psykologisk værktøj til selvindsigt.
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
@@ -123,45 +113,28 @@ questions = [
     "Jeg bliver let distraheret, når der sker meget omkring mig."
 ]
 
-# -------------------------------------------------------------
-# SESSION STATE
-# -------------------------------------------------------------
 if "answers" not in st.session_state:
     st.session_state.answers = [0] * len(questions)
 
-# -------------------------------------------------------------
-# RENDER QUESTIONS
-# -------------------------------------------------------------
 for i, q in enumerate(questions):
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
-
-    choice = st.radio(
-        "",
-        options=[0,1,2,3,4],
-        horizontal=True,
-        key=f"q_{i}",
-        label_visibility="collapsed"
-    )
-
+    choice = st.radio("", [0,1,2,3,4], key=f"q_{i}", horizontal=True, label_visibility="collapsed")
     st.session_state.answers[i] = choice
 
-# -------------------------------------------------------------
 # RESET BUTTON
-# -------------------------------------------------------------
 if st.button("Nulstil svar"):
     st.session_state.answers = [0] * len(questions)
     st.experimental_rerun()
 
 # -------------------------------------------------------------
-# INTERPRETATION
+# INTERPRET SCORE
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
         return "Slow Processor"
     elif score <= 53:
         return "Mellemprofil"
-    else:
-        return "HSP"
+    return "HSP"
 
 PROFILE_TEXT = {
     "HSP": [
@@ -190,52 +163,43 @@ PROFILE_TEXT = {
     ]
 }
 
-# -------------------------------------------------------------
-# RESULT
-# -------------------------------------------------------------
-total_score = sum(st.session_state.answers)
-profile = interpret_score(total_score)
+total = sum(st.session_state.answers)
+profile = interpret_score(total)
 
 st.header("Dit resultat")
-st.subheader(f"Score: {total_score} / 80")
+st.subheader(f"Score: {total} / 80")
 st.write(f"**Profil: {profile}**")
 
 st.write("### Karakteristika for din profil:")
-for s in PROFILE_TEXT[profile]:
-    st.write(f"- {s}")
+for line in PROFILE_TEXT[profile]:
+    st.write("- " + line)
 
 # -------------------------------------------------------------
-# PDF GENERATION
+# PDF
 # -------------------------------------------------------------
 def generate_pdf(score, profile):
-    buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=letter)
+    buf = BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=letter)
     styles = getSampleStyleSheet()
     story = []
 
     story.append(Paragraph("HSP / Slow Processor Test – Rapport", styles["Title"]))
-    story.append(Paragraph(f"Samlet score: {score} / 80", styles["Heading2"]))
+    story.append(Paragraph(f"Score: {score} / 80", styles["Heading2"]))
     story.append(Paragraph(f"Profil: {profile}", styles["Heading2"]))
-    story.append(Spacer(1, 12))
+    story.append(Spacer(1,12))
 
     for s in PROFILE_TEXT[profile]:
-        story.append(Paragraph(f"- {s}", styles["BodyText"]))
-    story.append(Spacer(1, 12))
+        story.append(Paragraph("- " + s, styles["BodyText"]))
 
+    story.append(Spacer(1,12))
     story.append(Paragraph("Dine svar:", styles["Heading2"]))
+
     for i, q in enumerate(questions):
-        story.append(Paragraph(
-            f"{i+1}. {q} – Svar: {st.session_state.answers[i]}",
-            styles["BodyText"]
-        ))
+        story.append(Paragraph(f"{i+1}. {q} — Svar: {st.session_state.answers[i]}", styles["BodyText"]))
 
     doc.build(story)
-    buffer.seek(0)
-    return buffer
+    buf.seek(0)
+    return buf
 
-st.download_button(
-    "Download PDF-rapport",
-    data=generate_pdf(total_score, profile),
-    file_name="HSP_SlowProcessor_Rapport.pdf",
-    mime="application/pdf"
-)
+st.download_button("Download PDF-rapport", generate_pdf(total, profile),
+                   file_name="rapport.pdf", mime="application/pdf")
