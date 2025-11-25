@@ -69,7 +69,7 @@ with col_logo:
     st.image("logo.png", width=100)   # <-- doubleret størrelse
 
 with col_title:
-    st.markdown("<h1 style='margin-top: 8px;'>HSP / Slow Processor Test</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='margin-top: 2px;'>HSP / Slow Processor Test</h1>", unsafe_allow_html=True)
 
 # -------------------------------------------------------------
 # INTROTEXT
