@@ -21,6 +21,14 @@ html, body, .stApp {
     font-family: Arial, sans-serif !important;
 }
 
+/* CENTER LOGO */
+.center-logo {
+    display: flex;
+    justify-content: center;
+    margin-top: 15px;
+    margin-bottom: 10px;
+}
+
 /* MAIN TITLE */
 .main-title {
     font-size: 2.3rem;
@@ -38,14 +46,14 @@ html, body, .stApp {
     margin-bottom: 10px;
 }
 
-/* HORIZONTAL RADIO BUTTONS */
+/* HORIZONTAL RADIO */
 div[role='radiogroup'] {
     display: flex !important;
     gap: 22px !important;
     margin-bottom: 4px !important;
 }
 
-/* RED BUTTONS (RESET + PDF) */
+/* RED BUTTONS */
 div.stButton > button, div.stDownloadButton > button {
     background-color: #C62828 !important;
     color: white !important;
@@ -58,25 +66,15 @@ div.stButton > button:hover, div.stDownloadButton > button:hover {
     background-color: #B71C1C !important;
 }
 
-/* CENTERED LOGO */
-.logo-box {
-    width: 100%;
-    text-align: center;
-    margin-top: 15px;
-    margin-bottom: 10px;
-}
-
 </style>
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# PERFECT CENTERED LOGO
+# CENTERED LOGO (WORKING VERSION)
 # -------------------------------------------------------------
-st.markdown("""
-<div class="logo-box">
-    <img src="logo.png" width="150">
-</div>
-""", unsafe_allow_html=True)
+st.markdown('<div class="center-logo">', unsafe_allow_html=True)
+st.image("logo.png", width=150)
+st.markdown('</div>', unsafe_allow_html=True)
 
 # -------------------------------------------------------------
 # MAIN TITLE
@@ -130,16 +128,16 @@ if "answers" not in st.session_state:
     st.session_state.answers = [0] * len(questions)
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS
+# QUESTIONS
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
     choice = st.radio(
         "",
-        [0, 1, 2, 3, 4],
-        key=f"q_{i}",
+        [0,1,2,3,4],
         horizontal=True,
+        key=f"q_{i}",
         label_visibility="collapsed"
     )
     st.session_state.answers[i] = choice
