@@ -159,7 +159,7 @@ for i, q in enumerate(questions):
     )
 
     # Slider container (66% max width)
-    st.markdown("<div style='max-width: 66%; min-width: 280px;'>", unsafe_allow_html=True)
+    st.markdown("<div style='max-width: 66%; min-width: 100px;'>", unsafe_allow_html=True)
 
     val = st.slider(
         "",
