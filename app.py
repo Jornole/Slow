@@ -4,8 +4,14 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
 
+# -------------------------------------------------------------
+# BASIC SETUP
+# -------------------------------------------------------------
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
+# -------------------------------------------------------------
+# GLOBAL CSS
+# -------------------------------------------------------------
 st.markdown("""
 <style>
 
@@ -15,29 +21,11 @@ html, body, .stApp {
     font-family: Arial, sans-serif !important;
 }
 
-/* HEADER WRAPPER */
-.header-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 18px;
-    margin-bottom: 5px;
-    flex-wrap: nowrap;
-}
-
-/* LOGO ALWAYS VISIBLE */
-.header-wrapper img {
-    width: 90px;
-    height: auto;
-    flex-shrink: 0;
-}
-
-/* TEXT NEXT TO LOGO */
+/* TEKSTEN VED SIDEN AF LOGO */
 .header-text-small {
     font-size: 1.05rem;
     font-weight: 700;
     line-height: 1.25;
-    max-width: 200px;
-    white-space: normal;
 }
 
 /* MAIN TITLE */
@@ -64,7 +52,7 @@ div[role='radiogroup'] {
     margin-bottom: 4px;
 }
 
-/* ⭐ FIX: RØDE KNAPPER (den manglende CSS) ⭐ */
+/* RØDE KNAPPER (RESET + PDF) */
 div.stButton > button, div.stDownloadButton > button {
     background-color: #C62828 !important;
     color: white !important;
@@ -80,26 +68,31 @@ div.stButton > button:hover, div.stDownloadButton > button:hover {
 </style>
 """, unsafe_allow_html=True)
 
-# ----------------------
-# HEADER
-# ----------------------
-st.markdown("""
-<div class="header-wrapper">
-    <img src="logo.png">
-    <div class="header-text-small">
-        HSP / SLOW<br>Processor Test
-    </div>
-</div>
-""", unsafe_allow_html=True)
+# -------------------------------------------------------------
+# HEADER (LOGO + TEKST I KOLONNER)
+# -------------------------------------------------------------
+col_logo, col_head = st.columns([0.25, 0.75])
 
-# ----------------------
-# TITLE
-# ----------------------
+with col_logo:
+    # BRUGER st.image IGEN → logo.png bliver fundet
+    st.image("logo.png", width=90)
+
+with col_head:
+    st.markdown("""
+    <div class="header-text-small">
+        HSP / SLOW<br>
+        Processor Test
+    </div>
+    """, unsafe_allow_html=True)
+
+# -------------------------------------------------------------
+# MAIN TITLE
+# -------------------------------------------------------------
 st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
 
-# ----------------------
-# INTRO
-# ----------------------
+# -------------------------------------------------------------
+# INTRO TEXT
+# -------------------------------------------------------------
 st.markdown("""
 Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige 
 og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner.
@@ -111,9 +104,9 @@ Du besvarer 20 udsagn på en skala fra **0 (aldrig)** til **4 (altid)**.
 Testen er <u>**ikke en diagnose**</u>, men et psykologisk værktøj til selvindsigt.
 """, unsafe_allow_html=True)
 
-# ----------------------
+# -------------------------------------------------------------
 # QUESTIONS
-# ----------------------
+# -------------------------------------------------------------
 questions = [
     "Jeg bliver let overvældet af indtryk.",
     "Jeg opdager små detaljer, som andre ofte overser.",
@@ -137,30 +130,43 @@ questions = [
     "Jeg bliver let distraheret, når der sker meget omkring mig."
 ]
 
+# -------------------------------------------------------------
+# SESSION STATE
+# -------------------------------------------------------------
 if "answers" not in st.session_state:
     st.session_state.answers = [0] * len(questions)
 
+# -------------------------------------------------------------
+# RENDER QUESTIONS
+# -------------------------------------------------------------
 for i, q in enumerate(questions):
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
-    v = st.radio("", [0,1,2,3,4], key=f"q_{i}", horizontal=True, label_visibility="collapsed")
+    v = st.radio(
+        "",
+        [0, 1, 2, 3, 4],
+        key=f"q_{i}",
+        horizontal=True,
+        label_visibility="collapsed"
+    )
     st.session_state.answers[i] = v
 
-# ----------------------
+# -------------------------------------------------------------
 # RESET BUTTON
-# ----------------------
+# -------------------------------------------------------------
 if st.button("Nulstil svar"):
     st.session_state.answers = [0] * len(questions)
     st.experimental_rerun()
 
-# ----------------------
+# -------------------------------------------------------------
 # RESULT
-# ----------------------
-def interpret_score(score):
+# -------------------------------------------------------------
+def interpret_score(score: int) -> str:
     if score <= 26:
         return "Slow Processor"
     elif score <= 53:
         return "Mellemprofil"
-    return "HSP"
+    else:
+        return "HSP"
 
 PROFILE_TEXT = {
     "HSP": [
@@ -200,25 +206,25 @@ st.write("### Karakteristika for din profil:")
 for s in PROFILE_TEXT[profile]:
     st.write(f"- {s}")
 
-# ----------------------
+# -------------------------------------------------------------
 # PDF EXPORT
-# ----------------------
+# -------------------------------------------------------------
 def generate_pdf(score, profile):
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter)
     styles = getSampleStyleSheet()
-    story = [
-        Paragraph("HSP / Slow Processor Test – Rapport", styles["Title"]),
-        Spacer(1, 12),
-        Paragraph(f"Samlet score: {score} / 80", styles["Heading2"]),
-        Paragraph(f"Profil: {profile}", styles["Heading2"]),
-        Spacer(1, 12)
-    ]
+    story = []
+
+    story.append(Paragraph("HSP / Slow Processor Test – Rapport", styles["Title"]))
+    story.append(Paragraph(f"Samlet score: {score} / 80", styles["Heading2"]))
+    story.append(Paragraph(f"Profil: {profile}", styles["Heading2"]))
+    story.append(Spacer(1, 12))
+
     for s in PROFILE_TEXT[profile]:
         story.append(Paragraph(f"- {s}", styles["BodyText"]))
     story.append(Spacer(1, 12))
-    story.append(Paragraph("Dine svar:", styles["Heading2"]))
 
+    story.append(Paragraph("Dine svar:", styles["Heading2"]))
     for i, q in enumerate(questions):
         story.append(Paragraph(f"{i+1}. {q} – Svar: {st.session_state.answers[i]}", styles["BodyText"]))
 
