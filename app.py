@@ -5,7 +5,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
 
 # -------------------------------------------------------------
-# BASIC SETUP
+# PAGE SETUP
 # -------------------------------------------------------------
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
@@ -16,66 +16,75 @@ st.markdown("""
 <style>
 
 html, body, .stApp {
-    background-color:#1A6333 !important;
-    color:white !important;
-    font-family:Arial, sans-serif !important;
+    background-color: #1A6333 !important;
+    color: white !important;
+    font-family: Arial, sans-serif !important;
+}
+
+/* CENTER THE LOGO */
+.logo-center {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+    margin-bottom: 10px;
 }
 
 /* MAIN TITLE */
 .main-title {
-    font-size:2.3rem;
-    font-weight:800;
-    text-align:center;
-    margin-top:15px;
-    margin-bottom:25px;
+    font-size: 2.3rem;
+    font-weight: 800;
+    text-align: center;
+    margin-top: 5px;
+    margin-bottom: 25px;
 }
 
 /* QUESTION TEXT */
 .question-text {
-    font-size:1.1rem;
-    font-weight:600;
-    margin-top:18px;
-    margin-bottom:8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-top: 18px;
+    margin-bottom: 10px;
 }
 
-/* RADIO BUTTONS HORIZONTAL */
+/* HORIZONTAL RADIO FIX */
 div[role='radiogroup'] {
-    display:flex !important;
-    gap:22px !important;
-    justify-content:flex-start !important;
-    margin-bottom:6px !important;
+    display: flex !important;
+    gap: 22px !important;
+    justify-content: flex-start !important;
+    margin-bottom: 4px;
 }
 
-/* RØDE KNAPPER (reset + pdf) */
-div.stButton > button, div.stDownloadButton > button {
-    background-color:#C62828 !important;
-    color:white !important;
-    border-radius:8px !important;
-    padding:0.65rem 1.4rem !important;
-    font-weight:600 !important;
-    border:none !important;
+/* RED BUTTONS */
+.stButton>button, .stDownloadButton>button {
+    background-color: #C62828 !important;
+    color: white !important;
+    border-radius: 8px !important;
+    padding: 0.6rem 1.4rem !important;
+    font-weight: 600 !important;
 }
-div.stButton > button:hover, div.stDownloadButton > button:hover {
-    background-color:#B71C1C !important;
+.stButton>button:hover, .stDownloadButton>button:hover {
+    background-color: #B71C1C !important;
 }
 
 </style>
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# LOGO – CENTRERET MED COLUMNS (KAN IKKE SNYDE)
+# LOGO (CENTERED)
 # -------------------------------------------------------------
-col1, col2, col3 = st.columns([1, 2, 1])
-with col2:
-    st.image("logo.png", width=150)
+st.markdown("""
+<div class="logo-center">
+    <img src="logo.png" style="width:150px; border-radius:12px;">
+</div>
+""", unsafe_allow_html=True)
 
 # -------------------------------------------------------------
 # MAIN TITLE
 # -------------------------------------------------------------
-st.markdown("<div class='main-title'>DIN PERSONLIGE PROFIL</div>", unsafe_allow_html=True)
+st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# INTRO
+# INTRO TEXT
 # -------------------------------------------------------------
 st.markdown("""
 Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige 
@@ -124,16 +133,13 @@ if "answers" not in st.session_state:
 # RENDER QUESTIONS
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
-    st.markdown(
-        f"<div class='question-text'>{i+1}. {q}</div>",
-        unsafe_allow_html=True
-    )
+    st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
     choice = st.radio(
         "",
-        options=[0, 1, 2, 3, 4],
-        key=f"q_{i}",
+        options=[0,1,2,3,4],
         horizontal=True,
+        key=f"q_{i}",
         label_visibility="collapsed"
     )
 
@@ -147,9 +153,9 @@ if st.button("Nulstil svar"):
     st.experimental_rerun()
 
 # -------------------------------------------------------------
-# SCORING + PROFILE TEXT
+# INTERPRETATION
 # -------------------------------------------------------------
-def interpret_score(score: int) -> str:
+def interpret_score(score):
     if score <= 26:
         return "Slow Processor"
     elif score <= 53:
@@ -184,12 +190,12 @@ PROFILE_TEXT = {
     ]
 }
 
+# -------------------------------------------------------------
+# RESULT
+# -------------------------------------------------------------
 total_score = sum(st.session_state.answers)
 profile = interpret_score(total_score)
 
-# -------------------------------------------------------------
-# RESULT VISUALISATION
-# -------------------------------------------------------------
 st.header("Dit resultat")
 st.subheader(f"Score: {total_score} / 80")
 st.write(f"**Profil: {profile}**")
@@ -212,15 +218,16 @@ def generate_pdf(score, profile):
     story.append(Paragraph(f"Profil: {profile}", styles["Heading2"]))
     story.append(Spacer(1, 12))
 
-    story.append(Paragraph("Karakteristika:", styles["Heading2"]))
     for s in PROFILE_TEXT[profile]:
         story.append(Paragraph(f"- {s}", styles["BodyText"]))
     story.append(Spacer(1, 12))
 
     story.append(Paragraph("Dine svar:", styles["Heading2"]))
     for i, q in enumerate(questions):
-        answer = st.session_state.answers[i]
-        story.append(Paragraph(f"{i+1}. {q} – Svar: {answer}", styles["BodyText"]))
+        story.append(Paragraph(
+            f"{i+1}. {q} – Svar: {st.session_state.answers[i]}",
+            styles["BodyText"]
+        ))
 
     doc.build(story)
     buffer.seek(0)
