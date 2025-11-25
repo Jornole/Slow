@@ -45,7 +45,7 @@ div[role='radiogroup'] {
     margin-bottom: 4px;
 }
 
-/* RED BUTTONS */
+/* RØDE KNAPPER (RESET + PDF) */
 div.stButton > button, div.stDownloadButton > button {
     background-color: #C62828 !important;
     color: white !important;
@@ -62,11 +62,12 @@ div.stButton > button:hover, div.stDownloadButton > button:hover {
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# CENTERED LOGO
+# CENTERED LOGO (MIDTERSTE KOLONNE)
 # -------------------------------------------------------------
-st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
-st.image("logo.png", width=150)
-st.markdown("</div>", unsafe_allow_html=True)
+col_left, col_center, col_right = st.columns([1, 2, 1])
+
+with col_center:
+    st.image("logo.png", width=150)
 
 # -------------------------------------------------------------
 # MAIN TITLE
