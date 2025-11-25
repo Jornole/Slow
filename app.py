@@ -10,7 +10,7 @@ from io import BytesIO
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# GLOBAL CSS (FINAL, TESTED, WORKING)
+# GLOBAL CSS (røde knapper + grøn baggrund)
 # -------------------------------------------------------------
 st.markdown("""
 <style>
@@ -21,56 +21,38 @@ html, body, .stApp {
     font-family: Arial, sans-serif !important;
 }
 
-/* CENTER LOGO PERFECTLY */
-.logo-container {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    margin-top: 25px;
-    margin-bottom: 10px;
-}
-.logo-container img {
-    width: 220px;
-    height: auto;
-    display: block;
-}
-
-/* MAIN TITLE */
+/* Titel */
 .main-title {
     font-size: 2.4rem;
     font-weight: 800;
     text-align: center;
-    margin-top: 10px;
+    margin-top: 5px;
     margin-bottom: 25px;
 }
 
-/* QUESTION TEXT */
+/* Spørgsmål */
 .question-text {
-    font-size: 1.15rem;
+    font-size: 1.1rem;
     font-weight: 600;
     margin-top: 18px;
     margin-bottom: 10px;
 }
 
-/* RADIO BUTTONS HORIZONTAL */
+/* Vandrette radioknapper */
 div[role='radiogroup'] {
     display: flex !important;
-    gap: 20px !important;
-    justify-content: flex-start !important;
-    margin-bottom: 6px;
+    gap: 18px !important;
 }
 
-/* RED BUTTONS (ROBUST AGAINST STREAMLIT CHANGES) */
-.stButton > button, .stDownloadButton > button {
+/* Røde knapper */
+button[kind="primary"] {
     background-color: #C62828 !important;
     color: white !important;
     border-radius: 8px !important;
     padding: 0.6rem 1.4rem !important;
     font-weight: 600 !important;
-    border: none !important;
 }
-
-.stButton > button:hover, .stDownloadButton > button:hover {
+button[kind="primary"]:hover {
     background-color: #B71C1C !important;
 }
 
@@ -78,21 +60,14 @@ div[role='radiogroup'] {
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# LOGO CENTERED
+# LOGO (DEN STABILE METODE – STREAMLIT CENTRERING)
 # -------------------------------------------------------------
-st.markdown("""
-<div class="logo-container">
-    <img src="logo.png">
-</div>
-""", unsafe_allow_html=True)
+st.image("logo.png", width=220)   # altid centreret på alle devices
 
-# -------------------------------------------------------------
-# MAIN TITLE
-# -------------------------------------------------------------
 st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# INTRO TEXT
+# INTRO TEKST
 # -------------------------------------------------------------
 st.markdown("""
 Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige 
@@ -103,7 +78,7 @@ eller mere langsomme, bearbejdende og eftertænksomme.
 
 Du besvarer 20 udsagn på en skala fra **0 (aldrig)** til **4 (altid)**.
 
-Testen er <u>ikke en diagnose</u>, men et psykologisk værktøj til selvindsigt.
+Testen er <u>**ikke en diagnose**</u>, men et psykologisk værktøj til selvindsigt.
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
@@ -136,7 +111,7 @@ questions = [
 # SESSION STATE
 # -------------------------------------------------------------
 if "answers" not in st.session_state:
-    st.session_state.answers = [0] * len(questions)
+    st.session_state.answers = [0]*len(questions)
 
 # -------------------------------------------------------------
 # RENDER QUESTIONS
@@ -149,20 +124,19 @@ for i, q in enumerate(questions):
         options=[0, 1, 2, 3, 4],
         key=f"q_{i}",
         horizontal=True,
-        label_visibility="collapsed",
+        label_visibility="collapsed"
     )
-
     st.session_state.answers[i] = choice
 
 # -------------------------------------------------------------
 # RESET BUTTON
 # -------------------------------------------------------------
 if st.button("Nulstil svar"):
-    st.session_state.answers = [0] * len(questions)
+    st.session_state.answers = [0]*len(questions)
     st.experimental_rerun()
 
 # -------------------------------------------------------------
-# SCORING + PROFILE
+# PROFILE INTERPRETATION
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
