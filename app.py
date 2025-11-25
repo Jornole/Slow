@@ -21,33 +21,6 @@ html, body, .stApp {
     font-family: Arial, sans-serif !important;
 }
 
-/* SMALL HEADER RIGHT OF LOGO */
-.header-text {
-    font-size: 0.95rem;
-    font-weight: 700;
-    line-height: 1.05;
-    padding-left: 10px;
-
-    /* Vertical alignment */
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-
-    /* Align correctly with logo top */
-    margin-top: -10px;
-    height: 50px;
-}
-
-/* MAIN TITLE */
-.main-title {
-    font-size: 2.2rem;
-    font-weight: 800;
-    text-align: center;
-    margin-top: 5px;
-    margin-bottom: 25px;
-}
-
-/* QUESTION TEXT */
 .question-text {
     font-size: 1.05rem;
     font-weight: 600;
@@ -73,23 +46,38 @@ div.stButton > button:hover, div.stDownloadButton > button:hover {
 # -------------------------------------------------------------
 # HEADER – LOGO + SMALL HEADER
 # -------------------------------------------------------------
-col_logo, col_title = st.columns([0.25, 0.75])
+logo_col, text_col = st.columns([0.22, 0.78])
 
-with col_logo:
+with logo_col:
     st.image("logo.png", width=100)
 
-with col_title:
+with text_col:
     st.markdown("""
-    <div class="header-text">
-        HSP / SLOW<br>
-        Processor Test
+    <div style="
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        height: 100%;
+        margin-top: 6px;
+        padding-left: 5px;
+    ">
+        <span style="font-size: 1.05rem; font-weight: 700; line-height: 1.1;">
+            HSP / SLOW
+        </span>
+        <span style="font-size: 0.95rem;">
+            Processor Test
+        </span>
     </div>
     """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# MIDTITLE
+# MID-TITLE
 # -------------------------------------------------------------
-st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
+st.markdown(
+    '<div style="font-size:2.2rem; font-weight:800; text-align:center; margin-top:5px; margin-bottom:25px;">'
+    'DIN PERSONLIGE PROFIL</div>',
+    unsafe_allow_html=True
+)
 
 # -------------------------------------------------------------
 # INTROTEXT
@@ -141,7 +129,7 @@ def reset_answers():
     st.session_state.answers = [0] * len(questions)
 
 # -------------------------------------------------------------
-# BUTTON-BASED ANSWER INPUT (0–4 horizontally)
+# ANSWER BUTTONS (0–4 horizontally)
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
 
@@ -150,11 +138,15 @@ for i, q in enumerate(questions):
         unsafe_allow_html=True,
     )
 
-    # Horizontal row of 5 buttons
+    # Horizontal flex layout for answer buttons
+    st.markdown("<div style='display:flex; gap:12px; margin-bottom:8px;'>", unsafe_allow_html=True)
+
     cols = st.columns(5)
     for n in range(5):
         if cols[n].button(str(n), key=f"btn_{i}_{n}"):
             st.session_state.answers[i] = n
+
+    st.markdown("</div>", unsafe_allow_html=True)
 
     st.write(f"Valgt: {st.session_state.answers[i]}")
 
