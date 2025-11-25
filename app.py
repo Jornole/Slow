@@ -21,16 +21,21 @@ html, body, .stApp {
     font-family: Arial, sans-serif !important;
 }
 
-/* HEADER TEXT RIGHT OF LOGO (smaller version) */
+/* SMALL HEADER RIGHT OF LOGO */
 .header-text {
-    font-size: 1.05rem;
+    font-size: 0.95rem;
     font-weight: 700;
-    line-height: 1.1;
+    line-height: 1.05;
     padding-left: 10px;
-    height: 70px;
+
+    /* Vertical alignment */
     display: flex;
     flex-direction: column;
     justify-content: center;
+
+    /* Align correctly with logo top */
+    margin-top: -10px;
+    height: 50px;
 }
 
 /* MAIN TITLE */
@@ -62,23 +67,11 @@ div.stButton > button:hover, div.stDownloadButton > button:hover {
     background-color: #B71C1C !important;
 }
 
-/* SLIDER STYLING */
-.stSlider > div > div > div {
-    height: 14px !important;
-}
-.stSlider > div > div > div > div {
-    height: 14px !important;
-}
-.stSlider > div > div > div > div > div {
-    width: 20px !important;
-    height: 20px !important;
-}
-
 </style>
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# HEADER – LOGO + HEADER-TITLE
+# HEADER – LOGO + SMALL HEADER
 # -------------------------------------------------------------
 col_logo, col_title = st.columns([0.25, 0.75])
 
@@ -146,13 +139,10 @@ if "answers" not in st.session_state:
 
 def reset_answers():
     st.session_state.answers = [0] * len(questions)
-    for i in range(len(questions)):
-        st.session_state[f"q_{i}"] = 0
 
 # -------------------------------------------------------------
-# SLIDERS – EXACT 66% WIDTH
+# BUTTON-BASED ANSWER INPUT (0–4 horizontally)
 # -------------------------------------------------------------
-answers = []
 for i, q in enumerate(questions):
 
     st.markdown(
@@ -160,19 +150,13 @@ for i, q in enumerate(questions):
         unsafe_allow_html=True,
     )
 
-    st.markdown("<div style='width:66%;'>", unsafe_allow_html=True)
-    val = st.slider(
-        "",
-        0,
-        4,
-        value=st.session_state.answers[i],
-        key=f"q_{i}",
-        label_visibility="hidden",
-    )
-    st.markdown("</div>", unsafe_allow_html=True)
+    # Horizontal row of 5 buttons
+    cols = st.columns(5)
+    for n in range(5):
+        if cols[n].button(str(n), key=f"btn_{i}_{n}"):
+            st.session_state.answers[i] = n
 
-    st.session_state.answers[i] = val
-    answers.append(val)
+    st.write(f"Valgt: {st.session_state.answers[i]}")
 
 st.button("Nulstil svar", on_click=reset_answers)
 
