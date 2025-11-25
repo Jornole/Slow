@@ -5,7 +5,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
 
 # -------------------------------------------------------------
-# PAGE CONFIG
+# APP SETUP
 # -------------------------------------------------------------
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
@@ -21,28 +21,25 @@ html, body, .stApp {
     font-family: Arial, sans-serif !important;
 }
 
-h1, h2, h3, p, label, span {
-    color: white !important;
-}
-
-/* Header-tekst til højre for logoet */
-.header-title {
-    font-size: 1.6rem;
+/* Header text right of logo */
+.header-text {
+    font-size: 1.4rem;
     font-weight: 700;
-    line-height: 1.2;
-    margin-left: 10px;
+    line-height: 1.1;
+    padding-top: 18px;       /* vertical centering relative to 100px logo */
+    padding-left: 12px;
 }
 
-/* Stor centralt placeret titel */
+/* Main title under header */
 .main-title {
     font-size: 2.2rem;
     font-weight: 800;
     text-align: center;
-    margin-top: 10px;
+    margin-top: 5px;
     margin-bottom: 25px;
 }
 
-/* Spørgsmålstekst */
+/* Question text */
 .question-text {
     font-size: 1.05rem;
     font-weight: 600;
@@ -63,7 +60,7 @@ div.stButton > button:hover, div.stDownloadButton > button:hover {
     background-color: #B71C1C !important;
 }
 
-/* Slider style (højde/knap) */
+/* Slider tweaks */
 .stSlider > div > div > div {
     height: 14px !important;
 }
@@ -79,37 +76,34 @@ div.stButton > button:hover, div.stDownloadButton > button:hover {
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# HEADER — logo.png til venstre, tekst til højre
+# HEADER: LOGO LEFT, TEXT VERTICALLY CENTERED RIGHT
 # -------------------------------------------------------------
-col_logo, col_title = st.columns([1, 4])
+col_logo, col_title = st.columns([120, 1])   # 120px left, rest right
 
 with col_logo:
-    # logo.png skal ligge i samme mappe som app.py
     st.image("logo.png", width=100)
 
 with col_title:
-    st.markdown(
-        "<div class='header-title'>HSP / SLOW<br>Processor Test</div>",
-        unsafe_allow_html=True,
-    )
+    st.markdown("""
+    <div class="header-text">
+        HSP / SLOW<br>
+        Processor Test
+    </div>
+    """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# STOR OVERSKRIFT
+# MIDTITLE
 # -------------------------------------------------------------
-st.markdown(
-    '<div class="main-title">DIN PERSONLIGE PROFIL</div>',
-    unsafe_allow_html=True,
-)
+st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# INTROTEKST
+# INTROTEXT
 # -------------------------------------------------------------
 st.markdown("""
-Denne test giver dig indblik i, hvordan du bearbejder følelsesmæssige og 
-sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner.  
-
-Testen undersøger, om du reagerer mere intuitivt og impulsstyret – eller mere 
-langsomt, bearbejdende og eftertænksomt.
+Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige 
+og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner 
+i hverdagen. Testen undersøger, om dine reaktioner er mere intuitive og 
+impulsstyrede – eller mere langsomme, bearbejdende og eftertænksomme.
 
 Du besvarer 20 udsagn på en skala fra **0 (aldrig)** til **4 (altid)**.
 
@@ -117,7 +111,7 @@ Testen er <u>**ikke en diagnose**</u>, men et psykologisk værktøj til selvinds
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# SPØRGSMÅL
+# QUESTIONS
 # -------------------------------------------------------------
 questions = [
     "Jeg bliver let overvældet af indtryk.",
@@ -154,18 +148,17 @@ def reset_answers():
         st.session_state[f"q_{i}"] = 0
 
 # -------------------------------------------------------------
-# SLIDERS — 2/3 bredde (kolonner [2,1])
+# SLIDERS – 2/3 LEFT, 1/3 EMPTY
 # -------------------------------------------------------------
 answers = []
 for i, q in enumerate(questions):
-    # spørgsmålstekst i fuld bredde
+
     st.markdown(
         f"<div class='question-text'>{i+1}. {q}</div>",
         unsafe_allow_html=True,
     )
 
-    # slider i venstre kolonne (2/3), tom højre kolonne (1/3)
-    col_slider, col_empty = st.columns([2, 1])
+    col_slider, col_empty = st.columns([2, 1])  # 2/3 left, 1/3 empty right
 
     with col_slider:
         val = st.slider(
@@ -183,7 +176,7 @@ for i, q in enumerate(questions):
 st.button("Nulstil svar", on_click=reset_answers)
 
 # -------------------------------------------------------------
-# PROFIL-FORTOLKNING
+# PROFILE INTERPRETATION
 # -------------------------------------------------------------
 def interpret_score(score: int) -> str:
     if score <= 26:
@@ -195,33 +188,33 @@ def interpret_score(score: int) -> str:
 
 PROFILE_TEXT = {
     "HSP": [
-        "Du registrerer mange nuancer i indtryk og stemninger.",
+        "Du registrerer flere nuancer i både indtryk og stemninger.",
         "Du bearbejder oplevelser dybt og grundigt.",
         "Du reagerer stærkt på stimuli og kan blive overstimuleret.",
-        "Du har en rig indre verden og høj empati.",
-        "Du bliver påvirket af miljøer og sociale stemninger.",
+        "Du har en rig indre verden og et fintfølende nervesystem.",
+        "Du er empatisk og opmærksom på andre.",
         "Du har brug for ro og pauser for at lade op."
     ],
     "Slow Processor": [
-        "Du arbejder bedst i roligt, stabilt tempo.",
+        "Du arbejder bedst i roligt tempo og med forudsigelighed.",
         "Du bearbejder indtryk grundigt, men langsomt.",
         "Du har brug for ekstra tid til omstilling og beslutninger.",
-        "Du trives med struktur og forudsigelighed.",
-        "Du kan føle dig presset, når ting går hurtigt.",
-        "Du har stærk udholdenhed, når tempoet passer dig."
+        "Du trives med faste rammer og struktur.",
+        "Du kan føle dig presset, når tingene går hurtigt.",
+        "Du har god udholdenhed, når du arbejder i dit eget tempo."
     ],
     "Mellemprofil": [
-        "Du kan både reagere hurtigt og langsomt.",
-        "Du håndterer de fleste stimuli uden problemer.",
-        "Du finder ofte balancen mellem intuition og eftertænksomhed.",
-        "Du tilpasser dig nemt forskellige tempoer.",
-        "Du bliver påvirket i perioder, men genfinder typisk hurtigt fokus.",
-        "Du fungerer stærkt i mange forskellige miljøer."
+        "Du veksler naturligt mellem hurtig og langsom bearbejdning.",
+        "Du håndterer de fleste stimuli uden at blive overvældet.",
+        "Du har en god balance mellem intuition og eftertænksomhed.",
+        "Du kan tilpasse dig forskellige miljøer og tempoer.",
+        "Du bliver påvirket i perioder, men finder hurtigt balancen igen.",
+        "Du fungerer bredt socialt og mentalt i mange typer situationer."
     ]
 }
 
 # -------------------------------------------------------------
-# RESULTAT
+# RESULT
 # -------------------------------------------------------------
 total_score = sum(st.session_state.answers)
 profile = interpret_score(total_score)
@@ -235,7 +228,7 @@ for s in PROFILE_TEXT[profile]:
     st.write(f"- {s}")
 
 # -------------------------------------------------------------
-# PDF RAPPORT
+# PDF REPORT
 # -------------------------------------------------------------
 def generate_pdf(score: int, profile: str) -> BytesIO:
     buffer = BytesIO()
@@ -257,8 +250,10 @@ def generate_pdf(score: int, profile: str) -> BytesIO:
     story.append(Paragraph("Dine svar:", styles["Heading2"]))
     for i, q in enumerate(questions):
         story.append(
-            Paragraph(f"{i+1}. {q} – Svar: {st.session_state.answers[i]}",
-                      styles["BodyText"])
+            Paragraph(
+                f"{i+1}. {q} – Svar: {st.session_state.answers[i]}",
+                styles["BodyText"],
+            )
         )
 
     doc.build(story)
