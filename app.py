@@ -21,16 +21,16 @@ html, body, .stApp {
     font-family: Arial, sans-serif !important;
 }
 
-/* HEADER TEXT RIGHT OF LOGO */
+/* HEADER TEXT RIGHT OF LOGO (smaller version) */
 .header-text {
-    font-size: 1.4rem;
+    font-size: 1.05rem;
     font-weight: 700;
-    line-height: 1.15;
-    padding-left: 12px;
-    height: 100px;                 
+    line-height: 1.1;
+    padding-left: 10px;
+    height: 70px;
     display: flex;
     flex-direction: column;
-    justify-content: center;       
+    justify-content: center;
 }
 
 /* MAIN TITLE */
@@ -78,7 +78,7 @@ div.stButton > button:hover, div.stDownloadButton > button:hover {
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# HEADER – LOGO + LITTLE TITLE
+# HEADER – LOGO + HEADER-TITLE
 # -------------------------------------------------------------
 col_logo, col_title = st.columns([0.25, 0.75])
 
@@ -150,7 +150,7 @@ def reset_answers():
         st.session_state[f"q_{i}"] = 0
 
 # -------------------------------------------------------------
-# SLIDERS – 2/3 AF BREDDEN
+# SLIDERS – EXACT 66% WIDTH
 # -------------------------------------------------------------
 answers = []
 for i, q in enumerate(questions):
@@ -160,17 +160,16 @@ for i, q in enumerate(questions):
         unsafe_allow_html=True,
     )
 
-    col_slider, col_empty = st.columns([2, 1])  # 2/3 slider, 1/3 tom plads
-
-    with col_slider:
-        val = st.slider(
-            "",
-            0,
-            4,
-            value=st.session_state.answers[i],
-            key=f"q_{i}",
-            label_visibility="hidden",
-        )
+    st.markdown("<div style='width:66%;'>", unsafe_allow_html=True)
+    val = st.slider(
+        "",
+        0,
+        4,
+        value=st.session_state.answers[i],
+        key=f"q_{i}",
+        label_visibility="hidden",
+    )
+    st.markdown("</div>", unsafe_allow_html=True)
 
     st.session_state.answers[i] = val
     answers.append(val)
