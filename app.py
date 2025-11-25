@@ -4,77 +4,79 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
 
-# -------------------------------------------------------------
-# BASIC SETUP
-# -------------------------------------------------------------
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# GLOBAL CSS – SIMPLE, SAFE, NO BREAKING LAYOUT
+# GLOBAL CSS (FIXED)
 # -------------------------------------------------------------
 st.markdown("""
 <style>
 
 html, body, .stApp {
-    background-color: #1A6333 !important;
-    color: white !important;
-    font-family: Arial, sans-serif !important;
+    background-color:#1A6333 !important;
+    color:white !important;
+    font-family:Arial, sans-serif !important;
 }
 
-/* MAIN TITLE */
+/* CENTER LOGO */
+.center-logo {
+    width:100%;
+    text-align:center;
+    margin-top:10px;
+}
+
+/* TITLE */
 .main-title {
-    font-size: 2.3rem;
-    font-weight: 800;
-    text-align: center;
-    margin-top: 10px;
-    margin-bottom: 25px;
+    font-size:2.3rem;
+    font-weight:800;
+    text-align:center;
+    margin-top:15px;
+    margin-bottom:25px;
 }
 
-/* QUESTION TEXT */
+/* QUESTIONS */
 .question-text {
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin-top: 18px;
-    margin-bottom: 10px;
+    font-size:1.1rem;
+    font-weight:600;
+    margin-top:18px;
+    margin-bottom:8px;
 }
 
-/* RADIO GROUP */
+/* RADIO BUTTONS HORIZONTAL */
 div[role='radiogroup'] {
-    display: flex !important;
-    gap: 22px !important;
-    justify-content: flex-start !important;
-    margin-bottom: 6px;
+    display:flex !important;
+    gap:22px !important;
 }
 
-/* RED BUTTONS */
-button[kind="primary"] {
-    background-color: #C62828 !important;
-    color: white !important;
-    border-radius: 8px !important;
-    padding: 0.65rem 1.4rem !important;
-    font-weight: 600 !important;
+/* FORCE RED BUTTONS (reset + pdf) */
+div.stButton > button, div.stDownloadButton > button {
+    background-color:#C62828 !important;
+    color:white !important;
+    border-radius:8px !important;
+    padding:0.65rem 1.4rem !important;
+    font-weight:600 !important;
 }
-button[kind="primary"]:hover {
-    background-color: #B71C1C !important;
+div.stButton > button:hover, div.stDownloadButton > button:hover {
+    background-color:#B71C1C !important;
 }
 
 </style>
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# HEADER – CENTERED LOGO (ultrastabil version)
+# LOGO (TRUE CENTERED)
 # -------------------------------------------------------------
-st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
+st.markdown("<div class='center-logo'>", unsafe_allow_html=True)
 st.image("logo.png", width=150)
 st.markdown("</div>", unsafe_allow_html=True)
 
 # -------------------------------------------------------------
 # MAIN TITLE
 # -------------------------------------------------------------
-st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
+st.markdown("<div class='main-title'>DIN PERSONLIGE PROFIL</div>", unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# INTRO TEXT
+# INTRO
 # -------------------------------------------------------------
 st.markdown("""
 Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige 
@@ -113,49 +115,45 @@ questions = [
     "Jeg bliver let distraheret, når der sker meget omkring mig."
 ]
 
-# -------------------------------------------------------------
-# SESSION STATE
-# -------------------------------------------------------------
 if "answers" not in st.session_state:
-    st.session_state.answers = [0] * len(questions)
+    st.session_state.answers = [0]*len(questions)
 
-# -------------------------------------------------------------
-# RENDER QUESTIONS
-# -------------------------------------------------------------
 for i, q in enumerate(questions):
-
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    choice = st.radio(
+    ans = st.radio(
         "",
-        options=[0, 1, 2, 3, 4],
-        key=f"q_{i}",
+        options=[0,1,2,3,4],
         horizontal=True,
+        key=f"q_{i}",
         label_visibility="collapsed"
     )
-
-    st.session_state.answers[i] = choice
+    st.session_state.answers[i] = ans
 
 # -------------------------------------------------------------
 # RESET BUTTON
 # -------------------------------------------------------------
 if st.button("Nulstil svar"):
-    st.session_state.answers = [0] * len(questions)
+    st.session_state.answers = [0]*len(questions)
     st.experimental_rerun()
 
 # -------------------------------------------------------------
-# SCORING + TEXT
+# RESULT
 # -------------------------------------------------------------
-def interpret_score(score):
-    if score <= 26:
-        return "Slow Processor"
-    elif score <= 53:
-        return "Mellemprofil"
-    else:
-        return "HSP"
+def interpret_score(s):
+    if s <= 26: return "Slow Processor"
+    elif s <= 53: return "Mellemprofil"
+    return "HSP"
+
+score = sum(st.session_state.answers)
+profile = interpret_score(score)
+
+st.header("Dit resultat")
+st.subheader(f"Score: {score} / 80")
+st.write(f"**Profil: {profile}**")
 
 PROFILE_TEXT = {
-    "HSP": [
+    "HSP":[
         "Du registrerer flere nuancer i både indtryk og stemninger.",
         "Du bearbejder oplevelser dybt og grundigt.",
         "Du reagerer stærkt på stimuli og kan blive overstimuleret.",
@@ -163,7 +161,7 @@ PROFILE_TEXT = {
         "Du er empatisk og opmærksom på andre.",
         "Du har brug for ro og pauser for at lade op."
     ],
-    "Slow Processor": [
+    "Slow Processor":[
         "Du arbejder bedst i roligt tempo og med forudsigelighed.",
         "Du bearbejder indtryk grundigt, men langsomt.",
         "Du har brug for ekstra tid til omstilling og beslutninger.",
@@ -171,7 +169,7 @@ PROFILE_TEXT = {
         "Du kan føle dig presset, når tingene går hurtigt.",
         "Du har god udholdenhed, når du arbejder i dit eget tempo."
     ],
-    "Mellemprofil": [
+    "Mellemprofil":[
         "Du veksler naturligt mellem hurtig og langsom bearbejdning.",
         "Du håndterer de fleste stimuli uden at blive overvældet.",
         "Du har en god balance mellem intuition og eftertænksomhed.",
@@ -181,22 +179,12 @@ PROFILE_TEXT = {
     ]
 }
 
-# -------------------------------------------------------------
-# RESULT
-# -------------------------------------------------------------
-total_score = sum(st.session_state.answers)
-profile = interpret_score(total_score)
-
-st.header("Dit resultat")
-st.subheader(f"Score: {total_score} / 80")
-st.write(f"**Profil: {profile}**")
-
 st.write("### Karakteristika for din profil:")
 for s in PROFILE_TEXT[profile]:
     st.write(f"- {s}")
 
 # -------------------------------------------------------------
-# PDF REPORT
+# PDF DOWNLOAD
 # -------------------------------------------------------------
 def generate_pdf(score, profile):
     buffer = BytesIO()
@@ -207,13 +195,14 @@ def generate_pdf(score, profile):
     story.append(Paragraph("HSP / Slow Processor Test – Rapport", styles["Title"]))
     story.append(Paragraph(f"Samlet score: {score} / 80", styles["Heading2"]))
     story.append(Paragraph(f"Profil: {profile}", styles["Heading2"]))
-    story.append(Spacer(1, 12))
+    story.append(Spacer(1,12))
 
     for s in PROFILE_TEXT[profile]:
         story.append(Paragraph(f"- {s}", styles["BodyText"]))
-    story.append(Spacer(1, 12))
 
+    story.append(Spacer(1,12))
     story.append(Paragraph("Dine svar:", styles["Heading2"]))
+
     for i, q in enumerate(questions):
         story.append(Paragraph(f"{i+1}. {q} – Svar: {st.session_state.answers[i]}", styles["BodyText"]))
 
@@ -223,7 +212,7 @@ def generate_pdf(score, profile):
 
 st.download_button(
     "Download PDF-rapport",
-    data=generate_pdf(total_score, profile),
+    data=generate_pdf(score, profile),
     file_name="HSP_SlowProcessor_Rapport.pdf",
     mime="application/pdf"
 )
