@@ -48,18 +48,18 @@ html, body, .stApp {
 /* Horizontal radio buttons */
 div[role='radiogroup'] {
     display: flex !important;
-    gap: 40px !important;
-    justify-content: center !important;
-    margin-bottom: 4px;
+    justify-content: space-between !important;
+    padding: 0 10px;
+    margin-bottom: 0px !important;
 }
 
-/* Label row under each radio group */
-.scale-labels {
+/* Labels under radios */
+.answer-labels {
     display: flex;
     justify-content: space-between;
-    width: 260px;
-    margin: -4px auto 14px auto;
-    font-size: 0.85rem;
+    font-size: 0.95rem;
+    margin-top: -4px;
+    padding: 0 4px;
 }
 
 /* Red buttons */
@@ -100,7 +100,7 @@ og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner
 Testen undersøger, om dine reaktioner er mere intuitive og impulsstyrede – 
 eller mere langsomme, bearbejdende og eftertænksomme.
 
-Du besvarer 20 udsagn på en skala fra **0 (aldrig)** til **4 (altid)**.
+Du besvarer 20 udsagn på en skala der går fra **Aldrig** til **Altid**.
 
 Testen er <u>**ikke en diagnose**</u>, men et psykologisk værktøj til selvindsigt.
 """, unsafe_allow_html=True)
@@ -136,31 +136,34 @@ questions = [
 # -------------------------------------------------------------
 if "answers" not in st.session_state:
     st.session_state.answers = [0] * len(questions)
+
 if "reset_trigger" not in st.session_state:
     st.session_state.reset_trigger = 0
 
 # -------------------------------------------------------------
-# RENDER QUESTION BLOCKS
+# RENDER QUESTIONS
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
 
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
+    # radio buttons with hidden labels
     choice = st.radio(
         "",
         [0, 1, 2, 3, 4],
         key=f"q_{i}_{st.session_state.reset_trigger}",
         horizontal=True,
-        label_visibility="collapsed"
+        label_visibility="collapsed",
     )
     st.session_state.answers[i] = choice
 
+    # THE LABELS UNDER THE BUTTONS
     st.markdown("""
-        <div class="scale-labels">
-            <span>Aldrig</span>
-            <span>En gang imellem</span>
-            <span>Altid</span>
-        </div>
+    <div class="answer-labels">
+        <span>Aldrig</span>
+        <span>En gang imellem</span>
+        <span>Altid</span>
+    </div>
     """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
@@ -172,7 +175,7 @@ if st.button("Nulstil svar"):
     st.rerun()
 
 # -------------------------------------------------------------
-# SCORE INTERPRETATION
+# INTERPRETATION
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
@@ -209,12 +212,12 @@ PROFILE_TEXT = {
     ]
 }
 
-total_score = sum(st.session_state.answers)
-profile = interpret_score(total_score)
-
 # -------------------------------------------------------------
 # RESULTS
 # -------------------------------------------------------------
+total_score = sum(st.session_state.answers)
+profile = interpret_score(total_score)
+
 st.header("Dit resultat")
 st.subheader(f"Score: {total_score} / 80")
 st.write(f"**Profil: {profile}**")
