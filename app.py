@@ -10,83 +10,75 @@ from io import BytesIO
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# GLOBAL CSS (NO RADIO BUTTON STYLING!)
+# VISUAL STYLING
 # -------------------------------------------------------------
 st.markdown("""
 <style>
-
 html, body, .stApp {
     background-color: #1A6333 !important;
     color: white !important;
     font-family: Arial, sans-serif !important;
 }
-
-/* Title */
 .main-title {
-    font-size: 2.3rem;
-    font-weight: 800;
+    font-size: 2.6rem;
+    font-weight: 900;
     text-align: center;
-    margin-top: 20px;
-    margin-bottom: 20px;
+    margin: 10px 0 30px 0;
 }
-
-/* Question text */
 .question-text {
     font-size: 1.1rem;
     font-weight: 600;
-    margin-top: 24px;
-    margin-bottom: 6px;
+    margin-top: 22px;
 }
-
-/* PERFECT 5-COLUMN LABEL ROW */
-.label-row {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
+.scale-label {
     text-align: center;
-    margin-top: -6px;
-    margin-bottom: 26px;
-    font-size: 0.95rem;
-    width: 100%;
+    font-size: 0.9rem;
+    margin-top: 6px;
 }
-
-/* Buttons */
 .stButton > button {
     background-color: #C62828 !important;
     color: white !important;
     border-radius: 10px !important;
-    padding: 0.65rem 1.4rem !important;
-    font-weight: 600 !important;
+    padding: 10px 18px !important;
     border: none !important;
+    font-weight: 600;
 }
 .stButton > button:hover {
     background-color: #B71C1C !important;
 }
-
 .version-tag {
-    position: fixed;
-    bottom: 12px;
-    left: 12px;
-    font-size: 0.85rem;
-    opacity: 0.7;
+    font-size: 0.75rem;
+    opacity: 0.6;
+    margin-top: 40px;
 }
-
 </style>
+""", unsafe_allow_html=True)
+
+# -------------------------------------------------------------
+# LOGO
+# -------------------------------------------------------------
+st.markdown("""
+<div style='text-align:center; margin-top:20px;'>
+    <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="150">
+</div>
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
 # TITLE
 # -------------------------------------------------------------
-st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
+st.markdown("<div class='main-title'>DIN PERSONLIGE PROFIL</div>", unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# INTRO
+# INTRO TEXT
 # -------------------------------------------------------------
 st.markdown("""
 Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige 
 og sansemæssige indtryk.
 
 Du besvarer 20 udsagn på en skala fra **Aldrig** til **Altid**.
-""")
+
+Testen er <u>ikke en diagnose</u>, men et psykologisk værktøj til selvindsigt.
+""", unsafe_allow_html=True)
 
 # -------------------------------------------------------------
 # QUESTIONS
@@ -114,51 +106,40 @@ questions = [
     "Jeg bliver let distraheret, når der sker meget omkring mig."
 ]
 
-# -------------------------------------------------------------
-# STATE
-# -------------------------------------------------------------
+# ensure state
 if "answers" not in st.session_state:
     st.session_state.answers = [0] * len(questions)
-if "reset" not in st.session_state:
-    st.session_state.reset = 0
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS
+# RENDER QUESTIONS — WITH 5 HORIZONTAL BUTTONS
 # -------------------------------------------------------------
-scale_labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
+labels = ["Aldrig", "Sjældent", "Nogle\ngange", "Ofte", "Altid"]
 
 for i, q in enumerate(questions):
-
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    choice = st.radio(
-        "",
-        [0, 1, 2, 3, 4],
-        key=f"q_{i}_{st.session_state.reset}",
-        horizontal=True,
-        label_visibility="collapsed"
-    )
+    cols = st.columns(5)
 
-    st.session_state.answers[i] = choice
+    for idx, col in enumerate(cols):
+        btn_label = ""  # button shows blank
+        if col.button(btn_label, key=f"btn_{i}_{idx}",
+                      help=f"{labels[idx]} (værdi {idx})"):
+            st.session_state.answers[i] = idx
 
-    # Label row
-    st.markdown(
-        "<div class='label-row'>" +
-        "".join([f"<div>{label}</div>" for label in scale_labels]) +
-        "</div>",
-        unsafe_allow_html=True
-    )
+    # LABELS UNDER KNAPPERNE
+    label_cols = st.columns(5)
+    for idx, col in enumerate(label_cols):
+        col.markdown(f"<div class='scale-label'>{labels[idx]}</div>", unsafe_allow_html=True)
 
 # -------------------------------------------------------------
 # RESET BUTTON
 # -------------------------------------------------------------
 if st.button("Nulstil svar"):
     st.session_state.answers = [0] * len(questions)
-    st.session_state.reset += 1
     st.rerun()
 
 # -------------------------------------------------------------
-# RESULT
+# RESULT LOGIC
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
@@ -195,51 +176,56 @@ PROFILE_TEXT = {
     ]
 }
 
-total = sum(st.session_state.answers)
-profile = interpret_score(total)
+total_score = sum(st.session_state.answers)
+profile = interpret_score(total_score)
 
+# -------------------------------------------------------------
+# RESULT BLOCK
+# -------------------------------------------------------------
 st.header("Dit resultat")
-st.subheader(f"Score: {total} / 80")
+st.subheader(f"Score: {total_score} / 80")
 st.write(f"**Profil: {profile}**")
 
 st.write("### Karakteristika for din profil:")
-for line in PROFILE_TEXT[profile]:
-    st.write(f"- {line}")
+for txt in PROFILE_TEXT[profile]:
+    st.write(f"- {txt}")
 
 # -------------------------------------------------------------
-# PDF
+# PDF EXPORT
 # -------------------------------------------------------------
 def generate_pdf(score, profile):
-    buf = BytesIO()
-    doc = SimpleDocTemplate(buf, pagesize=letter)
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
     styles = getSampleStyleSheet()
     story = []
 
     story.append(Paragraph("HSP / Slow Processor Test – Rapport", styles["Title"]))
-    story.append(Spacer(1, 12))
-    story.append(Paragraph(f"Samlet score: {score} / 80", styles["Heading2"]))
+    story.append(Spacer(1, 20))
+    story.append(Paragraph(f"Score: {score} / 80", styles["Heading2"]))
     story.append(Paragraph(f"Profil: {profile}", styles["Heading2"]))
-    story.append(Spacer(1, 12))
+    story.append(Spacer(1, 20))
 
     story.append(Paragraph("Karakteristika:", styles["Heading2"]))
-    for line in PROFILE_TEXT[profile]:
-        story.append(Paragraph(f"- {line}", styles["BodyText"]))
-    story.append(Spacer(1, 12))
+    for s in PROFILE_TEXT[profile]:
+        story.append(Paragraph(f"- {s}", styles["BodyText"]))
+    story.append(Spacer(1, 20))
 
     story.append(Paragraph("Dine svar:", styles["Heading2"]))
     for i, q in enumerate(questions):
         story.append(Paragraph(f"{i+1}. {q} – Svar: {st.session_state.answers[i]}", styles["BodyText"]))
 
     doc.build(story)
-    buf.seek(0)
-    return buf
+    buffer.seek(0)
+    return buffer
 
 st.download_button(
     "Download PDF-rapport",
-    data=generate_pdf(total, profile),
+    data=generate_pdf(total_score, profile),
     file_name="HSP_SlowProcessor_Rapport.pdf",
     mime="application/pdf"
 )
 
+# -------------------------------------------------------------
 # VERSION TAG
-st.markdown("<div class='version-tag'>v14</div>", unsafe_allow_html=True)
+# -------------------------------------------------------------
+st.markdown("<div class='version-tag'>v15</div>", unsafe_allow_html=True)
