@@ -20,12 +20,20 @@ html, body, .stApp {
     font-family: Arial, sans-serif !important;
 }
 
-/* CENTRERET LOGO */
-.center-logo {
+/* HEADER WRAPPER: LOGO + TEKST */
+.header-wrapper {
     display: flex;
-    justify-content: center;
+    align-items: center;
+    gap: 16px;
     margin-top: 15px;
     margin-bottom: 10px;
+}
+
+/* LILLE HEADERTEKST */
+.header-text-small {
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.2;
 }
 
 /* MAIN TITLE */
@@ -68,11 +76,14 @@ div[role='radiogroup'] {
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# HEADER – KUN LOGO I MIDTEN
+# HEADER (LOGO + TEKST)
 # -------------------------------------------------------------
-st.markdown("""
-<div class="center-logo">
-    <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="130">
+st.markdown(f"""
+<div class="header-wrapper">
+    <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="110">
+    <div class="header-text-small">
+        HSP / SLOW<br>Processor Test
+    </div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -128,22 +139,22 @@ if "answers" not in st.session_state:
     st.session_state.answers = [0] * len(questions)
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS
+# RENDER QUESTIONS (0–4)
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
-    choice = st.radio("", [0, 1, 2, 3, 4], key=f"q_{i}", horizontal=True, label_visibility="collapsed")
+    choice = st.radio("", [0,1,2,3,4], key=f"q_{i}", horizontal=True, label_visibility="collapsed")
     st.session_state.answers[i] = choice
 
 # -------------------------------------------------------------
-# RESET KNAP
+# RESET KNAP (STABIL VERSION)
 # -------------------------------------------------------------
 if st.button("Nulstil svar"):
     st.session_state.answers = [0] * len(questions)
-    st.experimental_rerun()
+    st.rerun()  # ✔ erstatter deprecated experimental_rerun
 
 # -------------------------------------------------------------
-# SCORE & PROFIL
+# PROFIL-FORTOLKNING
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
@@ -183,6 +194,9 @@ PROFILE_TEXT = {
 total_score = sum(st.session_state.answers)
 profile = interpret_score(total_score)
 
+# -------------------------------------------------------------
+# RESULTATVISNING
+# -------------------------------------------------------------
 st.header("Dit resultat")
 st.subheader(f"Score: {total_score} / 80")
 st.write(f"**Profil: {profile}**")
@@ -192,7 +206,7 @@ for s in PROFILE_TEXT[profile]:
     st.write(f"- {s}")
 
 # -------------------------------------------------------------
-# PDF DOWNLOAD
+# PDF GENERERING
 # -------------------------------------------------------------
 def generate_pdf(score, profile):
     buffer = BytesIO()
@@ -201,10 +215,12 @@ def generate_pdf(score, profile):
     story = []
 
     story.append(Paragraph("HSP / Slow Processor Test – Rapport", styles["Title"]))
+    story.append(Spacer(1, 12))
     story.append(Paragraph(f"Samlet score: {score} / 80", styles["Heading2"]))
     story.append(Paragraph(f"Profil: {profile}", styles["Heading2"]))
     story.append(Spacer(1, 12))
 
+    story.append(Paragraph("Karakteristika for din profil:", styles["Heading2"]))
     for s in PROFILE_TEXT[profile]:
         story.append(Paragraph(f"- {s}", styles["BodyText"]))
     story.append(Spacer(1, 12))
