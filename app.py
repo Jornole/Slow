@@ -42,48 +42,37 @@ html, body, .stApp {
 .question-text {
     font-size: 1.05rem;
     font-weight: 600;
-    margin-top: 18px;
-    margin-bottom: 4px;
+    margin-top: 20px;
+    margin-bottom: 6px;
 }
 
-/* Wrapper for scale */
-.scale-wrapper {
+/* Perfect aligned 5-column layout */
+.scale-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
     width: 100%;
+    margin-bottom: 2px;
 }
 
-/* Radio row */
-.scale-wrapper div[role='radiogroup'] {
-    display: flex !important;
-    justify-content: space-between !important;
-    width: 100% !important;
-    margin-bottom: 0 !important;
+/* Hide default radio text */
+.scale-grid label > div > div {
+    display: none !important;
 }
 
-/* Each radio item */
-.scale-wrapper div[role='radiogroup'] > label {
-    flex: 1 !important;
+/* Center the radio circles */
+.scale-grid label {
     display: flex !important;
     justify-content: center !important;
 }
 
-/* Hide the radio labels (numbers) */
-.scale-wrapper div[role='radiogroup'] span {
-    display: none !important;
-}
-
-/* Text labels under buttons */
-.scale-row {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-    margin-top: -2px;
-    margin-bottom: 34px;
-}
-
-.scale-row span {
-    flex: 1;
+/* Labels under knapperne */
+.scale-labels {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
     text-align: center;
-    font-size: 0.83rem;
+    font-size: 0.85rem;
+    margin-bottom: 28px;
+    margin-top: 2px;
 }
 
 /* Red buttons */
@@ -95,19 +84,17 @@ html, body, .stApp {
     font-weight: 600 !important;
     border: none !important;
 }
-
 .stButton > button:hover, .stDownloadButton > button:hover {
     background-color: #B71C1C !important;
 }
 
-/* Version label bottom-left */
-.version-label {
+/* Version text bottom-left */
+.version-tag {
     position: fixed;
-    bottom: 8px;
+    bottom: 6px;
     left: 10px;
     font-size: 0.75rem;
-    opacity: 0.6;
-    color: white;
+    opacity: 0.55;
 }
 
 </style>
@@ -170,6 +157,7 @@ questions = [
 # -------------------------------------------------------------
 if "answers" not in st.session_state:
     st.session_state.answers = [0] * len(questions)
+
 if "reset_trigger" not in st.session_state:
     st.session_state.reset_trigger = 0
 
@@ -180,26 +168,28 @@ for i, q in enumerate(questions):
 
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    st.markdown("<div class='scale-wrapper'>", unsafe_allow_html=True)
-
+    # Radio button row
+    st.markdown("<div class='scale-grid'>", unsafe_allow_html=True)
     choice = st.radio(
         "",
         [0, 1, 2, 3, 4],
         key=f"q_{i}_{st.session_state.reset_trigger}",
-        horizontal=True,
         label_visibility="collapsed",
-        format_func=lambda x: ""
+        horizontal=True,
+        format_func=lambda x: ""  # hide numbers
     )
+    st.markdown("</div>", unsafe_allow_html=True)
+
     st.session_state.answers[i] = choice
 
+    # Labels row
     st.markdown("""
-    <div class="scale-row">
+    <div class="scale-labels">
         <span>Aldrig</span>
         <span>Sjældent</span>
         <span>Nogle gange</span>
         <span>Ofte</span>
         <span>Altid</span>
-    </div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -285,12 +275,7 @@ def generate_pdf(score, profile):
 
     story.append(Paragraph("Dine svar:", styles["Heading2"]))
     for i, q in enumerate(questions):
-        story.append(
-            Paragraph(
-                f"{i+1}. {q} – Svar: {st.session_state.answers[i]}",
-                styles["BodyText"],
-            )
-        )
+        story.append(Paragraph(f"{i+1}. {q} – Svar: {st.session_state.answers[i]}", styles["BodyText"]))
 
     doc.build(story)
     buffer.seek(0)
@@ -304,6 +289,6 @@ st.download_button(
 )
 
 # -------------------------------------------------------------
-# VERSION LABEL (LEFT BOTTOM)
+# VERSION TAG
 # -------------------------------------------------------------
-st.markdown('<div class="version-label">Version v1</div>', unsafe_allow_html=True)
+st.markdown("<div class='version-tag'>Version v2</div>", unsafe_allow_html=True)
