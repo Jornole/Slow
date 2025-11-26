@@ -4,9 +4,6 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
 
-# -------------------------------------------------------------
-# BASIC SETUP
-# -------------------------------------------------------------
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
@@ -41,25 +38,26 @@ html, body, .stApp {
 .question-text {
     font-size: 1.05rem;
     font-weight: 600;
-    margin-top: 18px;
-    margin-bottom: 8px;
+    margin-top: 22px;
+    margin-bottom: 10px;
 }
 
-/* Horizontal radio buttons */
+/* Horizontal radios – MORE SPREAD */
 div[role='radiogroup'] {
     display: flex !important;
     justify-content: space-between !important;
-    padding: 0 10px;
+    gap: 40px !important;
     margin-bottom: 0px !important;
 }
 
-/* Labels under radios */
+/* Labels under buttons */
 .answer-labels {
     display: flex;
     justify-content: space-between;
+    margin-top: 4px;
+    margin-bottom: 25px;
     font-size: 0.95rem;
-    margin-top: -4px;
-    padding: 0 4px;
+    font-weight: 500;
 }
 
 /* Red buttons */
@@ -74,11 +72,16 @@ div[role='radiogroup'] {
 .stButton > button:hover, .stDownloadButton > button:hover {
     background-color: #B71C1C !important;
 }
+
+/* Extra space above Nulstil */
+.reset-space {
+    margin-top: 35px;
+}
 </style>
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# LOGO (CENTERED)
+# LOGO
 # -------------------------------------------------------------
 st.markdown("""
 <div class="center-logo">
@@ -87,20 +90,17 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# MAIN TITLE
+# INTRO
 # -------------------------------------------------------------
 st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
 
-# -------------------------------------------------------------
-# INTRO TEXT
-# -------------------------------------------------------------
 st.markdown("""
 Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige 
 og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner.
 Testen undersøger, om dine reaktioner er mere intuitive og impulsstyrede – 
 eller mere langsomme, bearbejdende og eftertænksomme.
 
-Du besvarer 20 udsagn på en skala der går fra **Aldrig** til **Altid**.
+Du besvarer 20 udsagn på en skala fra **0 (aldrig)** til **4 (altid)**.
 
 Testen er <u>**ikke en diagnose**</u>, men et psykologisk værktøj til selvindsigt.
 """, unsafe_allow_html=True)
@@ -131,12 +131,9 @@ questions = [
     "Jeg bliver let distraheret, når der sker meget omkring mig."
 ]
 
-# -------------------------------------------------------------
-# SESSION STATE INIT
-# -------------------------------------------------------------
+# SESSION STATE
 if "answers" not in st.session_state:
     st.session_state.answers = [0] * len(questions)
-
 if "reset_trigger" not in st.session_state:
     st.session_state.reset_trigger = 0
 
@@ -147,17 +144,16 @@ for i, q in enumerate(questions):
 
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    # radio buttons with hidden labels
     choice = st.radio(
         "",
         [0, 1, 2, 3, 4],
         key=f"q_{i}_{st.session_state.reset_trigger}",
         horizontal=True,
-        label_visibility="collapsed",
+        label_visibility="collapsed"
     )
     st.session_state.answers[i] = choice
 
-    # THE LABELS UNDER THE BUTTONS
+    # Labels
     st.markdown("""
     <div class="answer-labels">
         <span>Aldrig</span>
@@ -169,13 +165,15 @@ for i, q in enumerate(questions):
 # -------------------------------------------------------------
 # RESET BUTTON
 # -------------------------------------------------------------
+st.markdown('<div class="reset-space"></div>', unsafe_allow_html=True)
+
 if st.button("Nulstil svar"):
     st.session_state.answers = [0] * len(questions)
     st.session_state.reset_trigger += 1
     st.rerun()
 
 # -------------------------------------------------------------
-# INTERPRETATION
+# SCORING
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
@@ -184,6 +182,15 @@ def interpret_score(score):
         return "Mellemprofil"
     else:
         return "HSP"
+
+profile = interpret_score(sum(st.session_state.answers))
+
+# -------------------------------------------------------------
+# RESULT
+# -------------------------------------------------------------
+st.header("Dit resultat")
+st.subheader(f"Score: {sum(st.session_state.answers)} / 80")
+st.write(f"**Profil: {profile}**")
 
 PROFILE_TEXT = {
     "HSP": [
@@ -212,16 +219,6 @@ PROFILE_TEXT = {
     ]
 }
 
-# -------------------------------------------------------------
-# RESULTS
-# -------------------------------------------------------------
-total_score = sum(st.session_state.answers)
-profile = interpret_score(total_score)
-
-st.header("Dit resultat")
-st.subheader(f"Score: {total_score} / 80")
-st.write(f"**Profil: {profile}**")
-
 st.write("### Karakteristika for din profil:")
 for s in PROFILE_TEXT[profile]:
     st.write(f"- {s}")
@@ -241,14 +238,8 @@ def generate_pdf(score, profile):
     story.append(Paragraph(f"Profil: {profile}", styles["Heading2"]))
     story.append(Spacer(1, 12))
 
-    story.append(Paragraph("Karakteristika for din profil:", styles["Heading2"]))
     for s in PROFILE_TEXT[profile]:
         story.append(Paragraph(f"- {s}", styles["BodyText"]))
-    story.append(Spacer(1, 12))
-
-    story.append(Paragraph("Dine svar:", styles["Heading2"]))
-    for i, q in enumerate(questions):
-        story.append(Paragraph(f"{i+1}. {q} – Svar: {st.session_state.answers[i]}", styles["BodyText"]))
 
     doc.build(story)
     buffer.seek(0)
@@ -256,7 +247,7 @@ def generate_pdf(score, profile):
 
 st.download_button(
     "Download PDF-rapport",
-    data=generate_pdf(total_score, profile),
+    data=generate_pdf(sum(st.session_state.answers), profile),
     file_name="HSP_SlowProcessor_Rapport.pdf",
     mime="application/pdf"
 )
