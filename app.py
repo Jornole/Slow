@@ -4,13 +4,10 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
 
-# -------------------------------------------------------------
-# BASIC SETUP
-# -------------------------------------------------------------
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# GLOBAL CSS
+# GLOBAL CSS (CLEAN VERSION)
 # -------------------------------------------------------------
 st.markdown("""
 <style>
@@ -20,7 +17,6 @@ html, body, .stApp {
     font-family: Arial, sans-serif !important;
 }
 
-/* Centered logo */
 .center-logo {
     display: flex;
     justify-content: center;
@@ -28,7 +24,6 @@ html, body, .stApp {
     margin-bottom: 5px;
 }
 
-/* Main title */
 .main-title {
     font-size: 2.3rem;
     font-weight: 800;
@@ -37,7 +32,6 @@ html, body, .stApp {
     margin-bottom: 25px;
 }
 
-/* Question text */
 .question-text {
     font-size: 1.05rem;
     font-weight: 600;
@@ -45,29 +39,35 @@ html, body, .stApp {
     margin-bottom: 8px;
 }
 
-/* Horizontal radio buttons */
 div[role='radiogroup'] {
     display: flex !important;
     gap: 20px !important;
-    justify-content: flex-start !important;
-    margin-bottom: 2px !important;
+    margin-bottom: 0px !important;
 }
 
-/* Labels "aldrig" og "altid" */
-.scale-labels {
+.label-row {
     display: flex;
     justify-content: space-between;
-    width: 260px;            
-    margin-left: 4px;
-    margin-top: -4px;    
-}
-.scale-labels span {
-    font-size: 0.75rem;
-    color: white;
-    opacity: 0.85;
+    width: 260px;
+    font-size: 0.8rem;
+    margin-top: -4px;
 }
 
-/* Red buttons */
+.label-left {
+    color: white;
+}
+
+.label-middle {
+    color: white;
+    text-align: center;
+    width: 100%;
+}
+
+.label-right {
+    color: white;
+    text-align: right;
+}
+
 .stButton > button, .stDownloadButton > button {
     background-color: #C62828 !important;
     color: white !important;
@@ -76,6 +76,7 @@ div[role='radiogroup'] {
     font-weight: 600 !important;
     border: none !important;
 }
+
 .stButton > button:hover, .stDownloadButton > button:hover {
     background-color: #B71C1C !important;
 }
@@ -83,7 +84,7 @@ div[role='radiogroup'] {
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# LOGO (CENTERED)
+# LOGO CENTERED
 # -------------------------------------------------------------
 st.markdown("""
 <div class="center-logo">
@@ -92,7 +93,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# MAIN TITLE
+# TITLE
 # -------------------------------------------------------------
 st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
 
@@ -101,43 +102,42 @@ st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_
 # -------------------------------------------------------------
 st.markdown("""
 Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige 
-og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner.
-Testen undersøger, om dine reaktioner er mere intuitive og impulsstyrede – 
-eller mere langsomme, bearbejdende og eftertænksomme.
+og sansemæssige indtryk, og hvordan dit mentale tempo paavirker dine reaktioner.
+Testen undersoeger, om dine reaktioner er mere intuitive og impulsstyrede eller mere langsomme, bearbejdende og eftertaenksomme.
 
-Du besvarer 20 udsagn på en skala fra **0 (aldrig)** til **4 (altid)**.
+Du besvarer 20 udsagn paa en skala fra 0 (aldrig) til 4 (altid).
 
-Testen er <u>**ikke en diagnose**</u>, men et psykologisk værktøj til selvindsigt.
-""", unsafe_allow_html=True)
+Testen er ikke en diagnose, men et psykologisk vaerktoej til selvindsigt.
+""")
 
 # -------------------------------------------------------------
 # QUESTIONS
 # -------------------------------------------------------------
 questions = [
-    "Jeg bliver let overvældet af indtryk.",
-    "Jeg opdager små detaljer, som andre ofte overser.",
-    "Jeg bruger længere tid på at tænke ting igennem.",
-    "Jeg foretrækker rolige omgivelser.",
-    "Jeg reagerer stærkt på uventede afbrydelser.",
+    "Jeg bliver let overvaeldet af indtryk.",
+    "Jeg opdager smaa detaljer, som andre ofte overser.",
+    "Jeg bruger laengere tid paa at taenke ting igennem.",
+    "Jeg foretraekker rolige omgivelser.",
+    "Jeg reagerer staerkt paa uventede afbrydelser.",
     "Jeg bearbejder information dybt og grundigt.",
     "Jeg har brug for mere tid til at omstille mig.",
     "Jeg bliver hurtigt mentalt udmattet.",
-    "Jeg er meget opmærksom på stemninger hos andre.",
-    "Jeg foretrækker at gøre én ting ad gangen.",
-    "Jeg påvirkes lettere af støj end de fleste.",
+    "Jeg er meget opmaerksom paa stemninger hos andre.",
+    "Jeg foretraekker at goere en ting ad gangen.",
+    "Jeg paavirkes lettere af sto ej end de fleste.",
     "Jeg trives bedst med tydelige rammer og struktur.",
-    "Jeg bruger lang tid på at komme i gang med nye opgaver.",
-    "Jeg har svært ved at sortere irrelevante stimuli fra.",
-    "Jeg bliver let påvirket af andres humør.",
-    "Jeg bruger lang tid på at træffe beslutninger.",
-    "Jeg foretrækker dybe samtaler frem for smalltalk.",
-    "Jeg kan have svært ved at skifte fokus hurtigt.",
-    "Jeg føler mig ofte overstimuleret.",
-    "Jeg bliver let distraheret, når der sker meget omkring mig."
+    "Jeg bruger lang tid paa at komme i gang med nye opgaver.",
+    "Jeg har svaert ved at sortere irrelevante stimuli fra.",
+    "Jeg bliver let paavirket af andres humoer.",
+    "Jeg bruger lang tid paa at traeffe beslutninger.",
+    "Jeg foretraekker dybe samtaler frem for smalltalk.",
+    "Jeg kan have svaert ved at skifte fokus hurtigt.",
+    "Jeg foeler mig ofte overstimuleret.",
+    "Jeg bliver let distraheret, naar der sker meget omkring mig."
 ]
 
 # -------------------------------------------------------------
-# SESSION STATE INIT
+# SESSION STATE
 # -------------------------------------------------------------
 if "answers" not in st.session_state:
     st.session_state.answers = [0] * len(questions)
@@ -145,14 +145,11 @@ if "reset_trigger" not in st.session_state:
     st.session_state.reset_trigger = 0
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS
+# RENDER QUESTIONS WITH LABELS
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
 
-    st.markdown(
-        f"<div class='question-text'>{i+1}. {q}</div>",
-        unsafe_allow_html=True
-    )
+    st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
     choice = st.radio(
         "",
@@ -161,14 +158,15 @@ for i, q in enumerate(questions):
         horizontal=True,
         label_visibility="collapsed"
     )
+
     st.session_state.answers[i] = choice
 
-    # --- ADD LABELS UNDER BUTTONS ---
     st.markdown("""
-        <div class="scale-labels">
-            <span>aldrig</span>
-            <span>altid</span>
-        </div>
+    <div class="label-row">
+        <div class="label-left">aldrig</div>
+        <div class="label-middle">sjaeldnere</div>
+        <div class="label-right">altid</div>
+    </div>
     """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
@@ -180,7 +178,7 @@ if st.button("Nulstil svar"):
     st.rerun()
 
 # -------------------------------------------------------------
-# INTERPRETATION
+# PROFILE INTERPRETATION
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
@@ -192,28 +190,28 @@ def interpret_score(score):
 
 PROFILE_TEXT = {
     "HSP": [
-        "Du registrerer flere nuancer i både indtryk og stemninger.",
-        "Du bearbejder oplevelser dybt og grundigt.",
-        "Du reagerer stærkt på stimuli og kan blive overstimuleret.",
-        "Du har en rig indre verden og et fintfølende nervesystem.",
-        "Du er empatisk og opmærksom på andre.",
-        "Du har brug for ro og pauser for at lade op."
+        "Du registrerer flere nuancer.",
+        "Du bearbejder indtryk dybt.",
+        "Du blir let overstimuleret.",
+        "Du har et fintfoelende nervesystem.",
+        "Du er empatisk og opmaerksom.",
+        "Du har brug for ro og pauser."
     ],
     "Slow Processor": [
-        "Du arbejder bedst i roligt tempo og med forudsigelighed.",
-        "Du bearbejder indtryk grundigt, men langsomt.",
-        "Du har brug for ekstra tid til omstilling og beslutninger.",
-        "Du trives med faste rammer og struktur.",
-        "Du kan føle dig presset, når tingene går hurtigt.",
-        "Du har god udholdenhed, når du arbejder i dit eget tempo."
+        "Du arbejder bedst i roligt tempo.",
+        "Du bearbejder grundigt men langsomt.",
+        "Du har brug for mere omstillingstid.",
+        "Du trives med struktur.",
+        "Du kan foele dig presset ved hurtige skift.",
+        "Du har god udholdenhed i eget tempo."
     ],
     "Mellemprofil": [
-        "Du veksler naturligt mellem hurtig og langsom bearbejdning.",
-        "Du håndterer de fleste stimuli uden at blive overvældet.",
-        "Du har en god balance mellem intuition og eftertænksomhed.",
-        "Du kan tilpasse dig forskellige miljøer og tempoer.",
-        "Du bliver påvirket i perioder, men finder hurtigt balancen igen.",
-        "Du fungerer bredt socialt og mentalt i mange typer situationer."
+        "Du har god balance mellem tempoer.",
+        "Du haandterer stimuli fleksibelt.",
+        "Du er hverken meget hurtig eller langsom.",
+        "Du tilpasser dig let omgivelser.",
+        "Du mister sjældent balancen.",
+        "Du fungerer bredt i sociale situationer."
     ]
 }
 
@@ -221,15 +219,15 @@ total_score = sum(st.session_state.answers)
 profile = interpret_score(total_score)
 
 # -------------------------------------------------------------
-# RESULT BLOCK
+# RESULT DISPLAY
 # -------------------------------------------------------------
 st.header("Dit resultat")
 st.subheader(f"Score: {total_score} / 80")
-st.write(f"**Profil: {profile}**")
+st.write(f"Profil: {profile}")
 
-st.write("### Karakteristika for din profil:")
+st.write("### Karakteristika:")
 for s in PROFILE_TEXT[profile]:
-    st.write(f"- {s}")
+    st.write("- " + s)
 
 # -------------------------------------------------------------
 # PDF GENERATION
@@ -242,16 +240,17 @@ def generate_pdf(score, profile):
 
     story.append(Paragraph("HSP / Slow Processor Test – Rapport", styles["Title"]))
     story.append(Spacer(1, 12))
-    story.append(Paragraph(f"Samlet score: {score} / 80", styles["Heading2"]))
+    story.append(Paragraph(f"Score: {score} / 80", styles["Heading2"]))
     story.append(Paragraph(f"Profil: {profile}", styles["Heading2"]))
     story.append(Spacer(1, 12))
+    story.append(Paragraph("Karakteristika:", styles["Heading2"]))
 
-    story.append(Paragraph("Karakteristika for din profil:", styles["Heading2"]))
     for s in PROFILE_TEXT[profile]:
-        story.append(Paragraph(f"- {s}", styles["BodyText"]))
-    story.append(Spacer(1, 12))
+        story.append(Paragraph("- " + s, styles["BodyText"]))
 
+    story.append(Spacer(1, 12))
     story.append(Paragraph("Dine svar:", styles["Heading2"]))
+
     for i, q in enumerate(questions):
         story.append(Paragraph(f"{i+1}. {q} – Svar: {st.session_state.answers[i]}", styles["BodyText"]))
 
