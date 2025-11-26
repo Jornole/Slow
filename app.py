@@ -45,28 +45,30 @@ html, body, .stApp {
     margin-bottom: 8px;
 }
 
-/* Horizontal radio buttons */
+/* Stable radiobutton alignment */
 div[role='radiogroup'] {
     display: flex !important;
-    gap: 26px !important;         /* lidt større afstand mellem knapperne */
-    margin-bottom: 6px;
+    gap: 20px !important;
+    margin-bottom: 0px !important;
 }
 
-/* SCALE LABELS */
-.scale-labels {
+/* Number row */
+.custom-radio-row {
     display: flex;
     justify-content: space-between;
-    margin-top: -4px;             /* tættere på knapper */
-    font-size: 0.82rem;
-    font-weight: 600;
+    width: 260px;
+    margin: 3px 0 -2px 0;
+    font-size: 1rem;
+}
+
+/* Label row */
+.custom-radio-labels {
+    display: flex;
+    justify-content: space-between;
+    width: 260px;
+    font-size: 0.85rem;
+    margin-top: 0px;
     color: white;
-    padding: 0 6px;
-}
-.scale-labels span:nth-child(2) {
-    margin-left: 3px;             /* finjustering af "En gang imellem" */
-}
-.scale-labels span:last-child {
-    margin-right: 6px;            /* Altid længere ud mod højre */
 }
 
 /* Red buttons */
@@ -85,7 +87,7 @@ div[role='radiogroup'] {
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# LOGO
+# LOGO (CENTERED)
 # -------------------------------------------------------------
 st.markdown("""
 <div class="center-logo">
@@ -139,7 +141,7 @@ questions = [
 ]
 
 # -------------------------------------------------------------
-# SESSION STATE
+# SESSION STATE INIT
 # -------------------------------------------------------------
 if "answers" not in st.session_state:
     st.session_state.answers = [0] * len(questions)
@@ -153,6 +155,7 @@ for i, q in enumerate(questions):
 
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
+    # Radio buttons
     choice = st.radio(
         "",
         [0, 1, 2, 3, 4],
@@ -163,9 +166,16 @@ for i, q in enumerate(questions):
 
     st.session_state.answers[i] = choice
 
-    # Labels under scale
+    # Numbers under radios
     st.markdown("""
-    <div class="scale-labels">
+    <div class="custom-radio-row">
+        <span>0</span><span>1</span><span>2</span><span>3</span><span>4</span>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Text labels under numbers
+    st.markdown("""
+    <div class="custom-radio-labels">
         <span>Aldrig</span>
         <span>En gang imellem</span>
         <span>Altid</span>
@@ -181,7 +191,7 @@ if st.button("Nulstil svar"):
     st.rerun()
 
 # -------------------------------------------------------------
-# INTERPRET SCORE
+# SCORE INTERPRETATION
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
@@ -222,7 +232,7 @@ total_score = sum(st.session_state.answers)
 profile = interpret_score(total_score)
 
 # -------------------------------------------------------------
-# RESULT
+# RESULT OUTPUT
 # -------------------------------------------------------------
 st.header("Dit resultat")
 st.subheader(f"Score: {total_score} / 80")
@@ -233,7 +243,7 @@ for s in PROFILE_TEXT[profile]:
     st.write(f"- {s}")
 
 # -------------------------------------------------------------
-# PDF GENERATOR
+# PDF GENERATION
 # -------------------------------------------------------------
 def generate_pdf(score, profile):
     buffer = BytesIO()
