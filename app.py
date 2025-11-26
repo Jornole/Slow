@@ -4,14 +4,8 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
 
-# -------------------------------------------------------------
-# BASIC SETUP
-# -------------------------------------------------------------
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
-# -------------------------------------------------------------
-# GLOBAL CSS
-# -------------------------------------------------------------
 st.markdown("""
 <style>
 html, body, .stApp {
@@ -19,24 +13,12 @@ html, body, .stApp {
     color: white !important;
     font-family: Arial, sans-serif !important;
 }
-
-/* HEADER WRAPPER: LOGO + TEKST */
-.header-wrapper {
+.center-logo {
     display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-top: 15px;
-    margin-bottom: 10px;
+    justify-content: center;
+    margin-top: 20px;
+    margin-bottom: 5px;
 }
-
-/* LILLE HEADERTEKST */
-.header-text-small {
-    font-size: 1.05rem;
-    font-weight: 700;
-    line-height: 1.2;
-}
-
-/* MAIN TITLE */
 .main-title {
     font-size: 2.3rem;
     font-weight: 800;
@@ -44,23 +26,17 @@ html, body, .stApp {
     margin-top: 10px;
     margin-bottom: 25px;
 }
-
-/* QUESTION TEXT */
 .question-text {
     font-size: 1.05rem;
     font-weight: 600;
     margin-top: 18px;
     margin-bottom: 8px;
 }
-
-/* HORIZONTALE RADIOKNAPPER (0–4) */
 div[role='radiogroup'] {
     display: flex !important;
     gap: 20px !important;
     margin-bottom: 6px;
 }
-
-/* RØDE KNAPPER: RESET + PDF */
 .stButton > button, .stDownloadButton > button {
     background-color: #C62828 !important;
     color: white !important;
@@ -75,26 +51,14 @@ div[role='radiogroup'] {
 </style>
 """, unsafe_allow_html=True)
 
-# -------------------------------------------------------------
-# HEADER (LOGO + TEKST)
-# -------------------------------------------------------------
-st.markdown(f"""
-<div class="header-wrapper">
-    <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="110">
-    <div class="header-text-small">
-        HSP / SLOW<br>Processor Test
-    </div>
+st.markdown("""
+<div class="center-logo">
+    <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="160">
 </div>
 """, unsafe_allow_html=True)
 
-# -------------------------------------------------------------
-# MAIN TITLE
-# -------------------------------------------------------------
 st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
 
-# -------------------------------------------------------------
-# INTROTEKST
-# -------------------------------------------------------------
 st.markdown("""
 Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige 
 og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner.
@@ -106,9 +70,6 @@ Du besvarer 20 udsagn på en skala fra **0 (aldrig)** til **4 (altid)**.
 Testen er <u>**ikke en diagnose**</u>, men et psykologisk værktøj til selvindsigt.
 """, unsafe_allow_html=True)
 
-# -------------------------------------------------------------
-# QUESTIONS
-# -------------------------------------------------------------
 questions = [
     "Jeg bliver let overvældet af indtryk.",
     "Jeg opdager små detaljer, som andre ofte overser.",
@@ -132,30 +93,21 @@ questions = [
     "Jeg bliver let distraheret, når der sker meget omkring mig."
 ]
 
-# -------------------------------------------------------------
-# SESSION STATE
-# -------------------------------------------------------------
 if "answers" not in st.session_state:
     st.session_state.answers = [0] * len(questions)
 
-# -------------------------------------------------------------
-# RENDER QUESTIONS (0–4)
-# -------------------------------------------------------------
 for i, q in enumerate(questions):
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
     choice = st.radio("", [0,1,2,3,4], key=f"q_{i}", horizontal=True, label_visibility="collapsed")
     st.session_state.answers[i] = choice
 
-# -------------------------------------------------------------
-# RESET KNAP (STABIL VERSION)
-# -------------------------------------------------------------
 if st.button("Nulstil svar"):
+    for i in range(len(questions)):
+        if f"q_{i}" in st.session_state:
+            del st.session_state[f"q_{i}"]
     st.session_state.answers = [0] * len(questions)
-    st.rerun()  # ✔ erstatter deprecated experimental_rerun
+    st.rerun()
 
-# -------------------------------------------------------------
-# PROFIL-FORTOLKNING
-# -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
         return "Slow Processor"
@@ -194,9 +146,6 @@ PROFILE_TEXT = {
 total_score = sum(st.session_state.answers)
 profile = interpret_score(total_score)
 
-# -------------------------------------------------------------
-# RESULTATVISNING
-# -------------------------------------------------------------
 st.header("Dit resultat")
 st.subheader(f"Score: {total_score} / 80")
 st.write(f"**Profil: {profile}**")
@@ -205,9 +154,6 @@ st.write("### Karakteristika for din profil:")
 for s in PROFILE_TEXT[profile]:
     st.write(f"- {s}")
 
-# -------------------------------------------------------------
-# PDF GENERERING
-# -------------------------------------------------------------
 def generate_pdf(score, profile):
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter)
