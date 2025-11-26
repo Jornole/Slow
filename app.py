@@ -1,3 +1,7 @@
+# -------------------------------------------------------------
+# HSP / Slow Processor Test – Version 8
+# -------------------------------------------------------------
+
 import streamlit as st
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.pagesizes import letter
@@ -9,103 +13,110 @@ from io import BytesIO
 # -------------------------------------------------------------
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
+VERSION = "v8"
+
 # -------------------------------------------------------------
 # GLOBAL CSS
 # -------------------------------------------------------------
-st.markdown("""
+st.markdown(f"""
 <style>
 
-html, body, .stApp {
+html, body, .stApp {{
     background-color: #1A6333 !important;
     color: white !important;
     font-family: Arial, sans-serif !important;
-}
+}}
 
 /* Centered logo */
-.center-logo {
+.center-logo {{
     display: flex;
     justify-content: center;
     margin-top: 20px;
     margin-bottom: 5px;
-}
+}}
 
 /* Main title */
-.main-title {
+.main-title {{
     font-size: 2.3rem;
     font-weight: 800;
     text-align: center;
     margin-top: 10px;
     margin-bottom: 25px;
-}
+}}
 
 /* Question text */
-.question-text {
+.question-text {{
     font-size: 1.05rem;
     font-weight: 600;
     margin-top: 18px;
     margin-bottom: 6px;
-}
+}}
 
-/* RADIO GRID WRAPPER */
-.scale-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    column-gap: 0px;
-    width: 100%;
-    justify-items: center;
-}
+/* Wrapper rundt om hver skala (radio + labels) */
+.scale-wrapper > div[data-testid="stRadio"] > div {{
+    width: 100% !important;
+}}
 
-/* Hide Streamlit radio inputs */
-.scale-grid > div label > div:nth-child(1) {
+/* Selve radiogruppen */
+.scale-wrapper div[role="radiogroup"] {{
+    display: flex !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    margin-bottom: 0 !important;
+}}
+
+/* Hver radio som en kolonne */
+.scale-wrapper div[role="radiogroup"] > label {{
+    flex: 1 !important;
+    display: flex !important;
+    justify-content: center !important;
+}}
+
+/* Skjul tallene (0–4) inde i radioen */
+.scale-wrapper div[role="radiogroup"] span {{
     display: none !important;
-}
+}}
 
-/* Style the radio circles */
-.scale-grid > div label > div:nth-child(2) {
-    width: 22px !important;
-    height: 22px !important;
-    border-radius: 50% !important;
-    border: 2px solid white !important;
-    background-color: transparent !important;
-    margin: 0 auto !important;
-}
+/* Tekstlinje under knapperne */
+.scale-row {{
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    margin-top: -2px;
+    margin-bottom: 30px;
+}}
 
-/* Selected state */
-.scale-grid input:checked + div {
-    background-color: white !important;
-}
-
-/* LABELS BELOW BUTTONS */
-.scale-labels {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
+.scale-row span {{
+    flex: 1;
     text-align: center;
     font-size: 0.85rem;
-    margin-top: 6px;
-    margin-bottom: 32px;
-}
+}}
 
-/* Red buttons */
-.stButton > button, .stDownloadButton > button {
+/* Røde knapper (Nulstil + PDF) */
+.stButton > button, .stDownloadButton > button {{
     background-color: #C62828 !important;
     color: white !important;
     border-radius: 8px !important;
     padding: 0.6rem 1.4rem !important;
     font-weight: 600 !important;
     border: none !important;
-}
-.stButton > button:hover, .stDownloadButton > button:hover {
-    background-color: #B71C1C !important;
-}
+}}
 
-/* Version number */
-.version {
+.stButton > button:hover, .stDownloadButton > button:hover {{
+    background-color: #B71C1C !important;
+}}
+
+/* Versionsnummer nederst til venstre */
+.version-tag {{
+    position: fixed;
+    bottom: 6px;
+    left: 10px;
     font-size: 0.75rem;
-    opacity: 0.6;
-    margin-top: 20px;
-}
+    opacity: 0.7;
+}}
 
 </style>
+<div class="version-tag">{VERSION}</div>
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
@@ -118,12 +129,12 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# TITLE
+# MAIN TITLE
 # -------------------------------------------------------------
 st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# INTRO
+# INTRO TEKST
 # -------------------------------------------------------------
 st.markdown("""
 Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige 
@@ -160,6 +171,8 @@ questions = [
     "Jeg bliver let distraheret, når der sker meget omkring mig."
 ]
 
+labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
+
 # -------------------------------------------------------------
 # SESSION STATE
 # -------------------------------------------------------------
@@ -169,34 +182,34 @@ if "reset_trigger" not in st.session_state:
     st.session_state.reset_trigger = 0
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS
+# RENDER QUESTIONS (RADIO + LABELS)
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    cols = st.columns(1)
-    with cols[0]:
-        choice = st.radio(
-            "",
-            [0, 1, 2, 3, 4],
-            key=f"q_{i}_{st.session_state.reset_trigger}",
-            horizontal=True,
-            label_visibility="collapsed",
-        )
+    # Wrapper så CSS kan ramme radio-gruppen
+    st.markdown("<div class='scale-wrapper'>", unsafe_allow_html=True)
+
+    choice = st.radio(
+        "",
+        [0, 1, 2, 3, 4],
+        key=f"q_{i}_{st.session_state.reset_trigger}",
+        horizontal=True,
+        label_visibility="collapsed",
+        format_func=lambda x: ""  # skjul tal
+    )
     st.session_state.answers[i] = choice
 
-    st.markdown("""
-    <div class="scale-labels">
-        <span>Aldrig</span>
-        <span>Sjældent</span>
-        <span>Nogle gange</span>
-        <span>Ofte</span>
-        <span>Altid</span>
-    </div>
-    """, unsafe_allow_html=True)
+    # Tekstlinjen under knapperne
+    st.markdown(
+        "<div class='scale-row'>" +
+        "".join(f"<span>{lab}</span>" for lab in labels) +
+        "</div></div>",
+        unsafe_allow_html=True
+    )
 
 # -------------------------------------------------------------
-# RESET BUTTON
+# RESET KNAP
 # -------------------------------------------------------------
 if st.button("Nulstil svar"):
     st.session_state.answers = [0] * len(questions)
@@ -204,9 +217,9 @@ if st.button("Nulstil svar"):
     st.rerun()
 
 # -------------------------------------------------------------
-# INTERPRETATION
+# PROFIL-FORTOLKNING
 # -------------------------------------------------------------
-def interpret_score(score):
+def interpret_score(score: int) -> str:
     if score <= 26:
         return "Slow Processor"
     elif score <= 53:
@@ -245,7 +258,7 @@ total_score = sum(st.session_state.answers)
 profile = interpret_score(total_score)
 
 # -------------------------------------------------------------
-# RESULT BLOCK
+# RESULTATVISNING
 # -------------------------------------------------------------
 st.header("Dit resultat")
 st.subheader(f"Score: {total_score} / 80")
@@ -258,7 +271,7 @@ for s in PROFILE_TEXT[profile]:
 # -------------------------------------------------------------
 # PDF GENERATOR
 # -------------------------------------------------------------
-def generate_pdf(score, profile):
+def generate_pdf(score: int, profile: str) -> BytesIO:
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter)
     styles = getSampleStyleSheet()
@@ -277,10 +290,12 @@ def generate_pdf(score, profile):
 
     story.append(Paragraph("Dine svar:", styles["Heading2"]))
     for i, q in enumerate(questions):
-        story.append(Paragraph(
-            f"{i+1}. {q} – Svar: {st.session_state.answers[i]}",
-            styles["BodyText"]
-        ))
+        story.append(
+            Paragraph(
+                f"{i+1}. {q} – Svar: {st.session_state.answers[i]}",
+                styles["BodyText"],
+            )
+        )
 
     doc.build(story)
     buffer.seek(0)
@@ -292,8 +307,3 @@ st.download_button(
     file_name="HSP_SlowProcessor_Rapport.pdf",
     mime="application/pdf"
 )
-
-# -------------------------------------------------------------
-# VERSION NUMBER (v7)
-# -------------------------------------------------------------
-st.markdown("<div class='version'>Version 7</div>", unsafe_allow_html=True)
