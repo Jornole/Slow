@@ -14,13 +14,13 @@ st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 # -------------------------------------------------------------
 st.markdown("""
 <style>
+
 html, body, .stApp {
     background-color: #1A6333 !important;
     color: white !important;
     font-family: Arial, sans-serif !important;
 }
 
-/* Centered logo */
 .center-logo {
     display: flex;
     justify-content: center;
@@ -45,34 +45,38 @@ html, body, .stApp {
     margin-bottom: 4px;
 }
 
-/* --- HORIZONTAL RADIO WITH MAX SPREAD --- */
+/* --- FLEX GRID FOR KNAPPERNE (0–4 radios) --- */
 div[role='radiogroup'] {
     display: flex !important;
-    width: 100% !important;
     justify-content: space-between !important;
-    margin-bottom: 0px !important;
+    width: 100% !important;
+    margin-bottom: 0 !important;
 }
 
 div[role='radiogroup'] > label {
-    flex-grow: 1 !important;
+    flex-basis: 33% !important;
     display: flex !important;
     justify-content: center !important;
 }
 
-/* Hide the numbers on the buttons */
+/* HIDE numbers inside radio buttons */
 div[role='radiogroup'] span {
     display: none !important;
 }
 
-/* Text labels under buttons */
-.scale-labels {
+/* --- LABELS UNDER KNAPPERNE --- */
+.scale-row {
     display: flex;
     justify-content: space-between;
     width: 100%;
-    margin-top: -4px;
-    margin-bottom: 10px;
+    margin-top: -8px;
+    margin-bottom: 22px;
+}
+
+.scale-row span {
+    flex-basis: 33%;
+    text-align: center;
     font-size: 0.85rem;
-    color: white;
 }
 
 /* Red buttons */
@@ -84,14 +88,16 @@ div[role='radiogroup'] span {
     font-weight: 600 !important;
     border: none !important;
 }
+
 .stButton > button:hover, .stDownloadButton > button:hover {
     background-color: #B71C1C !important;
 }
+
 </style>
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# LOGO (CENTERED)
+# LOGO
 # -------------------------------------------------------------
 st.markdown("""
 <div class="center-logo">
@@ -105,13 +111,11 @@ st.markdown("""
 st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# INTRO TEXT
+# INTRO
 # -------------------------------------------------------------
 st.markdown("""
 Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige 
 og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner.
-Testen undersøger, om dine reaktioner er mere intuitive og impulsstyrede – 
-eller mere langsomme, bearbejdende og eftertænksomme.
 
 Du besvarer 20 udsagn på en skala fra **0 (aldrig)** til **4 (altid)**.
 
@@ -149,7 +153,6 @@ questions = [
 # -------------------------------------------------------------
 if "answers" not in st.session_state:
     st.session_state.answers = [0] * len(questions)
-
 if "reset_trigger" not in st.session_state:
     st.session_state.reset_trigger = 0
 
@@ -157,11 +160,12 @@ if "reset_trigger" not in st.session_state:
 # RENDER QUESTIONS
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
+
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
     choice = st.radio(
         "",
-        options=[0, 1, 2, 3, 4],
+        [0, 2, 4],  # internal values that add correctly (0, mid, high)
         key=f"q_{i}_{st.session_state.reset_trigger}",
         horizontal=True,
         label_visibility="collapsed"
@@ -170,7 +174,7 @@ for i, q in enumerate(questions):
     st.session_state.answers[i] = choice
 
     st.markdown("""
-    <div class="scale-labels">
+    <div class="scale-row">
         <span>Aldrig</span>
         <span>En gang imellem</span>
         <span>Altid</span>
@@ -227,7 +231,7 @@ total_score = sum(st.session_state.answers)
 profile = interpret_score(total_score)
 
 # -------------------------------------------------------------
-# RESULT
+# RESULT BLOCK
 # -------------------------------------------------------------
 st.header("Dit resultat")
 st.subheader(f"Score: {total_score} / 80")
@@ -238,7 +242,7 @@ for s in PROFILE_TEXT[profile]:
     st.write(f"- {s}")
 
 # -------------------------------------------------------------
-# PDF GENERATION
+# PDF GENERATOR
 # -------------------------------------------------------------
 def generate_pdf(score, profile):
     buffer = BytesIO()
