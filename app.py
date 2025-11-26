@@ -1,7 +1,3 @@
-# -------------------------------------------------------------
-# HSP / Slow Processor Test – Version 8
-# -------------------------------------------------------------
-
 import streamlit as st
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.pagesizes import letter
@@ -13,117 +9,94 @@ from io import BytesIO
 # -------------------------------------------------------------
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
-VERSION = "v8"
-
 # -------------------------------------------------------------
-# GLOBAL CSS
+# CSS — v9 (PERFEKT ALIGNMENT)
 # -------------------------------------------------------------
-st.markdown(f"""
+st.markdown("""
 <style>
 
-html, body, .stApp {{
+html, body, .stApp {
     background-color: #1A6333 !important;
     color: white !important;
     font-family: Arial, sans-serif !important;
-}}
+}
 
-/* Centered logo */
-.center-logo {{
-    display: flex;
-    justify-content: center;
-    margin-top: 20px;
-    margin-bottom: 5px;
-}}
+/* Version label */
+.version-tag {
+    position: fixed;
+    bottom: 8px;
+    left: 12px;
+    opacity: 0.55;
+    font-size: 0.75rem;
+}
 
 /* Main title */
-.main-title {{
+.main-title {
     font-size: 2.3rem;
     font-weight: 800;
     text-align: center;
     margin-top: 10px;
     margin-bottom: 25px;
-}}
+}
 
 /* Question text */
-.question-text {{
+.question-text {
     font-size: 1.05rem;
     font-weight: 600;
-    margin-top: 18px;
-    margin-bottom: 6px;
-}}
+    margin-top: 22px;
+    margin-bottom: 10px;
+}
 
-/* Wrapper rundt om hver skala (radio + labels) */
-.scale-wrapper > div[data-testid="stRadio"] > div {{
-    width: 100% !important;
-}}
-
-/* Selve radiogruppen */
-.scale-wrapper div[role="radiogroup"] {{
-    display: flex !important;
-    justify-content: space-between !important;
-    width: 100% !important;
-    margin-bottom: 0 !important;
-}}
-
-/* Hver radio som en kolonne */
-.scale-wrapper div[role="radiogroup"] > label {{
-    flex: 1 !important;
-    display: flex !important;
-    justify-content: center !important;
-}}
-
-/* Skjul tallene (0–4) inde i radioen */
-.scale-wrapper div[role="radiogroup"] span {{
-    display: none !important;
-}}
-
-/* Tekstlinje under knapperne */
-.scale-row {{
-    display: flex;
-    justify-content: space-between;
+/* --- PERFECT 5-COLUMN GRID --- */
+.scale-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
     width: 100%;
-    margin-top: -2px;
-    margin-bottom: 30px;
-}}
+    align-items: center;
+    justify-items: center;
+    margin-bottom: -4px;
+}
 
-.scale-row span {{
-    flex: 1;
+.scale-grid label > div {
+    transform: scale(1.25);
+}
+
+/* hide numbers inside radio items */
+.scale-grid span {
+    display: none !important;
+}
+
+/* Labels under */
+.scale-labels {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
     text-align: center;
     font-size: 0.85rem;
-}}
+    margin-top: 4px;
+    margin-bottom: 26px;
+}
 
-/* Røde knapper (Nulstil + PDF) */
-.stButton > button, .stDownloadButton > button {{
+/* Buttons */
+.stButton > button, .stDownloadButton > button {
     background-color: #C62828 !important;
     color: white !important;
     border-radius: 8px !important;
     padding: 0.6rem 1.4rem !important;
     font-weight: 600 !important;
     border: none !important;
-}}
-
-.stButton > button:hover, .stDownloadButton > button:hover {{
+}
+.stButton > button:hover, .stDownloadButton > button:hover {
     background-color: #B71C1C !important;
-}}
-
-/* Versionsnummer nederst til venstre */
-.version-tag {{
-    position: fixed;
-    bottom: 6px;
-    left: 10px;
-    font-size: 0.75rem;
-    opacity: 0.7;
-}}
+}
 
 </style>
-<div class="version-tag">{VERSION}</div>
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
 # LOGO
 # -------------------------------------------------------------
 st.markdown("""
-<div class="center-logo">
+<div style="display:flex; justify-content:center; margin-top:20px; margin-bottom:5px;">
     <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="160">
 </div>
 """, unsafe_allow_html=True)
@@ -134,7 +107,7 @@ st.markdown("""
 st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# INTRO TEKST
+# INTRO TEXT
 # -------------------------------------------------------------
 st.markdown("""
 Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige 
@@ -171,10 +144,8 @@ questions = [
     "Jeg bliver let distraheret, når der sker meget omkring mig."
 ]
 
-labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
-
 # -------------------------------------------------------------
-# SESSION STATE
+# SESSION STATE INIT
 # -------------------------------------------------------------
 if "answers" not in st.session_state:
     st.session_state.answers = [0] * len(questions)
@@ -182,34 +153,36 @@ if "reset_trigger" not in st.session_state:
     st.session_state.reset_trigger = 0
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS (RADIO + LABELS)
+# RENDER QUESTIONS — v9 GRID SYSTEM
 # -------------------------------------------------------------
+labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
+
 for i, q in enumerate(questions):
+
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    # Wrapper så CSS kan ramme radio-gruppen
-    st.markdown("<div class='scale-wrapper'>", unsafe_allow_html=True)
+    # RADIO in perfect grid
+    cols = st.columns(5)
+    for idx in range(5):
+        with cols[idx]:
+            if st.radio(
+                "",
+                [idx],
+                key=f"q_{i}_{idx}_{st.session_state.reset_trigger}",
+                label_visibility="collapsed"
+            ) == idx:
+                st.session_state.answers[i] = idx
 
-    choice = st.radio(
-        "",
-        [0, 1, 2, 3, 4],
-        key=f"q_{i}_{st.session_state.reset_trigger}",
-        horizontal=True,
-        label_visibility="collapsed",
-        format_func=lambda x: ""  # skjul tal
-    )
-    st.session_state.answers[i] = choice
-
-    # Tekstlinjen under knapperne
+    # LABELS under grid
     st.markdown(
-        "<div class='scale-row'>" +
-        "".join(f"<span>{lab}</span>" for lab in labels) +
-        "</div></div>",
+        "<div class='scale-labels'>" +
+        "".join([f"<div>{lab}</div>" for lab in labels]) +
+        "</div>",
         unsafe_allow_html=True
     )
 
 # -------------------------------------------------------------
-# RESET KNAP
+# RESET BUTTON
 # -------------------------------------------------------------
 if st.button("Nulstil svar"):
     st.session_state.answers = [0] * len(questions)
@@ -217,9 +190,9 @@ if st.button("Nulstil svar"):
     st.rerun()
 
 # -------------------------------------------------------------
-# PROFIL-FORTOLKNING
+# INTERPRETATION
 # -------------------------------------------------------------
-def interpret_score(score: int) -> str:
+def interpret_score(score):
     if score <= 26:
         return "Slow Processor"
     elif score <= 53:
@@ -242,7 +215,7 @@ PROFILE_TEXT = {
         "Du har brug for ekstra tid til omstilling og beslutninger.",
         "Du trives med faste rammer og struktur.",
         "Du kan føle dig presset, når tingene går hurtigt.",
-        "Du har god udholdenhed, når du arbejder i dit eget tempo."
+        "Du har god udholdenhed, når arbejder i dit eget tempo."
     ],
     "Mellemprofil": [
         "Du veksler naturligt mellem hurtig og langsom bearbejdning.",
@@ -258,7 +231,7 @@ total_score = sum(st.session_state.answers)
 profile = interpret_score(total_score)
 
 # -------------------------------------------------------------
-# RESULTATVISNING
+# RESULT BLOCK
 # -------------------------------------------------------------
 st.header("Dit resultat")
 st.subheader(f"Score: {total_score} / 80")
@@ -269,9 +242,9 @@ for s in PROFILE_TEXT[profile]:
     st.write(f"- {s}")
 
 # -------------------------------------------------------------
-# PDF GENERATOR
+# PDF GENERATION
 # -------------------------------------------------------------
-def generate_pdf(score: int, profile: str) -> BytesIO:
+def generate_pdf(score, profile):
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter)
     styles = getSampleStyleSheet()
@@ -290,12 +263,7 @@ def generate_pdf(score: int, profile: str) -> BytesIO:
 
     story.append(Paragraph("Dine svar:", styles["Heading2"]))
     for i, q in enumerate(questions):
-        story.append(
-            Paragraph(
-                f"{i+1}. {q} – Svar: {st.session_state.answers[i]}",
-                styles["BodyText"],
-            )
-        )
+        story.append(Paragraph(f"{i+1}. {q} – Svar: {st.session_state.answers[i]}", styles["BodyText"]))
 
     doc.build(story)
     buffer.seek(0)
@@ -307,3 +275,6 @@ st.download_button(
     file_name="HSP_SlowProcessor_Rapport.pdf",
     mime="application/pdf"
 )
+
+# VERSION TAG
+st.markdown("<div class='version-tag'>v9</div>", unsafe_allow_html=True)
