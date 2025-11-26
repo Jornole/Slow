@@ -45,29 +45,28 @@ html, body, .stApp {
     margin-bottom: 8px;
 }
 
-/* Stable radiobutton alignment */
+/* Horizontal radio buttons (Streamlit core) */
 div[role='radiogroup'] {
     display: flex !important;
     gap: 20px !important;
-    margin-bottom: 0px !important;
+    margin-bottom: 6px;
 }
 
-/* Number row */
+/* FIXED NUMBER ROW */
 .custom-radio-row {
     display: flex;
     justify-content: space-between;
     width: 260px;
-    margin: 3px 0 -2px 0;
-    font-size: 1rem;
+    margin: -4px 0 -2px 0;
 }
 
-/* Label row */
+/* FIXED LABEL ROW (moved up closer to buttons) */
 .custom-radio-labels {
     display: flex;
     justify-content: space-between;
     width: 260px;
     font-size: 0.85rem;
-    margin-top: 0px;
+    margin-top: -10px;   /* <-- entire label-line moved up */
     color: white;
 }
 
@@ -149,13 +148,12 @@ if "reset_trigger" not in st.session_state:
     st.session_state.reset_trigger = 0
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS
+# RENDER QUESTIONS (WITH STABLE RADIO + LABELS)
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
 
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    # Radio buttons
     choice = st.radio(
         "",
         [0, 1, 2, 3, 4],
@@ -164,16 +162,14 @@ for i, q in enumerate(questions):
         label_visibility="collapsed"
     )
 
-    st.session_state.answers[i] = choice
-
-    # Numbers under radios
+    # Number row
     st.markdown("""
     <div class="custom-radio-row">
         <span>0</span><span>1</span><span>2</span><span>3</span><span>4</span>
     </div>
     """, unsafe_allow_html=True)
 
-    # Text labels under numbers
+    # Label row
     st.markdown("""
     <div class="custom-radio-labels">
         <span>Aldrig</span>
@@ -181,6 +177,8 @@ for i, q in enumerate(questions):
         <span>Altid</span>
     </div>
     """, unsafe_allow_html=True)
+
+    st.session_state.answers[i] = choice
 
 # -------------------------------------------------------------
 # RESET BUTTON
@@ -191,7 +189,7 @@ if st.button("Nulstil svar"):
     st.rerun()
 
 # -------------------------------------------------------------
-# SCORE INTERPRETATION
+# INTERPRETATION
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
@@ -232,7 +230,7 @@ total_score = sum(st.session_state.answers)
 profile = interpret_score(total_score)
 
 # -------------------------------------------------------------
-# RESULT OUTPUT
+# RESULT BLOCK
 # -------------------------------------------------------------
 st.header("Dit resultat")
 st.subheader(f"Score: {total_score} / 80")
