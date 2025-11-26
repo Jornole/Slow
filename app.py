@@ -12,8 +12,7 @@ st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 # -------------------------------------------------------------
 # GLOBAL CSS
 # -------------------------------------------------------------
-st.markdown(
-    """
+st.markdown("""
 <style>
 html, body, .stApp {
     background-color: #1A6333 !important;
@@ -21,115 +20,51 @@ html, body, .stApp {
     font-family: Arial, sans-serif !important;
 }
 
-/* Centered logo */
-.center-logo {
-    display: flex;
-    justify-content: center;
-    margin-top: 20px;
-    margin-bottom: 5px;
-}
-
-/* Main title */
-.main-title {
-    font-size: 2.3rem;
-    font-weight: 800;
-    text-align: center;
-    margin-top: 10px;
-    margin-bottom: 25px;
-}
-
-/* Question text */
 .question-text {
-    font-size: 1.05rem;
+    font-size: 1.1rem;
     font-weight: 600;
-    margin-top: 18px;
-    margin-bottom: 6px;
+    margin-top: 22px;
+    margin-bottom: 10px;
 }
 
-/* RADIO-GRUPPER: 5 knapper spredt ud, tekst under og klikbar */
-div[role="radiogroup"] {
-    display: flex !important;
-    justify-content: space-between !important;
-    width: 100% !important;
-    margin-bottom: 0.4rem !important;
+/* Radio labels hvide */
+.stRadio label {
+    color: white !important;
 }
 
-div[role="radiogroup"] > label {
-    flex: 1 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: flex-start !important;
-    gap: 0.15rem !important;
-}
-
-/* selve radio-cirklen lidt tættere på teksten */
-div[role="radiogroup"] > label > div:first-child {
-    margin-bottom: 0 !important;
-}
-
-/* Teksten under cirklen */
-div[role="radiogroup"] > label > div:last-child {
-    font-size: 0.85rem !important;
-}
-
-/* Røde knapper: reset + PDF */
+/* Røde knapper */
 .stButton > button, .stDownloadButton > button {
     background-color: #C62828 !important;
     color: white !important;
     border-radius: 8px !important;
-    padding: 0.6rem 1.4rem !important;
+    padding: 0.6rem 1.3rem !important;
     font-weight: 600 !important;
     border: none !important;
 }
-.stButton > button:hover, .stDownloadButton > button:hover {
-    background-color: #B71C1C !important;
-}
-
-/* Versionsnummer nederst til venstre */
-.app-version {
-    position: fixed;
-    left: 10px;
-    bottom: 8px;
-    font-size: 0.75rem;
-    opacity: 0.85;
-}
 </style>
-""",
-    unsafe_allow_html=True,
-)
+""", unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# LOGO (CENTERED)
+# LOGO
 # -------------------------------------------------------------
-st.markdown(
-    """
-<div class="center-logo">
+st.markdown("""
+<div style="text-align:center; margin-top:15px;">
     <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="160">
 </div>
-""",
-    unsafe_allow_html=True,
-)
+""", unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# MAIN TITLE
+# TITLE + INTRO
 # -------------------------------------------------------------
-st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
+st.markdown("""
+# DIN PERSONLIGE PROFIL
 
-# -------------------------------------------------------------
-# INTRO TEXT
-# -------------------------------------------------------------
-st.markdown(
-    """
-Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige 
-og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner.
+Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige og sansemæssige indtryk.
 
 Du besvarer 20 udsagn på en skala fra **Aldrig** til **Altid**.
 
 Testen er <u>**ikke en diagnose**</u>, men et psykologisk værktøj til selvindsigt.
-""",
-    unsafe_allow_html=True,
-)
+""", unsafe_allow_html=True)
 
 # -------------------------------------------------------------
 # QUESTIONS
@@ -157,54 +92,50 @@ questions = [
     "Jeg bliver let distraheret, når der sker meget omkring mig."
 ]
 
-# Skala-tekster (vises under knapperne) – og bruges som radio-options
 scale_labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
 
 # -------------------------------------------------------------
-# SESSION STATE INIT
+# SESSION
 # -------------------------------------------------------------
 if "answers" not in st.session_state:
-    # gemmer score 0–4 for hvert spørgsmål
     st.session_state.answers = [0] * len(questions)
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS
+# RENDER EACH QUESTION (5-column stable layout)
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
-    st.markdown(
-        f"<div class='question-text'>{i+1}. {q}</div>",
-        unsafe_allow_html=True,
-    )
 
-    # nuværende score (0–4) for dette spørgsmål
-    current_score = st.session_state.answers[i]
-    # den label der svarer til scoren
-    current_label = scale_labels[current_score]
+    st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    # radio med labels – tekst er under cirklen (styret af CSS)
-    choice_label = st.radio(
-        label="",
-        options=scale_labels,
-        index=scale_labels.index(current_label),
-        key=f"q_{i}",
-        horizontal=True,
-        label_visibility="collapsed",
-    )
+    cols = st.columns(5)
+    current = st.session_state.answers[i]
 
-    # opdater score (0–4) ud fra valgt label
-    st.session_state.answers[i] = scale_labels.index(choice_label)
+    for idx in range(5):
+        with cols[idx]:
+            clicked = st.radio(
+                label=f"<span style='color:white;'>{scale_labels[idx]}</span>",
+                options=[0],     # Streamlit requires an options list
+                key=f"q_{i}_{idx}",
+                label_visibility="visible"
+            )
+
+            # Hvis denne radioknap blev trykket ⇒ opdater svaret
+            if f"q_{i}_{idx}" in st.session_state:
+                if st.session_state.answers[i] != idx:
+                    st.session_state.answers[i] = idx
+                    st.rerun()
 
 # -------------------------------------------------------------
 # RESET BUTTON
 # -------------------------------------------------------------
 if st.button("Nulstil svar"):
     st.session_state.answers = [0] * len(questions)
-    st.experimental_rerun()
+    st.rerun()
 
 # -------------------------------------------------------------
 # INTERPRETATION
 # -------------------------------------------------------------
-def interpret_score(score: int) -> str:
+def interpret_score(score):
     if score <= 26:
         return "Slow Processor"
     elif score <= 53:
@@ -243,11 +174,11 @@ total_score = sum(st.session_state.answers)
 profile = interpret_score(total_score)
 
 # -------------------------------------------------------------
-# RESULT BLOCK
+# RESULT
 # -------------------------------------------------------------
 st.header("Dit resultat")
 st.subheader(f"Score: {total_score} / 80")
-st.write(f"**Profil: {profile}**")
+st.subheader(f"Profil: {profile}")
 
 st.write("### Karakteristika for din profil:")
 for s in PROFILE_TEXT[profile]:
@@ -256,7 +187,7 @@ for s in PROFILE_TEXT[profile]:
 # -------------------------------------------------------------
 # PDF GENERATOR
 # -------------------------------------------------------------
-def generate_pdf(score: int, profile: str) -> BytesIO:
+def generate_pdf(score, profile):
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter)
     styles = getSampleStyleSheet()
@@ -275,12 +206,7 @@ def generate_pdf(score: int, profile: str) -> BytesIO:
 
     story.append(Paragraph("Dine svar:", styles["Heading2"]))
     for i, q in enumerate(questions):
-        story.append(
-            Paragraph(
-                f"{i+1}. {q} – Svar: {st.session_state.answers[i]}",
-                styles["BodyText"],
-            )
-        )
+        story.append(Paragraph(f"{i+1}. {q} – Svar: {st.session_state.answers[i]}", styles["BodyText"]))
 
     doc.build(story)
     buffer.seek(0)
@@ -290,10 +216,10 @@ st.download_button(
     "Download PDF-rapport",
     data=generate_pdf(total_score, profile),
     file_name="HSP_SlowProcessor_Rapport.pdf",
-    mime="application/pdf",
+    mime="application/pdf"
 )
 
 # -------------------------------------------------------------
-# VERSION LABEL
+# VERSION NUMBER
 # -------------------------------------------------------------
-st.markdown('<div class="app-version">Version v18</div>', unsafe_allow_html=True)
+st.markdown("<div style='color: white; font-size: 0.8rem;'>Version v19</div>", unsafe_allow_html=True)
