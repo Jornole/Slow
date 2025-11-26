@@ -20,20 +20,12 @@ html, body, .stApp {
     font-family: Arial, sans-serif !important;
 }
 
-/* HEADER WRAPPER: LOGO + TEKST */
-.header-wrapper {
+/* CENTRERET LOGO */
+.center-logo {
     display: flex;
-    align-items: center;
-    gap: 16px;
+    justify-content: center;
     margin-top: 15px;
     margin-bottom: 10px;
-}
-
-/* LILLE HEADERTEKST TIL HØJRE FOR LOGO */
-.header-text-small {
-    font-size: 1.05rem;
-    font-weight: 700;
-    line-height: 1.2;
 }
 
 /* MAIN TITLE */
@@ -76,15 +68,11 @@ div[role='radiogroup'] {
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# HEADER (LOGO + LILLE TEKST)
+# HEADER – KUN LOGO I MIDTEN
 # -------------------------------------------------------------
-st.markdown(f"""
-<div class="header-wrapper">
-    <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="110">
-    <div class="header-text-small">
-        HSP / SLOW<br>
-        Processor Test
-    </div>
+st.markdown("""
+<div class="center-logo">
+    <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="130">
 </div>
 """, unsafe_allow_html=True)
 
@@ -140,21 +128,11 @@ if "answers" not in st.session_state:
     st.session_state.answers = [0] * len(questions)
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS MED VANDRET RADIO 0–4
+# RENDER QUESTIONS
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
-    st.markdown(
-        f"<div class='question-text'>{i+1}. {q}</div>",
-        unsafe_allow_html=True,
-    )
-
-    choice = st.radio(
-        "",
-        options=[0, 1, 2, 3, 4],
-        key=f"q_{i}",
-        horizontal=True,
-        label_visibility="collapsed",
-    )
+    st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
+    choice = st.radio("", [0, 1, 2, 3, 4], key=f"q_{i}", horizontal=True, label_visibility="collapsed")
     st.session_state.answers[i] = choice
 
 # -------------------------------------------------------------
@@ -165,9 +143,9 @@ if st.button("Nulstil svar"):
     st.experimental_rerun()
 
 # -------------------------------------------------------------
-# PROFIL-FORTOLKNING
+# SCORE & PROFIL
 # -------------------------------------------------------------
-def interpret_score(score: int) -> str:
+def interpret_score(score):
     if score <= 26:
         return "Slow Processor"
     elif score <= 53:
@@ -205,9 +183,6 @@ PROFILE_TEXT = {
 total_score = sum(st.session_state.answers)
 profile = interpret_score(total_score)
 
-# -------------------------------------------------------------
-# RESULTATVISNING
-# -------------------------------------------------------------
 st.header("Dit resultat")
 st.subheader(f"Score: {total_score} / 80")
 st.write(f"**Profil: {profile}**")
@@ -217,33 +192,26 @@ for s in PROFILE_TEXT[profile]:
     st.write(f"- {s}")
 
 # -------------------------------------------------------------
-# PDF-RAPPORT
+# PDF DOWNLOAD
 # -------------------------------------------------------------
-def generate_pdf(score: int, profile: str) -> BytesIO:
+def generate_pdf(score, profile):
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter)
     styles = getSampleStyleSheet()
     story = []
 
     story.append(Paragraph("HSP / Slow Processor Test – Rapport", styles["Title"]))
-    story.append(Spacer(1, 12))
     story.append(Paragraph(f"Samlet score: {score} / 80", styles["Heading2"]))
     story.append(Paragraph(f"Profil: {profile}", styles["Heading2"]))
     story.append(Spacer(1, 12))
 
-    story.append(Paragraph("Karakteristika for din profil:", styles["Heading2"]))
     for s in PROFILE_TEXT[profile]:
         story.append(Paragraph(f"- {s}", styles["BodyText"]))
     story.append(Spacer(1, 12))
 
     story.append(Paragraph("Dine svar:", styles["Heading2"]))
     for i, q in enumerate(questions):
-        story.append(
-            Paragraph(
-                f"{i+1}. {q} – Svar: {st.session_state.answers[i]}",
-                styles["BodyText"],
-            )
-        )
+        story.append(Paragraph(f"{i+1}. {q} – Svar: {st.session_state.answers[i]}", styles["BodyText"]))
 
     doc.build(story)
     buffer.seek(0)
@@ -253,5 +221,5 @@ st.download_button(
     "Download PDF-rapport",
     data=generate_pdf(total_score, profile),
     file_name="HSP_SlowProcessor_Rapport.pdf",
-    mime="application/pdf",
+    mime="application/pdf"
 )
