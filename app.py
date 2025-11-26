@@ -46,35 +46,42 @@ html, body, .stApp {
     margin-bottom: 4px;
 }
 
-/* --- BUTTON GRID (no numbers visible) --- */
-div[role='radiogroup'] {
+/* Wrapper for one scale (buttons + labels) */
+.scale-wrapper {
+    width: 100%;
+}
+
+/* Radio row (5 knapper) */
+.scale-wrapper div[role='radiogroup'] {
     display: flex !important;
     justify-content: space-between !important;
     width: 100% !important;
     margin-bottom: 0 !important;
 }
 
-div[role='radiogroup'] > label {
-    flex: 1 !important;                      /* SAME WIDTH AS TEXT BELOW */
+/* Each radio "cell" */
+.scale-wrapper div[role='radiogroup'] > label {
+    flex: 1 !important;
     display: flex !important;
     justify-content: center !important;
 }
 
-div[role='radiogroup'] span {
+/* Hide the built-in labels (numbers) from radio */
+.scale-wrapper div[role='radiogroup'] span {
     display: none !important;
 }
 
-/* --- LABELS UNDER KNAPPERNE --- */
+/* Labels under knapperne */
 .scale-row {
     display: flex;
     justify-content: space-between;
     width: 100%;
-    margin-top: -4px;
-    margin-bottom: 34px;                     /* MORE SPACE BEFORE RESET BUTTON */
+    margin-top: -2px;      /* lidt tættere på knapperne */
+    margin-bottom: 34px;   /* mere luft ned til Nulstil */
 }
 
 .scale-row span {
-    flex: 1 !important;                      /* SAME WIDTH AS BUTTONS */
+    flex: 1;
     text-align: center;
     font-size: 0.83rem;
 }
@@ -152,7 +159,6 @@ questions = [
 # -------------------------------------------------------------
 if "answers" not in st.session_state:
     st.session_state.answers = [0] * len(questions)
-
 if "reset_trigger" not in st.session_state:
     st.session_state.reset_trigger = 0
 
@@ -163,16 +169,20 @@ for i, q in enumerate(questions):
 
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
+    # Wrapper så CSS kan målrette denne gruppe
+    st.markdown("<div class='scale-wrapper'>", unsafe_allow_html=True)
+
     choice = st.radio(
         "",
         [0, 1, 2, 3, 4],
         key=f"q_{i}_{st.session_state.reset_trigger}",
         horizontal=True,
-        label_visibility="collapsed"
+        label_visibility="collapsed",
+        format_func=lambda x: ""  # <- gør radio labels tomme (ingen tal)
     )
-
     st.session_state.answers[i] = choice
 
+    # Tekstlinjen under – 5 labels, samme bredde som knapperne
     st.markdown("""
     <div class="scale-row">
         <span>Aldrig</span>
@@ -180,6 +190,7 @@ for i, q in enumerate(questions):
         <span>Nogle gange</span>
         <span>Ofte</span>
         <span>Altid</span>
+    </div>
     </div>
     """, unsafe_allow_html=True)
 
