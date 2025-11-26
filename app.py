@@ -46,12 +46,12 @@ html, body, .stApp {
     margin-bottom: 4px;
 }
 
-/* Wrapper for one scale (buttons + labels) */
+/* Wrapper for scale */
 .scale-wrapper {
     width: 100%;
 }
 
-/* Radio row (5 knapper) */
+/* Radio row */
 .scale-wrapper div[role='radiogroup'] {
     display: flex !important;
     justify-content: space-between !important;
@@ -59,19 +59,19 @@ html, body, .stApp {
     margin-bottom: 0 !important;
 }
 
-/* Each radio "cell" */
+/* Each radio item */
 .scale-wrapper div[role='radiogroup'] > label {
     flex: 1 !important;
     display: flex !important;
     justify-content: center !important;
 }
 
-/* Hide numbers inside radio buttons */
+/* Hide the radio labels (numbers) */
 .scale-wrapper div[role='radiogroup'] span {
     display: none !important;
 }
 
-/* Labels under knapperne */
+/* Text labels under buttons */
 .scale-row {
     display: flex;
     justify-content: space-between;
@@ -95,18 +95,19 @@ html, body, .stApp {
     font-weight: 600 !important;
     border: none !important;
 }
+
 .stButton > button:hover, .stDownloadButton > button:hover {
     background-color: #B71C1C !important;
 }
 
-/* Version label (fixed at bottom right) */
+/* Version label bottom-left */
 .version-label {
     position: fixed;
-    bottom: 6px;
-    right: 10px;
-    opacity: 0.25;
-    font-size: 0.65rem;
-    z-index: 9999;
+    bottom: 8px;
+    left: 10px;
+    font-size: 0.75rem;
+    opacity: 0.6;
+    color: white;
 }
 
 </style>
@@ -187,7 +188,7 @@ for i, q in enumerate(questions):
         key=f"q_{i}_{st.session_state.reset_trigger}",
         horizontal=True,
         label_visibility="collapsed",
-        format_func=lambda x: ""  # Fjerner tal
+        format_func=lambda x: ""
     )
     st.session_state.answers[i] = choice
 
@@ -284,7 +285,12 @@ def generate_pdf(score, profile):
 
     story.append(Paragraph("Dine svar:", styles["Heading2"]))
     for i, q in enumerate(questions):
-        story.append(Paragraph(f"{i+1}. {q} – Svar: {st.session_state.answers[i]}", styles["BodyText"]))
+        story.append(
+            Paragraph(
+                f"{i+1}. {q} – Svar: {st.session_state.answers[i]}",
+                styles["BodyText"],
+            )
+        )
 
     doc.build(story)
     buffer.seek(0)
@@ -298,10 +304,6 @@ st.download_button(
 )
 
 # -------------------------------------------------------------
-# VERSION LABEL
+# VERSION LABEL (LEFT BOTTOM)
 # -------------------------------------------------------------
-st.markdown(f"""
-<div class="version-label">
-Version 1.01
-</div>
-""", unsafe_allow_html=True)
+st.markdown('<div class="version-label">Version v1</div>', unsafe_allow_html=True)
