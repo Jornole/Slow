@@ -49,7 +49,22 @@ html, body, .stApp {
 div[role='radiogroup'] {
     display: flex !important;
     gap: 20px !important;
-    margin-bottom: 6px;
+    justify-content: flex-start !important;
+    margin-bottom: 2px !important;
+}
+
+/* Labels "aldrig" og "altid" */
+.scale-labels {
+    display: flex;
+    justify-content: space-between;
+    width: 260px;            
+    margin-left: 4px;
+    margin-top: -4px;    
+}
+.scale-labels span {
+    font-size: 0.75rem;
+    color: white;
+    opacity: 0.85;
 }
 
 /* Red buttons */
@@ -130,27 +145,38 @@ if "reset_trigger" not in st.session_state:
     st.session_state.reset_trigger = 0
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS (WITH RESET-SAFE RADIO KEYS)
+# RENDER QUESTIONS
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
-    st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
+
+    st.markdown(
+        f"<div class='question-text'>{i+1}. {q}</div>",
+        unsafe_allow_html=True
+    )
 
     choice = st.radio(
         "",
         [0, 1, 2, 3, 4],
-        key=f"q_{i}_{st.session_state.reset_trigger}",   # <-- MAGIC FIX
+        key=f"q_{i}_{st.session_state.reset_trigger}",
         horizontal=True,
         label_visibility="collapsed"
     )
-
     st.session_state.answers[i] = choice
 
+    # --- ADD LABELS UNDER BUTTONS ---
+    st.markdown("""
+        <div class="scale-labels">
+            <span>aldrig</span>
+            <span>altid</span>
+        </div>
+    """, unsafe_allow_html=True)
+
 # -------------------------------------------------------------
-# RESET BUTTON (FULL RESET)
+# RESET BUTTON
 # -------------------------------------------------------------
 if st.button("Nulstil svar"):
     st.session_state.answers = [0] * len(questions)
-    st.session_state.reset_trigger += 1   # <-- NEW KEYS FOR RADIO AFTER RESET
+    st.session_state.reset_trigger += 1
     st.rerun()
 
 # -------------------------------------------------------------
