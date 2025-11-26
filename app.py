@@ -46,7 +46,7 @@ html, body, .stApp {
     margin-bottom: 4px;
 }
 
-/* --- BUTTON ROW (no numbers visible) --- */
+/* --- BUTTON GRID (no numbers visible) --- */
 div[role='radiogroup'] {
     display: flex !important;
     justify-content: space-between !important;
@@ -55,7 +55,7 @@ div[role='radiogroup'] {
 }
 
 div[role='radiogroup'] > label {
-    flex: 1 !important;
+    flex: 1 !important;                      /* SAME WIDTH AS TEXT BELOW */
     display: flex !important;
     justify-content: center !important;
 }
@@ -64,17 +64,17 @@ div[role='radiogroup'] span {
     display: none !important;
 }
 
-/* --- LABELS UNDER KNAPPERNE (5 labels, aligned perfectly) --- */
+/* --- LABELS UNDER KNAPPERNE --- */
 .scale-row {
     display: flex;
     justify-content: space-between;
     width: 100%;
     margin-top: -4px;
-    margin-bottom: 22px;
+    margin-bottom: 34px;                     /* MORE SPACE BEFORE RESET BUTTON */
 }
 
 .scale-row span {
-    flex: 1;
+    flex: 1 !important;                      /* SAME WIDTH AS BUTTONS */
     text-align: center;
     font-size: 0.83rem;
 }
@@ -105,7 +105,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# TITLE
+# MAIN TITLE
 # -------------------------------------------------------------
 st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
 
@@ -157,7 +157,7 @@ if "reset_trigger" not in st.session_state:
     st.session_state.reset_trigger = 0
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS (5-point scale)
+# RENDER QUESTIONS
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
 
@@ -165,7 +165,7 @@ for i, q in enumerate(questions):
 
     choice = st.radio(
         "",
-        [0, 1, 2, 3, 4],   # internal values
+        [0, 1, 2, 3, 4],
         key=f"q_{i}_{st.session_state.reset_trigger}",
         horizontal=True,
         label_visibility="collapsed"
