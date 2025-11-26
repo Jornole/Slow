@@ -5,12 +5,17 @@ from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
 
 # -------------------------------------------------------------
-# BASIC SETUP
+# PAGE SETUP
 # -------------------------------------------------------------
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# CSS — v9 (PERFEKT ALIGNMENT)
+# VERSION
+# -------------------------------------------------------------
+VERSION = "v10"
+
+# -------------------------------------------------------------
+# CSS – pixel-perfect knapper + labels
 # -------------------------------------------------------------
 st.markdown("""
 <style>
@@ -21,16 +26,15 @@ html, body, .stApp {
     font-family: Arial, sans-serif !important;
 }
 
-/* Version label */
-.version-tag {
-    position: fixed;
-    bottom: 8px;
-    left: 12px;
-    opacity: 0.55;
-    font-size: 0.75rem;
+/* Logo center */
+.center-logo {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+    margin-bottom: 5px;
 }
 
-/* Main title */
+/* Title */
 .main-title {
     font-size: 2.3rem;
     font-weight: 800;
@@ -43,66 +47,103 @@ html, body, .stApp {
 .question-text {
     font-size: 1.05rem;
     font-weight: 600;
-    margin-top: 22px;
+    margin-top: 25px;
     margin-bottom: 10px;
 }
 
-/* --- PERFECT 5-COLUMN GRID --- */
-.scale-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
+/* --- SCALE WRAPPER --- */
+.scale-container {
     width: 100%;
-    align-items: center;
-    justify-items: center;
-    margin-bottom: -4px;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 30px;
 }
 
-.scale-grid label > div {
-    transform: scale(1.25);
+/* Button row */
+.button-row {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
 }
 
-/* hide numbers inside radio items */
-.scale-grid span {
-    display: none !important;
+/* Custom round button */
+.button {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: #ffffff;
+    border: 3px solid #ffffff;
+    cursor: pointer;
+    transition: 0.2s;
 }
 
-/* Labels under */
-.scale-labels {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
+.button:hover {
+    transform: scale(1.15);
+}
+
+/* Selected button */
+.selected {
+    background-color: #C62828 !important;
+    border-color: #C62828 !important;
+}
+
+/* Labels row */
+.label-row {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+}
+
+.label-row span {
+    width: 32px;
     text-align: center;
-    font-size: 0.85rem;
-    margin-top: 4px;
-    margin-bottom: 26px;
+    font-size: 0.9rem;
 }
 
-/* Buttons */
-.stButton > button, .stDownloadButton > button {
+/* RESET button */
+.stButton > button {
     background-color: #C62828 !important;
     color: white !important;
     border-radius: 8px !important;
     padding: 0.6rem 1.4rem !important;
     font-weight: 600 !important;
     border: none !important;
+    margin-top: 40px !important;
 }
-.stButton > button:hover, .stDownloadButton > button:hover {
+
+.stButton > button:hover {
     background-color: #B71C1C !important;
+}
+
+/* Version text bottom-left */
+.version-box {
+    position: fixed;
+    bottom: 8px;
+    left: 10px;
+    font-size: 0.8rem;
+    color: white;
+    opacity: 0.6;
 }
 
 </style>
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
+# VERSION BOX
+# -------------------------------------------------------------
+st.markdown(f"<div class='version-box'>Version {VERSION}</div>", unsafe_allow_html=True)
+
+# -------------------------------------------------------------
 # LOGO
 # -------------------------------------------------------------
 st.markdown("""
-<div style="display:flex; justify-content:center; margin-top:20px; margin-bottom:5px;">
+<div class="center-logo">
     <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="160">
 </div>
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# MAIN TITLE
+# TITLE
 # -------------------------------------------------------------
 st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
 
@@ -144,53 +185,67 @@ questions = [
     "Jeg bliver let distraheret, når der sker meget omkring mig."
 ]
 
+labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
+
 # -------------------------------------------------------------
-# SESSION STATE INIT
+# STATE INIT
 # -------------------------------------------------------------
 if "answers" not in st.session_state:
     st.session_state.answers = [0] * len(questions)
-if "reset_trigger" not in st.session_state:
-    st.session_state.reset_trigger = 0
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS — v9 GRID SYSTEM
+# QUESTION RENDERING
 # -------------------------------------------------------------
-labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
-
 for i, q in enumerate(questions):
 
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    # RADIO in perfect grid
-    cols = st.columns(5)
-    for idx in range(5):
-        with cols[idx]:
-            if st.radio(
-                "",
-                [idx],
-                key=f"q_{i}_{idx}_{st.session_state.reset_trigger}",
-                label_visibility="collapsed"
-            ) == idx:
-                st.session_state.answers[i] = idx
-
-    # LABELS under grid
-    st.markdown(
-        "<div class='scale-labels'>" +
-        "".join([f"<div>{lab}</div>" for lab in labels]) +
-        "</div>",
-        unsafe_allow_html=True
+    # HIDDEN RADIO FOR LOGIC
+    selected = st.radio(
+        f"hidden_{i}",
+        [0, 1, 2, 3, 4],
+        index=st.session_state.answers[i],
+        label_visibility="collapsed"
     )
+
+    st.session_state.answers[i] = selected
+
+    # CUSTOM BUTTONS + LABELS
+    st.markdown("<div class='scale-container'>", unsafe_allow_html=True)
+
+    # BUTTON ROW
+    st.markdown("<div class='button-row'>", unsafe_allow_html=True)
+
+    # Render each custom button
+    btn_html = ""
+    for val in range(5):
+        cls = "button selected" if selected == val else "button"
+        btn_html += f"""
+            <div class="{cls}" onclick="document.querySelector('input[name=hidden_{i}][value='{val}']").click();"></div>
+        """
+    st.markdown(btn_html, unsafe_allow_html=True)
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # LABEL ROW
+    label_html = "<div class='label-row'>"
+    for lb in labels:
+        label_html += f"<span>{lb}</span>"
+    label_html += "</div>"
+
+    st.markdown(label_html, unsafe_allow_html=True)
+
+    st.markdown("</div>", unsafe_allow_html=True)
 
 # -------------------------------------------------------------
 # RESET BUTTON
 # -------------------------------------------------------------
 if st.button("Nulstil svar"):
     st.session_state.answers = [0] * len(questions)
-    st.session_state.reset_trigger += 1
-    st.rerun()
+    st.experimental_rerun()
 
 # -------------------------------------------------------------
-# INTERPRETATION
+# SCORING
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
@@ -200,46 +255,15 @@ def interpret_score(score):
     else:
         return "HSP"
 
-PROFILE_TEXT = {
-    "HSP": [
-        "Du registrerer flere nuancer i både indtryk og stemninger.",
-        "Du bearbejder oplevelser dybt og grundigt.",
-        "Du reagerer stærkt på stimuli og kan blive overstimuleret.",
-        "Du har en rig indre verden og et fintfølende nervesystem.",
-        "Du er empatisk og opmærksom på andre.",
-        "Du har brug for ro og pauser for at lade op."
-    ],
-    "Slow Processor": [
-        "Du arbejder bedst i roligt tempo og med forudsigelighed.",
-        "Du bearbejder indtryk grundigt, men langsomt.",
-        "Du har brug for ekstra tid til omstilling og beslutninger.",
-        "Du trives med faste rammer og struktur.",
-        "Du kan føle dig presset, når tingene går hurtigt.",
-        "Du har god udholdenhed, når arbejder i dit eget tempo."
-    ],
-    "Mellemprofil": [
-        "Du veksler naturligt mellem hurtig og langsom bearbejdning.",
-        "Du håndterer de fleste stimuli uden at blive overvældet.",
-        "Du har en god balance mellem intuition og eftertænksomhed.",
-        "Du kan tilpasse dig forskellige miljøer og tempoer.",
-        "Du bliver påvirket i perioder, men finder hurtigt balancen igen.",
-        "Du fungerer bredt socialt og mentalt i mange typer situationer."
-    ]
-}
-
-total_score = sum(st.session_state.answers)
-profile = interpret_score(total_score)
+total = sum(st.session_state.answers)
+profile = interpret_score(total)
 
 # -------------------------------------------------------------
-# RESULT BLOCK
+# RESULT
 # -------------------------------------------------------------
 st.header("Dit resultat")
-st.subheader(f"Score: {total_score} / 80")
+st.subheader(f"Score: {total} / 80")
 st.write(f"**Profil: {profile}**")
-
-st.write("### Karakteristika for din profil:")
-for s in PROFILE_TEXT[profile]:
-    st.write(f"- {s}")
 
 # -------------------------------------------------------------
 # PDF GENERATION
@@ -256,11 +280,6 @@ def generate_pdf(score, profile):
     story.append(Paragraph(f"Profil: {profile}", styles["Heading2"]))
     story.append(Spacer(1, 12))
 
-    story.append(Paragraph("Karakteristika for din profil:", styles["Heading2"]))
-    for s in PROFILE_TEXT[profile]:
-        story.append(Paragraph(f"- {s}", styles["BodyText"]))
-    story.append(Spacer(1, 12))
-
     story.append(Paragraph("Dine svar:", styles["Heading2"]))
     for i, q in enumerate(questions):
         story.append(Paragraph(f"{i+1}. {q} – Svar: {st.session_state.answers[i]}", styles["BodyText"]))
@@ -271,10 +290,7 @@ def generate_pdf(score, profile):
 
 st.download_button(
     "Download PDF-rapport",
-    data=generate_pdf(total_score, profile),
+    data=generate_pdf(total, profile),
     file_name="HSP_SlowProcessor_Rapport.pdf",
     mime="application/pdf"
 )
-
-# VERSION TAG
-st.markdown("<div class='version-tag'>v9</div>", unsafe_allow_html=True)
