@@ -21,6 +21,7 @@ html, body, .stApp {
     font-family: Arial, sans-serif !important;
 }
 
+/* Centered logo */
 .center-logo {
     display: flex;
     justify-content: center;
@@ -45,7 +46,7 @@ html, body, .stApp {
     margin-bottom: 4px;
 }
 
-/* --- FLEX GRID FOR KNAPPERNE (0–4 radios) --- */
+/* --- BUTTON ROW (no numbers visible) --- */
 div[role='radiogroup'] {
     display: flex !important;
     justify-content: space-between !important;
@@ -54,29 +55,28 @@ div[role='radiogroup'] {
 }
 
 div[role='radiogroup'] > label {
-    flex-basis: 33% !important;
+    flex: 1 !important;
     display: flex !important;
     justify-content: center !important;
 }
 
-/* HIDE numbers inside radio buttons */
 div[role='radiogroup'] span {
     display: none !important;
 }
 
-/* --- LABELS UNDER KNAPPERNE --- */
+/* --- LABELS UNDER KNAPPERNE (5 labels, aligned perfectly) --- */
 .scale-row {
     display: flex;
     justify-content: space-between;
     width: 100%;
-    margin-top: -8px;
+    margin-top: -4px;
     margin-bottom: 22px;
 }
 
 .scale-row span {
-    flex-basis: 33%;
+    flex: 1;
     text-align: center;
-    font-size: 0.85rem;
+    font-size: 0.83rem;
 }
 
 /* Red buttons */
@@ -88,7 +88,6 @@ div[role='radiogroup'] span {
     font-weight: 600 !important;
     border: none !important;
 }
-
 .stButton > button:hover, .stDownloadButton > button:hover {
     background-color: #B71C1C !important;
 }
@@ -106,18 +105,18 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# MAIN TITLE
+# TITLE
 # -------------------------------------------------------------
 st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# INTRO
+# INTRO TEXT
 # -------------------------------------------------------------
 st.markdown("""
 Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige 
 og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner.
 
-Du besvarer 20 udsagn på en skala fra **0 (aldrig)** til **4 (altid)**.
+Du besvarer 20 udsagn på en skala fra **Aldrig** til **Altid**.
 
 Testen er <u>**ikke en diagnose**</u>, men et psykologisk værktøj til selvindsigt.
 """, unsafe_allow_html=True)
@@ -149,15 +148,16 @@ questions = [
 ]
 
 # -------------------------------------------------------------
-# SESSION STATE INIT
+# SESSION STATE
 # -------------------------------------------------------------
 if "answers" not in st.session_state:
     st.session_state.answers = [0] * len(questions)
+
 if "reset_trigger" not in st.session_state:
     st.session_state.reset_trigger = 0
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS
+# RENDER QUESTIONS (5-point scale)
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
 
@@ -165,7 +165,7 @@ for i, q in enumerate(questions):
 
     choice = st.radio(
         "",
-        [0, 2, 4],  # internal values that add correctly (0, mid, high)
+        [0, 1, 2, 3, 4],   # internal values
         key=f"q_{i}_{st.session_state.reset_trigger}",
         horizontal=True,
         label_visibility="collapsed"
@@ -176,7 +176,9 @@ for i, q in enumerate(questions):
     st.markdown("""
     <div class="scale-row">
         <span>Aldrig</span>
-        <span>En gang imellem</span>
+        <span>Sjældent</span>
+        <span>Nogle gange</span>
+        <span>Ofte</span>
         <span>Altid</span>
     </div>
     """, unsafe_allow_html=True)
