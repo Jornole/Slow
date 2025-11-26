@@ -1,3 +1,7 @@
+##############################################
+# HSP / Slow Processor Test – Version v5
+##############################################
+
 import streamlit as st
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.pagesizes import letter
@@ -9,10 +13,8 @@ from io import BytesIO
 # -------------------------------------------------------------
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
-VERSION = "v4"
-
 # -------------------------------------------------------------
-# GLOBAL CSS
+# GLOBAL CSS (GRID VERSION – PERFECT ALIGNMENT)
 # -------------------------------------------------------------
 st.markdown("""
 <style>
@@ -23,41 +25,59 @@ html, body, .stApp {
     font-family: Arial, sans-serif !important;
 }
 
-/* --- GRID TIL KNAPPER + LABELS --- */
-.scale-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    column-gap: 0px;
-    width: 100%;
-    margin-top: 6px;
-    margin-bottom: 30px;
-    justify-items: center;
-}
-
-/* Selve radio-knapperne */
-.scale-grid .radio-cell {
+/* Centered logo */
+.center-logo {
     display: flex;
     justify-content: center;
+    margin-top: 20px;
+    margin-bottom: 5px;
 }
 
-/* Teksterne under */
-.scale-grid .label-cell {
+/* Main title */
+.main-title {
+    font-size: 2.3rem;
+    font-weight: 800;
     text-align: center;
-    font-size: 0.83rem;
-    margin-top: -4px;
-}
-
-/* Skjul radio-tekst (tallene) */
-.scale-grid .radio-cell span {
-    display: none !important;
+    margin-top: 8px;
+    margin-bottom: 28px;
 }
 
 /* Question text */
 .question-text {
-    font-size: 1.06rem;
+    font-size: 1.07rem;
     font-weight: 600;
     margin-top: 20px;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
+}
+
+/* -------- GRID LAYOUT FOR KNAPPERNE -------- */
+.scale-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    width: 100%;
+    gap: 6px;
+}
+
+/* Remove Streamlit numbers inside radios */
+.scale-grid span {
+    display: none !important;
+}
+
+/* Radio buttons styling */
+.scale-grid label {
+    display: flex !important;
+    justify-content: center !important;
+}
+
+/* Text labels under knapperne */
+.scale-labels {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    width: 100%;
+    margin-top: -4px;
+    margin-bottom: 30px;
+    text-align: center;
+    font-size: 0.9rem;
 }
 
 /* Red buttons */
@@ -73,13 +93,13 @@ html, body, .stApp {
     background-color: #B71C1C !important;
 }
 
-/* Versionsnummer nederst venstre */
+/* Version number bottom-left */
 .version-tag {
     position: fixed;
     bottom: 6px;
-    left: 10px;
+    left: 8px;
     font-size: 0.75rem;
-    opacity: 0.7;
+    opacity: 0.6;
 }
 
 </style>
@@ -89,7 +109,7 @@ html, body, .stApp {
 # LOGO
 # -------------------------------------------------------------
 st.markdown("""
-<div style="display:flex; justify-content:center; margin-top:20px; margin-bottom:5px;">
+<div class="center-logo">
     <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="160">
 </div>
 """, unsafe_allow_html=True)
@@ -97,18 +117,18 @@ st.markdown("""
 # -------------------------------------------------------------
 # MAIN TITLE
 # -------------------------------------------------------------
-st.markdown('<div style="font-size:2.3rem; font-weight:800; text-align:center;">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
+st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
 
 # -------------------------------------------------------------
 # INTRO TEXT
 # -------------------------------------------------------------
 st.markdown("""
 Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige 
-og sansemæssige indtryk.
+og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner.
 
 Du besvarer 20 udsagn på en skala fra **Aldrig** til **Altid**.
 
-Testen er <u>ikke en diagnose</u>, men et psykologisk værktøj til selvindsigt.
+Testen er <u>**ikke en diagnose**</u>, men et psykologisk værktøj til selvindsigt.
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
@@ -137,44 +157,45 @@ questions = [
     "Jeg bliver let distraheret, når der sker meget omkring mig."
 ]
 
-# INIT session
+# -------------------------------------------------------------
+# SESSION STATE
+# -------------------------------------------------------------
 if "answers" not in st.session_state:
     st.session_state.answers = [0] * len(questions)
 if "reset_trigger" not in st.session_state:
     st.session_state.reset_trigger = 0
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS
+# RENDER QUESTIONS – PERFECT GRID VERSION
 # -------------------------------------------------------------
-labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
-
 for i, q in enumerate(questions):
 
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    # GRID START
+    # Radio buttons i perfekt grid
     st.markdown("<div class='scale-grid'>", unsafe_allow_html=True)
-
-    # RADIO ROW
-    for val in range(5):
-        st.markdown("<div class='radio-cell'>", unsafe_allow_html=True)
-        choice = st.radio(
-            "",
-            [val],
-            key=f"q_{i}_{val}_{st.session_state.reset_trigger}",
-            label_visibility="collapsed",
-            format_func=lambda x: ""
-        )
-        if choice == val:
-            st.session_state.answers[i] = val
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    # LABEL ROW
-    for lab in labels:
-        st.markdown(f"<div class='label-cell'>{lab}</div>", unsafe_allow_html=True)
-
-    # GRID END
+    choice = st.radio(
+        "",
+        [0, 1, 2, 3, 4],
+        key=f"q_{i}_{st.session_state.reset_trigger}",
+        horizontal=True,
+        label_visibility="collapsed",
+        format_func=lambda x: ""
+    )
     st.markdown("</div>", unsafe_allow_html=True)
+
+    st.session_state.answers[i] = choice
+
+    # Tekst under
+    st.markdown("""
+    <div class="scale-labels">
+        <div>Aldrig</div>
+        <div>Sjældent</div>
+        <div>Nogle gange</div>
+        <div>Ofte</div>
+        <div>Altid</div>
+    </div>
+    """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
 # RESET BUTTON
@@ -185,7 +206,7 @@ if st.button("Nulstil svar"):
     st.rerun()
 
 # -------------------------------------------------------------
-# RESULT LOGIC
+# INTERPRETATION
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
@@ -195,15 +216,49 @@ def interpret_score(score):
     else:
         return "HSP"
 
-score = sum(st.session_state.answers)
-profile = interpret_score(score)
+PROFILE_TEXT = {
+    "HSP": [
+        "Du registrerer flere nuancer i både indtryk og stemninger.",
+        "Du bearbejder oplevelser dybt og grundigt.",
+        "Du reagerer stærkt på stimuli og kan blive overstimuleret.",
+        "Du har en rig indre verden og et fintfølende nervesystem.",
+        "Du er empatisk og opmærksom på andre.",
+        "Du har brug for ro og pauser for at lade op."
+    ],
+    "Slow Processor": [
+        "Du arbejder bedst i roligt tempo og med forudsigelighed.",
+        "Du bearbejder indtryk grundigt, men langsomt.",
+        "Du har brug for ekstra tid til omstilling og beslutninger.",
+        "Du trives med faste rammer og struktur.",
+        "Du kan føle dig presset, når tingene går hurtigt.",
+        "Du har god udholdenhed, når du arbejder i dit eget tempo."
+    ],
+    "Mellemprofil": [
+        "Du veksler naturligt mellem hurtig og langsom bearbejdning.",
+        "Du håndterer de fleste stimuli uden at blive overvældet.",
+        "Du har en god balance mellem intuition og eftertænksomhed.",
+        "Du kan tilpasse dig forskellige miljøer og tempoer.",
+        "Du bliver påvirket i perioder, men finder hurtigt balancen igen.",
+        "Du fungerer bredt socialt og mentalt i mange typer situationer."
+    ]
+}
 
-st.header("Dit resultat")
-st.subheader(f"Score: {score} / 80")
-st.write(f"**Profil: {profile}**")
+total_score = sum(st.session_state.answers)
+profile = interpret_score(total_score)
 
 # -------------------------------------------------------------
-# PDF GENERATION
+# RESULT
+# -------------------------------------------------------------
+st.header("Dit resultat")
+st.subheader(f"Score: {total_score} / 80")
+st.write(f"**Profil: {profile}**")
+
+st.write("### Karakteristika for din profil:")
+for s in PROFILE_TEXT[profile]:
+    st.write(f"- {s}")
+
+# -------------------------------------------------------------
+# PDF
 # -------------------------------------------------------------
 def generate_pdf(score, profile):
     buffer = BytesIO()
@@ -218,8 +273,11 @@ def generate_pdf(score, profile):
     story.append(Spacer(1, 12))
 
     story.append(Paragraph("Karakteristika for din profil:", styles["Heading2"]))
-
+    for s in PROFILE_TEXT[profile]:
+        story.append(Paragraph(f"- {s}", styles["BodyText"]))
     story.append(Spacer(1, 12))
+
+    story.append(Paragraph("Dine svar:", styles["Heading2"]))
     for i, q in enumerate(questions):
         story.append(Paragraph(f"{i+1}. {q} – Svar: {st.session_state.answers[i]}", styles["BodyText"]))
 
@@ -229,12 +287,12 @@ def generate_pdf(score, profile):
 
 st.download_button(
     "Download PDF-rapport",
-    data=generate_pdf(score, profile),
+    data=generate_pdf(total_score, profile),
     file_name="HSP_SlowProcessor_Rapport.pdf",
     mime="application/pdf"
 )
 
 # -------------------------------------------------------------
-# VERSION TAG
+# VERSION TAG (BOTTOM-LEFT)
 # -------------------------------------------------------------
-st.markdown(f"<div class='version-tag'>Version {VERSION}</div>", unsafe_allow_html=True)
+st.markdown('<div class="version-tag">v5</div>', unsafe_allow_html=True)
