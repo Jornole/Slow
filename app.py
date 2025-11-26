@@ -9,6 +9,8 @@ from io import BytesIO
 # -------------------------------------------------------------
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
+VERSION = "v3"
+
 # -------------------------------------------------------------
 # GLOBAL CSS
 # -------------------------------------------------------------
@@ -38,41 +40,52 @@ html, body, .stApp {
     margin-bottom: 25px;
 }
 
-/* Question text */
+/* Questions */
 .question-text {
     font-size: 1.05rem;
     font-weight: 600;
-    margin-top: 20px;
-    margin-bottom: 6px;
+    margin-top: 18px;
+    margin-bottom: 8px;
 }
 
-/* Perfect aligned 5-column layout */
-.scale-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
+/* WRAPPER for each question */
+.scale-wrapper {
     width: 100%;
-    margin-bottom: 2px;
 }
 
-/* Hide default radio text */
-.scale-grid label > div > div {
-    display: none !important;
+/* --- RADIO BUTTON ROW --- */
+.scale-wrapper div[role='radiogroup'] {
+    display: flex !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    margin-bottom: 0 !important;
 }
 
-/* Center the radio circles */
-.scale-grid label {
+/* Force each radio button into 5 equal columns */
+.scale-wrapper div[role='radiogroup'] > label {
+    flex: 1 !important;
     display: flex !important;
     justify-content: center !important;
 }
 
-/* Labels under knapperne */
-.scale-labels {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
+/* Remove built-in numbers */
+.scale-wrapper div[role='radiogroup'] span {
+    display: none !important;
+}
+
+/* --- LABEL ROW under buttons --- */
+.scale-row {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    margin-top: -6px;
+    margin-bottom: 32px; /* distance down to next question */
+}
+
+.scale-row span {
+    flex: 1;
     text-align: center;
-    font-size: 0.85rem;
-    margin-bottom: 28px;
-    margin-top: 2px;
+    font-size: 0.83rem;
 }
 
 /* Red buttons */
@@ -84,17 +97,18 @@ html, body, .stApp {
     font-weight: 600 !important;
     border: none !important;
 }
+
 .stButton > button:hover, .stDownloadButton > button:hover {
     background-color: #B71C1C !important;
 }
 
-/* Version text bottom-left */
+/* Version tag */
 .version-tag {
     position: fixed;
-    bottom: 6px;
+    bottom: 8px;
     left: 10px;
     font-size: 0.75rem;
-    opacity: 0.55;
+    opacity: 0.6;
 }
 
 </style>
@@ -129,6 +143,8 @@ Testen er <u>**ikke en diagnose**</u>, men et psykologisk værktøj til selvinds
 # -------------------------------------------------------------
 # QUESTIONS
 # -------------------------------------------------------------
+labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
+
 questions = [
     "Jeg bliver let overvældet af indtryk.",
     "Jeg opdager små detaljer, som andre ofte overser.",
@@ -156,8 +172,7 @@ questions = [
 # SESSION STATE
 # -------------------------------------------------------------
 if "answers" not in st.session_state:
-    st.session_state.answers = [0] * len(questions)
-
+    st.session_state.answers = [0]*len(questions)
 if "reset_trigger" not in st.session_state:
     st.session_state.reset_trigger = 0
 
@@ -166,38 +181,36 @@ if "reset_trigger" not in st.session_state:
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
 
-    st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
+    st.markdown(
+        f"<div class='question-text'>{i+1}. {q}</div>",
+        unsafe_allow_html=True
+    )
 
-    # Radio button row
-    st.markdown("<div class='scale-grid'>", unsafe_allow_html=True)
+    st.markdown("<div class='scale-wrapper'>", unsafe_allow_html=True)
+
     choice = st.radio(
         "",
         [0, 1, 2, 3, 4],
         key=f"q_{i}_{st.session_state.reset_trigger}",
-        label_visibility="collapsed",
         horizontal=True,
-        format_func=lambda x: ""  # hide numbers
+        label_visibility="collapsed",
+        format_func=lambda x: ""   # hide numbers
     )
-    st.markdown("</div>", unsafe_allow_html=True)
-
     st.session_state.answers[i] = choice
 
-    # Labels row
-    st.markdown("""
-    <div class="scale-labels">
-        <span>Aldrig</span>
-        <span>Sjældent</span>
-        <span>Nogle gange</span>
-        <span>Ofte</span>
-        <span>Altid</span>
-    </div>
-    """, unsafe_allow_html=True)
+    # Labels under
+    st.markdown(
+        "<div class='scale-row'>" +
+        "".join([f"<span>{label}</span>" for label in labels]) +
+        "</div></div>",
+        unsafe_allow_html=True
+    )
 
 # -------------------------------------------------------------
 # RESET BUTTON
 # -------------------------------------------------------------
 if st.button("Nulstil svar"):
-    st.session_state.answers = [0] * len(questions)
+    st.session_state.answers = [0]*len(questions)
     st.session_state.reset_trigger += 1
     st.rerun()
 
@@ -209,6 +222,7 @@ def interpret_score(score):
         return "Slow Processor"
     elif score <= 53:
         return "Mellemprofil"
+        # return "Mellemprofil"
     else:
         return "HSP"
 
@@ -239,19 +253,19 @@ PROFILE_TEXT = {
     ]
 }
 
-total_score = sum(st.session_state.answers)
-profile = interpret_score(total_score)
+score = sum(st.session_state.answers)
+profile = interpret_score(score)
 
 # -------------------------------------------------------------
 # RESULT BLOCK
 # -------------------------------------------------------------
 st.header("Dit resultat")
-st.subheader(f"Score: {total_score} / 80")
+st.subheader(f"Score: {score} / 80")
 st.write(f"**Profil: {profile}**")
 
 st.write("### Karakteristika for din profil:")
 for s in PROFILE_TEXT[profile]:
-    st.write(f"- {s}")
+    st.write("- " + s)
 
 # -------------------------------------------------------------
 # PDF GENERATOR
@@ -273,22 +287,16 @@ def generate_pdf(score, profile):
         story.append(Paragraph(f"- {s}", styles["BodyText"]))
     story.append(Spacer(1, 12))
 
-    story.append(Paragraph("Dine svar:", styles["Heading2"]))
-    for i, q in enumerate(questions):
-        story.append(Paragraph(f"{i+1}. {q} – Svar: {st.session_state.answers[i]}", styles["BodyText"]))
-
     doc.build(story)
     buffer.seek(0)
     return buffer
 
 st.download_button(
     "Download PDF-rapport",
-    data=generate_pdf(total_score, profile),
+    data=generate_pdf(score, profile),
     file_name="HSP_SlowProcessor_Rapport.pdf",
     mime="application/pdf"
 )
 
-# -------------------------------------------------------------
-# VERSION TAG
-# -------------------------------------------------------------
-st.markdown("<div class='version-tag'>Version v2</div>", unsafe_allow_html=True)
+# Version tag
+st.markdown(f"<div class='version-tag'>Version {VERSION}</div>", unsafe_allow_html=True)
