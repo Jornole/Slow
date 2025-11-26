@@ -66,7 +66,7 @@ html, body, .stApp {
     justify-content: center !important;
 }
 
-/* Hide the built-in labels (numbers) from radio */
+/* Hide numbers inside radio buttons */
 .scale-wrapper div[role='radiogroup'] span {
     display: none !important;
 }
@@ -76,8 +76,8 @@ html, body, .stApp {
     display: flex;
     justify-content: space-between;
     width: 100%;
-    margin-top: -2px;      /* lidt tættere på knapperne */
-    margin-bottom: 34px;   /* mere luft ned til Nulstil */
+    margin-top: -2px;
+    margin-bottom: 34px;
 }
 
 .scale-row span {
@@ -97,6 +97,16 @@ html, body, .stApp {
 }
 .stButton > button:hover, .stDownloadButton > button:hover {
     background-color: #B71C1C !important;
+}
+
+/* Version label (fixed at bottom right) */
+.version-label {
+    position: fixed;
+    bottom: 6px;
+    right: 10px;
+    opacity: 0.25;
+    font-size: 0.65rem;
+    z-index: 9999;
 }
 
 </style>
@@ -169,7 +179,6 @@ for i, q in enumerate(questions):
 
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    # Wrapper så CSS kan målrette denne gruppe
     st.markdown("<div class='scale-wrapper'>", unsafe_allow_html=True)
 
     choice = st.radio(
@@ -178,11 +187,10 @@ for i, q in enumerate(questions):
         key=f"q_{i}_{st.session_state.reset_trigger}",
         horizontal=True,
         label_visibility="collapsed",
-        format_func=lambda x: ""  # <- gør radio labels tomme (ingen tal)
+        format_func=lambda x: ""  # Fjerner tal
     )
     st.session_state.answers[i] = choice
 
-    # Tekstlinjen under – 5 labels, samme bredde som knapperne
     st.markdown("""
     <div class="scale-row">
         <span>Aldrig</span>
@@ -288,3 +296,12 @@ st.download_button(
     file_name="HSP_SlowProcessor_Rapport.pdf",
     mime="application/pdf"
 )
+
+# -------------------------------------------------------------
+# VERSION LABEL
+# -------------------------------------------------------------
+st.markdown(f"""
+<div class="version-label">
+Version 1.01
+</div>
+""", unsafe_allow_html=True)
