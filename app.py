@@ -21,7 +21,6 @@ html, body, .stApp {
     font-family: Arial, sans-serif !important;
 }
 
-/* Centered logo */
 .center-logo {
     display: flex;
     justify-content: center;
@@ -29,7 +28,6 @@ html, body, .stApp {
     margin-bottom: 5px;
 }
 
-/* Main title */
 .main-title {
     font-size: 2.3rem;
     font-weight: 800;
@@ -38,7 +36,6 @@ html, body, .stApp {
     margin-bottom: 25px;
 }
 
-/* Question text */
 .question-text {
     font-size: 1.05rem;
     font-weight: 600;
@@ -46,12 +43,10 @@ html, body, .stApp {
     margin-bottom: 6px;
 }
 
-/* --- GRID WRAPPER FOR BUTTONS + LABELS --- */
 .scale-wrapper {
     width: 100%;
 }
 
-/* 5-COL GRID – MAKES BUTTONS PERFECTLY SPREAD OUT */
 .scale-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -60,12 +55,10 @@ html, body, .stApp {
     justify-items: center;
 }
 
-/* Hide default radio labels */
 .scale-grid label span {
     display: none !important;
 }
 
-/* Labels under buttons */
 .scale-labels {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -78,7 +71,6 @@ html, body, .stApp {
     font-size: 0.83rem;
 }
 
-/* Red buttons */
 .stButton > button, .stDownloadButton > button {
     background-color: #C62828 !important;
     color: white !important;
@@ -87,11 +79,11 @@ html, body, .stApp {
     font-weight: 600 !important;
     border: none !important;
 }
+
 .stButton > button:hover, .stDownloadButton > button:hover {
     background-color: #B71C1C !important;
 }
 
-/* Version number */
 .version-box {
     position: fixed;
     bottom: 6px;
@@ -164,15 +156,12 @@ if "reset_trigger" not in st.session_state:
     st.session_state.reset_trigger = 0
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS (BUTTON GRID)
+# RENDER QUESTIONS
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
 
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    st.markdown("<div class='scale-wrapper'>", unsafe_allow_html=True)
-
-    # 5-column grid for the radio buttons
     cols = st.columns(5)
     values = [0, 1, 2, 3, 4]
     selected = None
@@ -189,7 +178,6 @@ for i, q in enumerate(questions):
 
     st.session_state.answers[i] = selected
 
-    # Labels under buttons
     st.markdown("""
         <div class="scale-labels">
             <span>Aldrig</span>
@@ -199,8 +187,6 @@ for i, q in enumerate(questions):
             <span>Altid</span>
         </div>
     """, unsafe_allow_html=True)
-
-    st.markdown("</div>", unsafe_allow_html=True)
 
 # -------------------------------------------------------------
 # RESET BUTTON
@@ -284,7 +270,12 @@ def generate_pdf(score, profile):
 
     story.append(Paragraph("Dine svar:", styles["Heading2"]))
     for i, q in enumerate(questions):
-        story.append(Paragraph(f\"{i+1}. {q} – Svar: {st.session_state.answers[i]}\", styles["BodyText"]))
+        story.append(
+            Paragraph(
+                f"{i+1}. {q} – Svar: {st.session_state.answers[i]}",
+                styles["BodyText"]
+            )
+        )
 
     doc.build(story)
     buffer.seek(0)
