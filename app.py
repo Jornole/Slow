@@ -7,7 +7,7 @@ from io import BytesIO
 # -------------------------------------------------------------
 # VERSION
 # -------------------------------------------------------------
-APP_VERSION = "v11"
+APP_VERSION = "v12"
 
 # -------------------------------------------------------------
 # BASIC SETUP
@@ -51,7 +51,30 @@ html, body, .stApp {{
     margin-bottom: 4px;
 }}
 
-/* Textlinje under skalaen */
+/* ---- RADIO-GRID (5 knapper) ---- */
+.scale-wrapper div[role='radiogroup'] {{
+    display: flex !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    margin-bottom: 0 !important;
+}}
+
+.scale-wrapper div[role='radiogroup'] > label {{
+    flex: 1 1 0 !important;              /* 5 lige brede kolonner */
+    display: flex !important;
+    justify-content: center !important;  /* centrer selve cirklen */
+}}
+
+.scale-wrapper div[role='radiogroup'] > label > div {{
+    margin: auto !important;             /* helt midt i kolonnen */
+}}
+
+/* skjul tal-teksten inde i radio-optionen */
+.scale-wrapper div[role='radiogroup'] span {{
+    display: none !important;
+}}
+
+/* Tekstlinje under skalaen */
 .scale-row {{
     display: flex;
     justify-content: space-between;
@@ -60,7 +83,7 @@ html, body, .stApp {{
     margin-bottom: 24px;
 }}
 .scale-row span {{
-    flex: 1;
+    flex: 1 1 0;
     text-align: center;
     font-size: 0.85rem;
 }}
@@ -151,14 +174,14 @@ questions = [
     "Jeg foretrækker dybe samtaler frem for smalltalk.",
     "Jeg kan have svært ved at skifte fokus hurtigt.",
     "Jeg føler mig ofte overstimuleret.",
-    "Jeg bliver let distraheret, når der sker meget omkring mig.",
+    "Jeg bliver let distraheret, når der sker meget omkring mig."
 ]
 
 # -------------------------------------------------------------
 # SESSION STATE
 # -------------------------------------------------------------
 if "answers" not in st.session_state:
-    # Gemmer det valgte INDEX 0–4 pr. spørgsmål
+    # vi gemmer stadig bare index 0–4
     st.session_state.answers = [0] * len(questions)
 
 if "reset_trigger" not in st.session_state:
@@ -167,17 +190,17 @@ if "reset_trigger" not in st.session_state:
 # -------------------------------------------------------------
 # RENDER QUESTIONS
 # -------------------------------------------------------------
-scale_labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
-
 for i, q in enumerate(questions):
     st.markdown(
         f"<div class='question-text'>{i+1}. {q}</div>",
         unsafe_allow_html=True,
     )
 
+    # wrapper så CSS kun rammer disse radioer
+    st.markdown("<div class='scale-wrapper'>", unsafe_allow_html=True)
+
     current_index = st.session_state.answers[i]
 
-    # Selve skalaen (0..4) – kun cirkler, ingen synlige tal
     choice_index = st.radio(
         "",
         options=[0, 1, 2, 3, 4],
@@ -185,12 +208,11 @@ for i, q in enumerate(questions):
         key=f"q_{i}_{st.session_state.reset_trigger}",
         horizontal=True,
         label_visibility="collapsed",
-        format_func=lambda x: "",  # skjuler tal-tekst
+        format_func=lambda x: "",  # skjul tal-tekst
     )
-
     st.session_state.answers[i] = choice_index
 
-    # Tekst under skalaen
+    # tekstlinjen under – samme 5 kolonner
     st.markdown(
         """
         <div class="scale-row">
@@ -199,6 +221,7 @@ for i, q in enumerate(questions):
             <span>Nogle gange</span>
             <span>Ofte</span>
             <span>Altid</span>
+        </div>
         </div>
         """,
         unsafe_allow_html=True,
