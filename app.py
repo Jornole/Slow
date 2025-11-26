@@ -1,7 +1,3 @@
-##############################################
-# HSP / Slow Processor Test – Version v5
-##############################################
-
 import streamlit as st
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.pagesizes import letter
@@ -14,7 +10,7 @@ from io import BytesIO
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# GLOBAL CSS (GRID VERSION – PERFECT ALIGNMENT)
+# GLOBAL CSS
 # -------------------------------------------------------------
 st.markdown("""
 <style>
@@ -38,46 +34,55 @@ html, body, .stApp {
     font-size: 2.3rem;
     font-weight: 800;
     text-align: center;
-    margin-top: 8px;
-    margin-bottom: 28px;
+    margin-top: 10px;
+    margin-bottom: 25px;
 }
 
 /* Question text */
 .question-text {
-    font-size: 1.07rem;
+    font-size: 1.05rem;
     font-weight: 600;
-    margin-top: 20px;
+    margin-top: 18px;
     margin-bottom: 6px;
 }
 
-/* -------- GRID LAYOUT FOR KNAPPERNE -------- */
+/* RADIO GRID WRAPPER */
 .scale-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
+    column-gap: 0px;
     width: 100%;
-    gap: 6px;
+    justify-items: center;
 }
 
-/* Remove Streamlit numbers inside radios */
-.scale-grid span {
+/* Hide Streamlit radio inputs */
+.scale-grid > div label > div:nth-child(1) {
     display: none !important;
 }
 
-/* Radio buttons styling */
-.scale-grid label {
-    display: flex !important;
-    justify-content: center !important;
+/* Style the radio circles */
+.scale-grid > div label > div:nth-child(2) {
+    width: 22px !important;
+    height: 22px !important;
+    border-radius: 50% !important;
+    border: 2px solid white !important;
+    background-color: transparent !important;
+    margin: 0 auto !important;
 }
 
-/* Text labels under knapperne */
+/* Selected state */
+.scale-grid input:checked + div {
+    background-color: white !important;
+}
+
+/* LABELS BELOW BUTTONS */
 .scale-labels {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    width: 100%;
-    margin-top: -4px;
-    margin-bottom: 30px;
     text-align: center;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
+    margin-top: 6px;
+    margin-bottom: 32px;
 }
 
 /* Red buttons */
@@ -93,13 +98,11 @@ html, body, .stApp {
     background-color: #B71C1C !important;
 }
 
-/* Version number bottom-left */
-.version-tag {
-    position: fixed;
-    bottom: 6px;
-    left: 8px;
+/* Version number */
+.version {
     font-size: 0.75rem;
     opacity: 0.6;
+    margin-top: 20px;
 }
 
 </style>
@@ -115,12 +118,12 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# MAIN TITLE
+# TITLE
 # -------------------------------------------------------------
 st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# INTRO TEXT
+# INTRO
 # -------------------------------------------------------------
 st.markdown("""
 Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige 
@@ -166,34 +169,29 @@ if "reset_trigger" not in st.session_state:
     st.session_state.reset_trigger = 0
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS – PERFECT GRID VERSION
+# RENDER QUESTIONS
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
-
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    # Radio buttons i perfekt grid
-    st.markdown("<div class='scale-grid'>", unsafe_allow_html=True)
-    choice = st.radio(
-        "",
-        [0, 1, 2, 3, 4],
-        key=f"q_{i}_{st.session_state.reset_trigger}",
-        horizontal=True,
-        label_visibility="collapsed",
-        format_func=lambda x: ""
-    )
-    st.markdown("</div>", unsafe_allow_html=True)
-
+    cols = st.columns(1)
+    with cols[0]:
+        choice = st.radio(
+            "",
+            [0, 1, 2, 3, 4],
+            key=f"q_{i}_{st.session_state.reset_trigger}",
+            horizontal=True,
+            label_visibility="collapsed",
+        )
     st.session_state.answers[i] = choice
 
-    # Tekst under
     st.markdown("""
     <div class="scale-labels">
-        <div>Aldrig</div>
-        <div>Sjældent</div>
-        <div>Nogle gange</div>
-        <div>Ofte</div>
-        <div>Altid</div>
+        <span>Aldrig</span>
+        <span>Sjældent</span>
+        <span>Nogle gange</span>
+        <span>Ofte</span>
+        <span>Altid</span>
     </div>
     """, unsafe_allow_html=True)
 
@@ -247,7 +245,7 @@ total_score = sum(st.session_state.answers)
 profile = interpret_score(total_score)
 
 # -------------------------------------------------------------
-# RESULT
+# RESULT BLOCK
 # -------------------------------------------------------------
 st.header("Dit resultat")
 st.subheader(f"Score: {total_score} / 80")
@@ -258,7 +256,7 @@ for s in PROFILE_TEXT[profile]:
     st.write(f"- {s}")
 
 # -------------------------------------------------------------
-# PDF
+# PDF GENERATOR
 # -------------------------------------------------------------
 def generate_pdf(score, profile):
     buffer = BytesIO()
@@ -279,7 +277,10 @@ def generate_pdf(score, profile):
 
     story.append(Paragraph("Dine svar:", styles["Heading2"]))
     for i, q in enumerate(questions):
-        story.append(Paragraph(f"{i+1}. {q} – Svar: {st.session_state.answers[i]}", styles["BodyText"]))
+        story.append(Paragraph(
+            f"{i+1}. {q} – Svar: {st.session_state.answers[i]}",
+            styles["BodyText"]
+        ))
 
     doc.build(story)
     buffer.seek(0)
@@ -293,6 +294,6 @@ st.download_button(
 )
 
 # -------------------------------------------------------------
-# VERSION TAG (BOTTOM-LEFT)
+# VERSION NUMBER (v7)
 # -------------------------------------------------------------
-st.markdown('<div class="version-tag">v5</div>', unsafe_allow_html=True)
+st.markdown("<div class='version'>Version 7</div>", unsafe_allow_html=True)
