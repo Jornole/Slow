@@ -4,6 +4,9 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
 
+# -------------------------------------------------------------
+# BASIC SETUP
+# -------------------------------------------------------------
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
@@ -45,32 +48,25 @@ html, body, .stApp {
 /* Horizontal radio buttons */
 div[role='radiogroup'] {
     display: flex !important;
-    gap: 20px !important;
-    margin-bottom: 0px !important;
+    gap: 26px !important;         /* lidt større afstand mellem knapperne */
+    margin-bottom: 6px;
 }
 
-/* LABEL ROW — NOW CLOSER TO BUTTONS */
-.label-row {
+/* SCALE LABELS */
+.scale-labels {
     display: flex;
     justify-content: space-between;
-    width: 260px;
-    font-size: 0.8rem;
-    margin-top: -12px; /* <-- moved closer */
-}
-
-.label-left {
+    margin-top: -4px;             /* tættere på knapper */
+    font-size: 0.82rem;
+    font-weight: 600;
     color: white;
+    padding: 0 6px;
 }
-
-.label-middle {
-    color: white;
-    text-align: center;
-    width: 100%;
+.scale-labels span:nth-child(2) {
+    margin-left: 3px;             /* finjustering af "En gang imellem" */
 }
-
-.label-right {
-    color: white;
-    text-align: right;
+.scale-labels span:last-child {
+    margin-right: 6px;            /* Altid længere ud mod højre */
 }
 
 /* Red buttons */
@@ -82,7 +78,6 @@ div[role='radiogroup'] {
     font-weight: 600 !important;
     border: none !important;
 }
-
 .stButton > button:hover, .stDownloadButton > button:hover {
     background-color: #B71C1C !important;
 }
@@ -90,7 +85,7 @@ div[role='radiogroup'] {
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# LOGO CENTERED
+# LOGO
 # -------------------------------------------------------------
 st.markdown("""
 <div class="center-logo">
@@ -99,7 +94,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# TITLE
+# MAIN TITLE
 # -------------------------------------------------------------
 st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
 
@@ -107,40 +102,40 @@ st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_
 # INTRO TEXT
 # -------------------------------------------------------------
 st.markdown("""
-Denne test giver dig et indblik i, hvordan du bearbejder baade foelelsesmaessige 
-og sansemaessige indtryk, og hvordan dit mentale tempo paavirker dine reaktioner.
-Testen undersoeger, om dine reaktioner er mere intuitive og impulsstyrede 
-eller mere langsomme, bearbejdende og eftertaenksomme.
+Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige 
+og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner.
+Testen undersøger, om dine reaktioner er mere intuitive og impulsstyrede – 
+eller mere langsomme, bearbejdende og eftertænksomme.
 
-Du besvarer 20 udsagn paa en skala fra 0 (aldrig) til 4 (altid).
+Du besvarer 20 udsagn på en skala fra **0 (aldrig)** til **4 (altid)**.
 
-Testen er ikke en diagnose, men et psykologisk vaerktoej til selvindsigt.
-""")
+Testen er <u>**ikke en diagnose**</u>, men et psykologisk værktøj til selvindsigt.
+""", unsafe_allow_html=True)
 
 # -------------------------------------------------------------
 # QUESTIONS
 # -------------------------------------------------------------
 questions = [
-    "Jeg bliver let overvaeldet af indtryk.",
-    "Jeg opdager smaa detaljer, som andre ofte overser.",
-    "Jeg bruger laengere tid paa at taenke ting igennem.",
-    "Jeg foretraekker rolige omgivelser.",
-    "Jeg reagerer staerkt paa uventede afbrydelser.",
+    "Jeg bliver let overvældet af indtryk.",
+    "Jeg opdager små detaljer, som andre ofte overser.",
+    "Jeg bruger længere tid på at tænke ting igennem.",
+    "Jeg foretrækker rolige omgivelser.",
+    "Jeg reagerer stærkt på uventede afbrydelser.",
     "Jeg bearbejder information dybt og grundigt.",
     "Jeg har brug for mere tid til at omstille mig.",
     "Jeg bliver hurtigt mentalt udmattet.",
-    "Jeg er meget opmaerksom paa stemninger hos andre.",
-    "Jeg foretraekker at goere en ting ad gangen.",
-    "Jeg paavirkes lettere af stoej end de fleste.",
+    "Jeg er meget opmærksom på stemninger hos andre.",
+    "Jeg foretrækker at gøre én ting ad gangen.",
+    "Jeg påvirkes lettere af støj end de fleste.",
     "Jeg trives bedst med tydelige rammer og struktur.",
-    "Jeg bruger lang tid paa at komme i gang med nye opgaver.",
-    "Jeg har svaert ved at sortere irrelevante stimuli fra.",
-    "Jeg bliver let paavirket af andres humoer.",
-    "Jeg bruger lang tid paa at traeffe beslutninger.",
-    "Jeg foretraekker dybe samtaler frem for smalltalk.",
-    "Jeg kan have svaert ved at skifte fokus hurtigt.",
-    "Jeg foeler mig ofte overstimuleret.",
-    "Jeg bliver let distraheret, naar der sker meget omkring mig."
+    "Jeg bruger lang tid på at komme i gang med nye opgaver.",
+    "Jeg har svært ved at sortere irrelevante stimuli fra.",
+    "Jeg bliver let påvirket af andres humør.",
+    "Jeg bruger lang tid på at træffe beslutninger.",
+    "Jeg foretrækker dybe samtaler frem for smalltalk.",
+    "Jeg kan have svært ved at skifte fokus hurtigt.",
+    "Jeg føler mig ofte overstimuleret.",
+    "Jeg bliver let distraheret, når der sker meget omkring mig."
 ]
 
 # -------------------------------------------------------------
@@ -152,7 +147,7 @@ if "reset_trigger" not in st.session_state:
     st.session_state.reset_trigger = 0
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS WITH LABELS
+# RENDER QUESTIONS
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
 
@@ -168,11 +163,12 @@ for i, q in enumerate(questions):
 
     st.session_state.answers[i] = choice
 
+    # Labels under scale
     st.markdown("""
-    <div class="label-row">
-        <div class="label-left">aldrig</div>
-        <div class="label-middle">sjaeldnere</div>
-        <div class="label-right">altid</div>
+    <div class="scale-labels">
+        <span>Aldrig</span>
+        <span>En gang imellem</span>
+        <span>Altid</span>
     </div>
     """, unsafe_allow_html=True)
 
@@ -185,7 +181,7 @@ if st.button("Nulstil svar"):
     st.rerun()
 
 # -------------------------------------------------------------
-# INTERPRETATION
+# INTERPRET SCORE
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
@@ -197,28 +193,28 @@ def interpret_score(score):
 
 PROFILE_TEXT = {
     "HSP": [
-        "Du registrerer flere nuancer.",
-        "Du bearbejder indtryk dybt.",
-        "Du bliver let overstimuleret.",
-        "Du har et fintfoelende nervesystem.",
-        "Du er empatisk og opmaerksom.",
-        "Du har brug for ro og pauser."
+        "Du registrerer flere nuancer i både indtryk og stemninger.",
+        "Du bearbejder oplevelser dybt og grundigt.",
+        "Du reagerer stærkt på stimuli og kan blive overstimuleret.",
+        "Du har en rig indre verden og et fintfølende nervesystem.",
+        "Du er empatisk og opmærksom på andre.",
+        "Du har brug for ro og pauser for at lade op."
     ],
     "Slow Processor": [
-        "Du arbejder bedst i roligt tempo.",
-        "Du bearbejder grundigt men langsomt.",
-        "Du har brug for mere omstillingstid.",
-        "Du trives med struktur.",
-        "Du kan foele dig presset ved hurtige skift.",
-        "Du har god udholdenhed i eget tempo."
+        "Du arbejder bedst i roligt tempo og med forudsigelighed.",
+        "Du bearbejder indtryk grundigt, men langsomt.",
+        "Du har brug for ekstra tid til omstilling og beslutninger.",
+        "Du trives med faste rammer og struktur.",
+        "Du kan føle dig presset, når tingene går hurtigt.",
+        "Du har god udholdenhed, når du arbejder i dit eget tempo."
     ],
     "Mellemprofil": [
-        "Du har god balance mellem tempoer.",
-        "Du haandterer stimuli fleksibelt.",
-        "Du er hverken meget hurtig eller langsom.",
-        "Du tilpasser dig let omgivelser.",
-        "Du mister sjældent balancen.",
-        "Du fungerer bredt i sociale situationer."
+        "Du veksler naturligt mellem hurtig og langsom bearbejdning.",
+        "Du håndterer de fleste stimuli uden at blive overvældet.",
+        "Du har en god balance mellem intuition og eftertænksomhed.",
+        "Du kan tilpasse dig forskellige miljøer og tempoer.",
+        "Du bliver påvirket i perioder, men finder hurtigt balancen igen.",
+        "Du fungerer bredt socialt og mentalt i mange typer situationer."
     ]
 }
 
@@ -226,18 +222,18 @@ total_score = sum(st.session_state.answers)
 profile = interpret_score(total_score)
 
 # -------------------------------------------------------------
-# RESULT DISPLAY
+# RESULT
 # -------------------------------------------------------------
 st.header("Dit resultat")
 st.subheader(f"Score: {total_score} / 80")
-st.write(f"Profil: {profile}")
+st.write(f"**Profil: {profile}**")
 
-st.write("### Karakteristika:")
+st.write("### Karakteristika for din profil:")
 for s in PROFILE_TEXT[profile]:
-    st.write("- " + s)
+    st.write(f"- {s}")
 
 # -------------------------------------------------------------
-# PDF GENERATION
+# PDF GENERATOR
 # -------------------------------------------------------------
 def generate_pdf(score, profile):
     buffer = BytesIO()
@@ -247,17 +243,16 @@ def generate_pdf(score, profile):
 
     story.append(Paragraph("HSP / Slow Processor Test – Rapport", styles["Title"]))
     story.append(Spacer(1, 12))
-    story.append(Paragraph(f"Score: {score} / 80", styles["Heading2"]))
+    story.append(Paragraph(f"Samlet score: {score} / 80", styles["Heading2"]))
     story.append(Paragraph(f"Profil: {profile}", styles["Heading2"]))
     story.append(Spacer(1, 12))
-    story.append(Paragraph("Karakteristika:", styles["Heading2"]))
 
+    story.append(Paragraph("Karakteristika for din profil:", styles["Heading2"]))
     for s in PROFILE_TEXT[profile]:
-        story.append(Paragraph("- " + s, styles["BodyText"]))
-
+        story.append(Paragraph(f"- {s}", styles["BodyText"]))
     story.append(Spacer(1, 12))
-    story.append(Paragraph("Dine svar:", styles["Heading2"]))
 
+    story.append(Paragraph("Dine svar:", styles["Heading2"]))
     for i, q in enumerate(questions):
         story.append(Paragraph(f"{i+1}. {q} – Svar: {st.session_state.answers[i]}", styles["BodyText"]))
 
