@@ -7,7 +7,7 @@ from io import BytesIO
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# GLOBAL CSS (CLEAN VERSION)
+# GLOBAL CSS
 # -------------------------------------------------------------
 st.markdown("""
 <style>
@@ -17,6 +17,7 @@ html, body, .stApp {
     font-family: Arial, sans-serif !important;
 }
 
+/* Centered logo */
 .center-logo {
     display: flex;
     justify-content: center;
@@ -24,6 +25,7 @@ html, body, .stApp {
     margin-bottom: 5px;
 }
 
+/* Main title */
 .main-title {
     font-size: 2.3rem;
     font-weight: 800;
@@ -32,6 +34,7 @@ html, body, .stApp {
     margin-bottom: 25px;
 }
 
+/* Question text */
 .question-text {
     font-size: 1.05rem;
     font-weight: 600;
@@ -39,18 +42,20 @@ html, body, .stApp {
     margin-bottom: 8px;
 }
 
+/* Horizontal radio buttons */
 div[role='radiogroup'] {
     display: flex !important;
     gap: 20px !important;
     margin-bottom: 0px !important;
 }
 
+/* LABEL ROW — NOW CLOSER TO BUTTONS */
 .label-row {
     display: flex;
     justify-content: space-between;
     width: 260px;
     font-size: 0.8rem;
-    margin-top: -4px;
+    margin-top: -12px; /* <-- moved closer */
 }
 
 .label-left {
@@ -68,6 +73,7 @@ div[role='radiogroup'] {
     text-align: right;
 }
 
+/* Red buttons */
 .stButton > button, .stDownloadButton > button {
     background-color: #C62828 !important;
     color: white !important;
@@ -101,9 +107,10 @@ st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_
 # INTRO TEXT
 # -------------------------------------------------------------
 st.markdown("""
-Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige 
-og sansemæssige indtryk, og hvordan dit mentale tempo paavirker dine reaktioner.
-Testen undersoeger, om dine reaktioner er mere intuitive og impulsstyrede eller mere langsomme, bearbejdende og eftertaenksomme.
+Denne test giver dig et indblik i, hvordan du bearbejder baade foelelsesmaessige 
+og sansemaessige indtryk, og hvordan dit mentale tempo paavirker dine reaktioner.
+Testen undersoeger, om dine reaktioner er mere intuitive og impulsstyrede 
+eller mere langsomme, bearbejdende og eftertaenksomme.
 
 Du besvarer 20 udsagn paa en skala fra 0 (aldrig) til 4 (altid).
 
@@ -124,7 +131,7 @@ questions = [
     "Jeg bliver hurtigt mentalt udmattet.",
     "Jeg er meget opmaerksom paa stemninger hos andre.",
     "Jeg foretraekker at goere en ting ad gangen.",
-    "Jeg paavirkes lettere af sto ej end de fleste.",
+    "Jeg paavirkes lettere af stoej end de fleste.",
     "Jeg trives bedst med tydelige rammer og struktur.",
     "Jeg bruger lang tid paa at komme i gang med nye opgaver.",
     "Jeg har svaert ved at sortere irrelevante stimuli fra.",
@@ -178,7 +185,7 @@ if st.button("Nulstil svar"):
     st.rerun()
 
 # -------------------------------------------------------------
-# PROFILE INTERPRETATION
+# INTERPRETATION
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
@@ -192,7 +199,7 @@ PROFILE_TEXT = {
     "HSP": [
         "Du registrerer flere nuancer.",
         "Du bearbejder indtryk dybt.",
-        "Du blir let overstimuleret.",
+        "Du bliver let overstimuleret.",
         "Du har et fintfoelende nervesystem.",
         "Du er empatisk og opmaerksom.",
         "Du har brug for ro og pauser."
