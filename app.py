@@ -20,18 +20,27 @@ html, body, .stApp {
     font-family: Arial, sans-serif !important;
 }
 
-.question-text {
-    font-size: 1.15rem;
-    font-weight: 600;
-    margin-top: 24px;
-    margin-bottom: 8px;
-}
-
-.stRadio label {
+/* Ensartet style til labels */
+.scale-label {
+    display: block;
+    text-align: center;
+    margin-top: 6px;
+    font-size: 0.9rem;
     color: white !important;
-    font-size: 1rem;
 }
 
+/* Radio-knapper altid i midten */
+.scale-radio > div {
+    display: flex !important;
+    justify-content: center !important;
+}
+
+/* Fjern den sorte label på standard-radio */
+.stRadio > label > div {
+    color: white !important;
+}
+
+/* Røde knapper */
 .stButton > button, .stDownloadButton > button {
     background-color: #C62828 !important;
     color: white !important;
@@ -41,6 +50,16 @@ html, body, .stApp {
     border: none !important;
 }
 
+.stButton > button:hover {
+    background-color: #B71C1C !important;
+}
+
+.question-text {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-top: 25px;
+    margin-bottom: 12px;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -49,7 +68,7 @@ html, body, .stApp {
 # -------------------------------------------------------------
 st.markdown("""
 <div style="text-align:center; margin-top:15px;">
-    <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="160">
+    <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="150">
 </div>
 """, unsafe_allow_html=True)
 
@@ -92,7 +111,7 @@ questions = [
     "Jeg bliver let distraheret, når der sker meget omkring mig."
 ]
 
-scale_options = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
+scale_labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
 
 # -------------------------------------------------------------
 # SESSION
@@ -101,22 +120,25 @@ if "answers" not in st.session_state:
     st.session_state.answers = [0] * len(questions)
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS — stable radios
+# RENDER QUESTIONS — 5 kolonner, klikbart label + knap
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
+
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    choice = st.radio(
-        "",
-        scale_options,
-        horizontal=True,
-        key=f"q_{i}",
-        index=st.session_state.answers[i],
-        label_visibility="collapsed"
-    )
-
-    # Gem valgt index
-    st.session_state.answers[i] = scale_options.index(choice)
+    cols = st.columns(5)
+    for idx in range(5):
+        with cols[idx]:
+            # Klik på label eller knap registrerer svar
+            if st.radio(
+                label=f"<div class='scale-label'>{scale_labels[idx]}</div>",
+                options=[idx],
+                key=f"q_{i}_{idx}",
+                format_func=lambda x: "",
+                label_visibility="visible",
+                horizontal=True
+            ):
+                st.session_state.answers[i] = idx
 
 # -------------------------------------------------------------
 # RESET BUTTON
@@ -126,7 +148,7 @@ if st.button("Nulstil svar"):
     st.rerun()
 
 # -------------------------------------------------------------
-# INTERPRETATION
+# SCORING
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
@@ -140,26 +162,26 @@ PROFILE_TEXT = {
     "HSP": [
         "Du registrerer flere nuancer i både indtryk og stemninger.",
         "Du bearbejder oplevelser dybt og grundigt.",
-        "Du reagerer stærkt på stimuli.",
-        "Du kan blive overstimuleret i travle miljøer.",
-        "Du har en dyb indre verden.",
-        "Du har brug for pauser for at lade op."
+        "Du reagerer stærkt på stimuli og kan blive overstimuleret.",
+        "Du har en rig indre verden og et fintfølende nervesystem.",
+        "Du er empatisk og opmærksom på andre.",
+        "Du har brug for ro og pauser for at lade op."
     ],
     "Slow Processor": [
-        "Du arbejder bedst i roligt tempo.",
-        "Du bearbejder indtryk grundigt.",
-        "Du har brug for ekstra tid til omstilling.",
-        "Du trives med faste rammer.",
-        "Du kan føle dig presset, når der er fart på.",
-        "Du er udholdende i dit eget tempo."
+        "Du arbejder bedst i roligt tempo og med forudsigelighed.",
+        "Du bearbejder indtryk grundigt, men langsomt.",
+        "Du har brug for ekstra tid til omstilling og beslutninger.",
+        "Du trives med faste rammer og struktur.",
+        "Du kan føle dig presset, når tingene går hurtigt.",
+        "Du har god udholdenhed, når du arbejder i dit eget tempo."
     ],
     "Mellemprofil": [
-        "Du balancerer mellem hurtig og langsom bearbejdning.",
-        "Du håndterer stimuli uden at blive overvældet.",
-        "Du er fleksibel i forskellige miljøer.",
-        "Du finder balance hurtigt.",
-        "Du fungerer socialt og mentalt i mange situationer.",
-        "Du er robust og tilpasningsdygtig."
+        "Du veksler naturligt mellem hurtig og langsom bearbejdning.",
+        "Du håndterer de fleste stimuli uden at blive overvældet.",
+        "Du har en god balance mellem intuition og eftertænksomhed.",
+        "Du kan tilpasse dig forskellige miljøer og tempoer.",
+        "Du bliver påvirket i perioder, men finder hurtigt balancen igen.",
+        "Du fungerer bredt socialt og mentalt i mange typer situationer."
     ]
 }
 
@@ -167,7 +189,7 @@ total_score = sum(st.session_state.answers)
 profile = interpret_score(total_score)
 
 # -------------------------------------------------------------
-# RESULT
+# RESULTS
 # -------------------------------------------------------------
 st.header("Dit resultat")
 st.subheader(f"Score: {total_score} / 80")
@@ -199,7 +221,7 @@ def generate_pdf(score, profile):
 
     story.append(Paragraph("Dine svar:", styles["Heading2"]))
     for i, q in enumerate(questions):
-        story.append(Paragraph(f"{i+1}. {q} - Svar: {st.session_state.answers[i]}", styles["BodyText"]))
+        story.append(Paragraph(f"{i+1}. {q} – Svar: {st.session_state.answers[i]}", styles["BodyText"]))
 
     doc.build(story)
     buffer.seek(0)
@@ -215,4 +237,4 @@ st.download_button(
 # -------------------------------------------------------------
 # VERSION NUMBER
 # -------------------------------------------------------------
-st.markdown("<div style='color: white; font-size: 0.8rem;'>Version v20</div>", unsafe_allow_html=True)
+st.markdown("<div style='color:white; font-size:0.8rem;'>Version v20</div>", unsafe_allow_html=True)
