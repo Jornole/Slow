@@ -14,55 +14,16 @@ st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 # -------------------------------------------------------------
 st.markdown("""
 <style>
-
 html, body, .stApp {
     background-color: #1A6333 !important;
     color: white !important;
     font-family: Arial, sans-serif !important;
 }
-
-/* Labels linje */
-.scale-row {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 6px;
-    margin-bottom: 32px;
-}
-
-.scale-label {
-    flex: 1;
-    text-align: center;
-    padding: 6px 4px;
-    cursor: pointer;
-    font-size: 0.95rem;
-    transition: 0.15s;
-}
-
-/* Ikke valgt */
-.scale-label.unselected {
-    color: white;
-    font-weight: 400;
-}
-
-/* Valgt */
-.scale-label.selected {
-    color: #FF4444 !important;
-    font-weight: 700 !important;
-}
-
-/* Klikbart ved hover */
-.scale-label:hover {
-    opacity: 0.7;
-}
-
-/* Red buttons */
-.stButton > button, .stDownloadButton > button {
-    background-color: #C62828 !important;
-    color: white !important;
-    border-radius: 8px !important;
-    padding: 0.6rem 1.3rem !important;
-    font-weight: 600 !important;
+.stButton > button {
+    background-color: transparent !important;
     border: none !important;
+    color: white !important;
+    font-size: 1rem !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -77,15 +38,16 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# TITLE + INTRO
+# TITLE & INTRO
 # -------------------------------------------------------------
 st.markdown("""
 # DIN PERSONLIGE PROFIL
 
-Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige og sansemæssige indtryk.  
+Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige og sansemæssige indtryk.
+
 Du besvarer 20 udsagn på en skala fra **Aldrig** til **Altid**.
 
-Testen er <u>ikke en diagnose</u>, men et psykologisk værktøj til selvindsigt.
+Testen er <u>**ikke en diagnose**</u>, men et psykologisk værktøj til selvindsigt.
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
@@ -116,47 +78,35 @@ questions = [
 
 scale_labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
 
-# INIT STATE
+# -------------------------------------------------------------
+# SESSION STATE
+# -------------------------------------------------------------
 if "answers" not in st.session_state:
     st.session_state.answers = [0] * len(questions)
 
 # -------------------------------------------------------------
-# CUSTOM LABEL-CLICK SELECTOR
+# RENDER QUESTIONS — V22 CLICK-LABEL SYSTEM
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
 
-    st.markdown(f"<div style='font-size:1.1rem; font-weight:600; margin-top:20px;'>{i+1}. {q}</div>",
-                 unsafe_allow_html=True)
+    st.markdown(
+        f"<div style='font-size:1.15rem; font-weight:600; margin-top:22px;'>{i+1}. {q}</div>", 
+        unsafe_allow_html=True
+    )
 
-    # BUILD ROW
-    row_html = "<div class='scale-row'>"
-    for val, label in enumerate(scale_labels):
+    cols = st.columns(5)
 
-        selected = "selected" if st.session_state.answers[i] == val else "unselected"
+    for idx, label in enumerate(scale_labels):
 
-        # Each label is a form submit button disguised as text
-        b_key = f"btn_{i}_{val}"
-        if st.button(label, key=b_key):
-            st.session_state.answers[i] = val
-            st.rerun()
+        selected = (st.session_state.answers[i] == idx)
 
-        # Inject visual override AFTER Streamlit renders button
-        row_html += f"""
-        <script>
-            var el = window.parent.document.querySelector('button[kind="secondary"][data-baseweb="button"][key="{b_key}"]');
-            if (el) {{
-                el.style.background = "transparent";
-                el.style.border = "0px";
-                el.style.boxShadow = "none";
-                el.style.color = "{'#FF4444' if selected=='selected' else 'white'}";
-                el.style.fontWeight = "{'700' if selected=='selected' else '400'}";
-                el.style.width = "100%";
-            }}
-        </script>
-        """
+        # Aktiv label = rød + fed
+        show_label = f"**:red[{label}]**" if selected else label
 
-    row_html += "</div>"
-    st.markdown(row_html, unsafe_allow_html=True)
+        with cols[idx]:
+            if st.button(show_label, key=f"btn_{i}_{idx}"):
+                st.session_state.answers[i] = idx
+                st.rerun()
 
 # -------------------------------------------------------------
 # RESET BUTTON
@@ -166,15 +116,12 @@ if st.button("Nulstil svar"):
     st.rerun()
 
 # -------------------------------------------------------------
-# INTERPRETATION
+# RESULTS
 # -------------------------------------------------------------
 def interpret_score(score):
-    if score <= 26:
-        return "Slow Processor"
-    elif score <= 53:
-        return "Mellemprofil"
-    else:
-        return "HSP"
+    if score <= 26: return "Slow Processor"
+    elif score <= 53: return "Mellemprofil"
+    else: return "HSP"
 
 PROFILE_TEXT = {
     "HSP": [
@@ -206,12 +153,13 @@ PROFILE_TEXT = {
 total_score = sum(st.session_state.answers)
 profile = interpret_score(total_score)
 
-# -------------------------------------------------------------
-# RESULT
-# -------------------------------------------------------------
 st.header("Dit resultat")
 st.subheader(f"Score: {total_score} / 80")
 st.subheader(f"Profil: {profile}")
+
+st.write("### Karakteristika for din profil:")
+for s in PROFILE_TEXT[profile]:
+    st.write(f"- {s}")
 
 # -------------------------------------------------------------
 # PDF GENERATOR
@@ -250,7 +198,6 @@ st.download_button(
 )
 
 # -------------------------------------------------------------
-# VERSION
+# VERSION NUMBER
 # -------------------------------------------------------------
-st.markdown("<div style='color:white; font-size:0.8rem; margin-top:20px;'>Version v21</div>",
-            unsafe_allow_html=True)
+st.markdown("<div style='color: white; font-size: 0.8rem;'>Version v22</div>", unsafe_allow_html=True)
