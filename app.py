@@ -51,17 +51,18 @@ html, body, .stApp {
     display: none !important;
 }
 
-/* Radio layout (5 buttons in one row) */
+/* Force radios onto one line + pull labels upward */
 .stRadio > div {
     display: flex !important;
     justify-content: space-between !important;
+    margin-bottom: -18px !important;  /* ← NEW: pull labels upward */
 }
 
-/* Labels under knapperne — now moved closer */
+/* Label row */
 .scale-row {
     display: flex;
     justify-content: space-between;
-    margin-top: -10px;    /* moved up closer to the radios */
+    margin-top: 2px;
     margin-bottom: 30px;
     width: 100%;
 }
@@ -108,7 +109,7 @@ og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner
 
 Du besvarer 20 udsagn på en skala fra **Aldrig** til **Altid**.
 
-Testen er <u><b>ikke en diagnose</b></u>, men et psykologisk værktøj til selvindsigt.
+Testen er <u>**ikke en diagnose**</u>, men et psykologisk værktøj til selvindsigt.
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
@@ -268,4 +269,4 @@ st.download_button(
 # -------------------------------------------------------------
 # VERSION NUMBER
 # -------------------------------------------------------------
-st.markdown("<div style='font-size:0.8rem; margin-top:20px;'>Version v32</div>", unsafe_allow_html=True)
+st.markdown("<div style='font-size:0.8rem; margin-top:20px;'>Version v33</div>", unsafe_allow_html=True)
