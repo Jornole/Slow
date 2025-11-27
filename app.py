@@ -12,43 +12,130 @@ st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 # -------------------------------------------------------------
 # GLOBAL CSS
 # -------------------------------------------------------------
-st.markdown("""
+st.markdown(
+    """
 <style>
 html, body, .stApp {
     background-color: #1A6333 !important;
     color: white !important;
     font-family: Arial, sans-serif !important;
 }
-.stButton > button {
-    background-color: transparent !important;
-    border: none !important;
+
+/* Logo centreret */
+.center-logo {
+    display: flex;
+    justify-content: center;
+    margin-top: 18px;
+    margin-bottom: 6px;
+}
+
+/* Main title */
+.main-title {
+    font-size: 2.3rem;
+    font-weight: 800;
+    text-align: center;
+    margin-top: 10px;
+    margin-bottom: 25px;
+}
+
+/* Spørgsmålstekst */
+.question-text {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-top: 20px;
+    margin-bottom: 8px;
+}
+
+/* --- SKALA SOM TEKST (HORIZONTAL) --- */
+.stRadio > div {
+    display: flex !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+}
+
+/* Hvert “radio”-felt */
+.stRadio [role="radio"] {
+    flex: 1 !important;
+    display: flex !important;
+    justify-content: center !important;
+}
+
+/* Skjul den runde cirkel */
+.stRadio [role="radio"] > div:first-child {
+    display: none !important;
+}
+
+/* Teksten i valgmulighederne (ikke valgt) */
+.stRadio [role="radio"] > div:nth-child(2) {
     color: white !important;
-    font-size: 1rem !important;
+    font-size: 0.95rem;
+    text-align: center;
+}
+
+/* Valgt svar: rød + fed */
+.stRadio [role="radio"][aria-checked="true"] > div:nth-child(2) {
+    color: #FF5252 !important;
+    font-weight: 700 !important;
+}
+
+/* Røde knapper: Nulstil + PDF */
+.stButton > button, .stDownloadButton > button {
+    background-color: #C62828 !important;
+    color: white !important;
+    border-radius: 8px !important;
+    padding: 0.6rem 1.4rem !important;
+    font-weight: 600 !important;
+    border: none !important;
+}
+.stButton > button:hover, .stDownloadButton > button:hover {
+    background-color: #B71C1C !important;
+}
+
+/* Lidt luft før Nulstil-knap */
+.reset-wrapper {
+    margin-top: 18px;
+    margin-bottom: 10px;
+}
+
+/* Versionsnummer nederst til venstre */
+.version-tag {
+    color: white;
+    font-size: 0.75rem;
+    margin-top: 14px;
 }
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 # -------------------------------------------------------------
 # LOGO
 # -------------------------------------------------------------
-st.markdown("""
-<div style="text-align:center; margin-top:15px;">
+st.markdown(
+    """
+<div class="center-logo">
     <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="160">
 </div>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 # -------------------------------------------------------------
-# TITLE & INTRO
+# TITLE + INTRO
 # -------------------------------------------------------------
-st.markdown("""
-# DIN PERSONLIGE PROFIL
+st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
 
-Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige og sansemæssige indtryk.
+st.markdown(
+    """
+Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige 
+og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner.
 
 Du besvarer 20 udsagn på en skala fra **Aldrig** til **Altid**.
 
 Testen er <u>**ikke en diagnose**</u>, men et psykologisk værktøj til selvindsigt.
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 # -------------------------------------------------------------
 # QUESTIONS
@@ -73,7 +160,7 @@ questions = [
     "Jeg foretrækker dybe samtaler frem for smalltalk.",
     "Jeg kan have svært ved at skifte fokus hurtigt.",
     "Jeg føler mig ofte overstimuleret.",
-    "Jeg bliver let distraheret, når der sker meget omkring mig."
+    "Jeg bliver let distraheret, når der sker meget omkring mig.",
 ]
 
 scale_labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
@@ -85,43 +172,51 @@ if "answers" not in st.session_state:
     st.session_state.answers = [0] * len(questions)
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS — V22 CLICK-LABEL SYSTEM
+# RENDER QUESTIONS
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
-
     st.markdown(
-        f"<div style='font-size:1.15rem; font-weight:600; margin-top:22px;'>{i+1}. {q}</div>", 
-        unsafe_allow_html=True
+        f"<div class='question-text'>{i+1}. {q}</div>",
+        unsafe_allow_html=True,
     )
 
-    cols = st.columns(5)
+    # nu bruges radio, men vi skjuler cirklerne med CSS,
+    # så kun teksten (Aldrig … Altid) er synlig og klikbar
+    choice = st.radio(
+        label="",
+        options=list(range(5)),
+        index=st.session_state.answers[i],
+        format_func=lambda x, labels=scale_labels: labels[x],
+        key=f"q_{i}",
+        horizontal=True,
+        label_visibility="collapsed",
+    )
 
-    for idx, label in enumerate(scale_labels):
-
-        selected = (st.session_state.answers[i] == idx)
-
-        # Aktiv label = rød + fed
-        show_label = f"**:red[{label}]**" if selected else label
-
-        with cols[idx]:
-            if st.button(show_label, key=f"btn_{i}_{idx}"):
-                st.session_state.answers[i] = idx
-                st.rerun()
+    st.session_state.answers[i] = choice
 
 # -------------------------------------------------------------
 # RESET BUTTON
 # -------------------------------------------------------------
+st.markdown('<div class="reset-wrapper">', unsafe_allow_html=True)
 if st.button("Nulstil svar"):
     st.session_state.answers = [0] * len(questions)
+    # sæt også alle radioer visuelt tilbage til 0
+    for i in range(len(questions)):
+        st.session_state[f"q_{i}"] = 0
     st.rerun()
+st.markdown("</div>", unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# RESULTS
+# INTERPRETATION
 # -------------------------------------------------------------
-def interpret_score(score):
-    if score <= 26: return "Slow Processor"
-    elif score <= 53: return "Mellemprofil"
-    else: return "HSP"
+def interpret_score(score: int) -> str:
+    if score <= 26:
+        return "Slow Processor"
+    elif score <= 53:
+        return "Mellemprofil"
+    else:
+        return "HSP"
+
 
 PROFILE_TEXT = {
     "HSP": [
@@ -130,7 +225,7 @@ PROFILE_TEXT = {
         "Du reagerer stærkt på stimuli og kan blive overstimuleret.",
         "Du har en rig indre verden og et fintfølende nervesystem.",
         "Du er empatisk og opmærksom på andre.",
-        "Du har brug for ro og pauser for at lade op."
+        "Du har brug for ro og pauser for at lade op.",
     ],
     "Slow Processor": [
         "Du arbejder bedst i roligt tempo og med forudsigelighed.",
@@ -138,7 +233,7 @@ PROFILE_TEXT = {
         "Du har brug for ekstra tid til omstilling og beslutninger.",
         "Du trives med faste rammer og struktur.",
         "Du kan føle dig presset, når tingene går hurtigt.",
-        "Du har god udholdenhed, når du arbejder i dit eget tempo."
+        "Du har god udholdenhed, når du arbejder i dit eget tempo.",
     ],
     "Mellemprofil": [
         "Du veksler naturligt mellem hurtig og langsom bearbejdning.",
@@ -146,13 +241,16 @@ PROFILE_TEXT = {
         "Du har en god balance mellem intuition og eftertænksomhed.",
         "Du kan tilpasse dig forskellige miljøer og tempoer.",
         "Du bliver påvirket i perioder, men finder hurtigt balancen igen.",
-        "Du fungerer bredt socialt og mentalt i mange typer situationer."
-    ]
+        "Du fungerer bredt socialt og mentalt i mange typer situationer.",
+    ],
 }
 
 total_score = sum(st.session_state.answers)
 profile = interpret_score(total_score)
 
+# -------------------------------------------------------------
+# RESULTAT
+# -------------------------------------------------------------
 st.header("Dit resultat")
 st.subheader(f"Score: {total_score} / 80")
 st.subheader(f"Profil: {profile}")
@@ -164,7 +262,7 @@ for s in PROFILE_TEXT[profile]:
 # -------------------------------------------------------------
 # PDF GENERATOR
 # -------------------------------------------------------------
-def generate_pdf(score, profile):
+def generate_pdf(score: int, profile: str) -> BytesIO:
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter)
     styles = getSampleStyleSheet()
@@ -179,25 +277,30 @@ def generate_pdf(score, profile):
     story.append(Paragraph("Karakteristika for din profil:", styles["Heading2"]))
     for s in PROFILE_TEXT[profile]:
         story.append(Paragraph(f"- {s}", styles["BodyText"]))
-
     story.append(Spacer(1, 12))
-    story.append(Paragraph("Dine svar:", styles["Heading2"]))
 
+    story.append(Paragraph("Dine svar:", styles["Heading2"]))
     for i, q in enumerate(questions):
-        story.append(Paragraph(f"{i+1}. {q} – Svar: {st.session_state.answers[i]}", styles["BodyText"]))
+        story.append(
+            Paragraph(
+                f"{i+1}. {q} – Svar: {st.session_state.answers[i]}",
+                styles["BodyText"],
+            )
+        )
 
     doc.build(story)
     buffer.seek(0)
     return buffer
 
+
 st.download_button(
     "Download PDF-rapport",
     data=generate_pdf(total_score, profile),
     file_name="HSP_SlowProcessor_Rapport.pdf",
-    mime="application/pdf"
+    mime="application/pdf",
 )
 
 # -------------------------------------------------------------
-# VERSION NUMBER
+# VERSION
 # -------------------------------------------------------------
-st.markdown("<div style='color: white; font-size: 0.8rem;'>Version v22</div>", unsafe_allow_html=True)
+st.markdown('<div class="version-tag">Version v23</div>', unsafe_allow_html=True)
