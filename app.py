@@ -46,24 +46,26 @@ html, body, .stApp {
     margin-bottom: 10px;
 }
 
-/* Hide radio numbers */
-.stRadio > div > label > div:first-child {
-    display: none !important;
+/* Remove Streamlit built-in spacing around radios */
+.stRadio {
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
-/* Force radios onto one line + pull labels upward */
+/* Force radios into one line, remove gap */
 .stRadio > div {
     display: flex !important;
     justify-content: space-between !important;
-    margin-bottom: -18px !important;  /* ← NEW: pull labels upward */
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
-/* Label row */
+/* Labels under knapperne — pulled upward */
 .scale-row {
     display: flex;
     justify-content: space-between;
-    margin-top: 2px;
-    margin-bottom: 30px;
+    margin-top: -12px !important;      /* <<< FLYTTER DEM OP */
+    margin-bottom: 26px !important;
     width: 100%;
 }
 
@@ -71,6 +73,11 @@ html, body, .stApp {
     flex: 1;
     text-align: center;
     font-size: 0.85rem;
+}
+
+/* Hide radio numbers */
+.stRadio > div > label > div:first-child {
+    display: none !important;
 }
 
 /* Red buttons */
@@ -145,6 +152,7 @@ labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
 # -------------------------------------------------------------
 if "answers" not in st.session_state:
     st.session_state.answers = [0] * len(questions)
+
 if "reset_trigger" not in st.session_state:
     st.session_state.reset_trigger = 0
 
@@ -161,7 +169,7 @@ for i, q in enumerate(questions):
         key=f"q_{i}_{st.session_state.reset_trigger}",
         horizontal=True,
         label_visibility="collapsed",
-        format_func=lambda x: ""  # hide numbers
+        format_func=lambda x: ""
     )
     st.session_state.answers[i] = choice
 
@@ -269,4 +277,4 @@ st.download_button(
 # -------------------------------------------------------------
 # VERSION NUMBER
 # -------------------------------------------------------------
-st.markdown("<div style='font-size:0.8rem; margin-top:20px;'>Version v33</div>", unsafe_allow_html=True)
+st.markdown("<div style='font-size:0.8rem; margin-top:20px;'>Version v34</div>", unsafe_allow_html=True)
