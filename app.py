@@ -108,7 +108,7 @@ og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner
 
 Du besvarer 20 udsagn på en skala fra **Aldrig** til **Altid**.
 
-Testen er <u>**ikke en diagnose**</u>, men et psykologisk værktøj til selvindsigt.
+Testen er <u><b>ikke en diagnose</b></u>, men et psykologisk værktøj til selvindsigt.
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
@@ -268,4 +268,4 @@ st.download_button(
 # -------------------------------------------------------------
 # VERSION NUMBER
 # -------------------------------------------------------------
-st.markdown("<div style='font-size:0.8rem; margin-top:20px;'>Version v30 (BASIS)</div>", unsafe_allow_html=True)
+st.markdown("<div style='font-size:0.8rem; margin-top:20px;'>Version v30.1 (BASIS)</div>", unsafe_allow_html=True)
