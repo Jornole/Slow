@@ -46,22 +46,29 @@ html, body, .stApp {
     margin-bottom: 10px;
 }
 
-/* Hide radio numbers (vi skjuler kun teksten, ikke cirklen) */
+/* Hide label text inside each radio button */
 .stRadio > label {
     visibility: hidden;
 }
 
-/* Radio layout (5 knapper i én række) */
+/* --- RADIO BUTTON LAYOUT: spread evenly --- */
 .stRadio > div {
     display: flex !important;
     justify-content: space-between !important;
+    width: 100% !important;
 }
 
-/* Labels under knapperne – NU TRUKKET OP */
+.stRadio > div > label {
+    flex: 1 !important;
+    display: flex !important;
+    justify-content: center !important;
+}
+
+/* Label row under the knapper */
 .scale-row {
     display: flex;
     justify-content: space-between;
-    margin-top: -14px;      /* <<< ændret fra -3 til -14 */
+    margin-top: -14px;
     margin-bottom: 28px;
     width: 100%;
 }
@@ -81,6 +88,7 @@ html, body, .stApp {
     font-weight: 600 !important;
     border: none !important;
 }
+
 .stButton > button:hover, .stDownloadButton > button:hover {
     background-color: #B71C1C !important;
 }
@@ -160,7 +168,7 @@ for i, q in enumerate(questions):
         key=f"q_{i}_{st.session_state.reset_trigger}",
         horizontal=True,
         label_visibility="collapsed",
-        format_func=lambda x: ""  # ingen tal
+        format_func=lambda x: ""
     )
     st.session_state.answers[i] = choice
 
@@ -268,4 +276,4 @@ st.download_button(
 # -------------------------------------------------------------
 # VERSION NUMBER
 # -------------------------------------------------------------
-st.markdown("<div style='font-size:0.8rem; margin-top:20px;'>Version v35</div>", unsafe_allow_html=True)
+st.markdown("<div style='font-size:0.8rem; margin-top:20px;'>Version v36</div>", unsafe_allow_html=True)
