@@ -14,33 +14,48 @@ st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 # -------------------------------------------------------------
 st.markdown("""
 <style>
+
 html, body, .stApp {
     background-color: #1A6333 !important;
     color: white !important;
     font-family: Arial, sans-serif !important;
 }
 
-/* Ensartet style til labels */
-.scale-label {
-    display: block;
-    text-align: center;
+/* Labels linje */
+.scale-row {
+    display: flex;
+    justify-content: space-between;
     margin-top: 6px;
-    font-size: 0.9rem;
-    color: white !important;
+    margin-bottom: 32px;
 }
 
-/* Radio-knapper altid i midten */
-.scale-radio > div {
-    display: flex !important;
-    justify-content: center !important;
+.scale-label {
+    flex: 1;
+    text-align: center;
+    padding: 6px 4px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: 0.15s;
 }
 
-/* Fjern den sorte label på standard-radio */
-.stRadio > label > div {
-    color: white !important;
+/* Ikke valgt */
+.scale-label.unselected {
+    color: white;
+    font-weight: 400;
 }
 
-/* Røde knapper */
+/* Valgt */
+.scale-label.selected {
+    color: #FF4444 !important;
+    font-weight: 700 !important;
+}
+
+/* Klikbart ved hover */
+.scale-label:hover {
+    opacity: 0.7;
+}
+
+/* Red buttons */
 .stButton > button, .stDownloadButton > button {
     background-color: #C62828 !important;
     color: white !important;
@@ -48,17 +63,6 @@ html, body, .stApp {
     padding: 0.6rem 1.3rem !important;
     font-weight: 600 !important;
     border: none !important;
-}
-
-.stButton > button:hover {
-    background-color: #B71C1C !important;
-}
-
-.question-text {
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin-top: 25px;
-    margin-bottom: 12px;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -68,7 +72,7 @@ html, body, .stApp {
 # -------------------------------------------------------------
 st.markdown("""
 <div style="text-align:center; margin-top:15px;">
-    <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="150">
+    <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="160">
 </div>
 """, unsafe_allow_html=True)
 
@@ -78,11 +82,10 @@ st.markdown("""
 st.markdown("""
 # DIN PERSONLIGE PROFIL
 
-Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige og sansemæssige indtryk.
-
+Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige og sansemæssige indtryk.  
 Du besvarer 20 udsagn på en skala fra **Aldrig** til **Altid**.
 
-Testen er <u>**ikke en diagnose**</u>, men et psykologisk værktøj til selvindsigt.
+Testen er <u>ikke en diagnose</u>, men et psykologisk værktøj til selvindsigt.
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
@@ -113,32 +116,47 @@ questions = [
 
 scale_labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
 
-# -------------------------------------------------------------
-# SESSION
-# -------------------------------------------------------------
+# INIT STATE
 if "answers" not in st.session_state:
     st.session_state.answers = [0] * len(questions)
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS — 5 kolonner, klikbart label + knap
+# CUSTOM LABEL-CLICK SELECTOR
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
 
-    st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
+    st.markdown(f"<div style='font-size:1.1rem; font-weight:600; margin-top:20px;'>{i+1}. {q}</div>",
+                 unsafe_allow_html=True)
 
-    cols = st.columns(5)
-    for idx in range(5):
-        with cols[idx]:
-            # Klik på label eller knap registrerer svar
-            if st.radio(
-                label=f"<div class='scale-label'>{scale_labels[idx]}</div>",
-                options=[idx],
-                key=f"q_{i}_{idx}",
-                format_func=lambda x: "",
-                label_visibility="visible",
-                horizontal=True
-            ):
-                st.session_state.answers[i] = idx
+    # BUILD ROW
+    row_html = "<div class='scale-row'>"
+    for val, label in enumerate(scale_labels):
+
+        selected = "selected" if st.session_state.answers[i] == val else "unselected"
+
+        # Each label is a form submit button disguised as text
+        b_key = f"btn_{i}_{val}"
+        if st.button(label, key=b_key):
+            st.session_state.answers[i] = val
+            st.rerun()
+
+        # Inject visual override AFTER Streamlit renders button
+        row_html += f"""
+        <script>
+            var el = window.parent.document.querySelector('button[kind="secondary"][data-baseweb="button"][key="{b_key}"]');
+            if (el) {{
+                el.style.background = "transparent";
+                el.style.border = "0px";
+                el.style.boxShadow = "none";
+                el.style.color = "{'#FF4444' if selected=='selected' else 'white'}";
+                el.style.fontWeight = "{'700' if selected=='selected' else '400'}";
+                el.style.width = "100%";
+            }}
+        </script>
+        """
+
+    row_html += "</div>"
+    st.markdown(row_html, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
 # RESET BUTTON
@@ -148,7 +166,7 @@ if st.button("Nulstil svar"):
     st.rerun()
 
 # -------------------------------------------------------------
-# SCORING
+# INTERPRETATION
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
@@ -189,15 +207,11 @@ total_score = sum(st.session_state.answers)
 profile = interpret_score(total_score)
 
 # -------------------------------------------------------------
-# RESULTS
+# RESULT
 # -------------------------------------------------------------
 st.header("Dit resultat")
 st.subheader(f"Score: {total_score} / 80")
 st.subheader(f"Profil: {profile}")
-
-st.write("### Karakteristika for din profil:")
-for s in PROFILE_TEXT[profile]:
-    st.write(f"- {s}")
 
 # -------------------------------------------------------------
 # PDF GENERATOR
@@ -217,9 +231,10 @@ def generate_pdf(score, profile):
     story.append(Paragraph("Karakteristika for din profil:", styles["Heading2"]))
     for s in PROFILE_TEXT[profile]:
         story.append(Paragraph(f"- {s}", styles["BodyText"]))
-    story.append(Spacer(1, 12))
 
+    story.append(Spacer(1, 12))
     story.append(Paragraph("Dine svar:", styles["Heading2"]))
+
     for i, q in enumerate(questions):
         story.append(Paragraph(f"{i+1}. {q} – Svar: {st.session_state.answers[i]}", styles["BodyText"]))
 
@@ -235,6 +250,7 @@ st.download_button(
 )
 
 # -------------------------------------------------------------
-# VERSION NUMBER
+# VERSION
 # -------------------------------------------------------------
-st.markdown("<div style='color:white; font-size:0.8rem;'>Version v20</div>", unsafe_allow_html=True)
+st.markdown("<div style='color:white; font-size:0.8rem; margin-top:20px;'>Version v21</div>",
+            unsafe_allow_html=True)
