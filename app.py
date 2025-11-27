@@ -43,40 +43,33 @@ html, body, .stApp {
     font-size: 1.15rem;
     font-weight: 600;
     margin-top: 22px;
-    margin-bottom: 6px;
+    margin-bottom: 10px;
 }
 
-/* Hide radio dots */
+/* Hide radio numbers */
 .stRadio > div > label > div:first-child {
     display: none !important;
 }
 
-/* Horizontal radio spacing */
+/* Radio layout (5 buttons in one row) */
 .stRadio > div {
     display: flex !important;
     justify-content: space-between !important;
 }
 
-/* Clickable label buttons */
-.scale-buttons {
+/* Labels under knapperne */
+.scale-row {
     display: flex;
     justify-content: space-between;
-    margin-top: -8px;
-    margin-bottom: 25px;
+    margin-top: -3px;
+    margin-bottom: 30px;
+    width: 100%;
 }
 
-.scale-buttons button {
-    background: none !important;
-    border: none !important;
-    color: white !important;
-    font-size: 0.95rem !important;
-    padding: 4px 0 !important;
-    cursor: pointer;
-}
-
-.scale-buttons button.selected {
-    color: #FF5252 !important;
-    font-weight: 700 !important;
+.scale-row span {
+    flex: 1;
+    text-align: center;
+    font-size: 0.85rem;
 }
 
 /* Red buttons */
@@ -161,32 +154,28 @@ for i, q in enumerate(questions):
 
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    # The hidden radio
     choice = st.radio(
         "",
         options=list(range(5)),
         key=f"q_{i}_{st.session_state.reset_trigger}",
         horizontal=True,
         label_visibility="collapsed",
-        format_func=lambda x: ""
+        format_func=lambda x: ""  # hide numbers
     )
     st.session_state.answers[i] = choice
 
-    # Clickable labels
-    st.markdown('<div class="scale-buttons">', unsafe_allow_html=True)
-
-    for idx, label in enumerate(labels):
-        btn = st.button(
-            label,
-            key=f"lbl_{i}_{idx}",
-            help="",
-        )
-        if btn:
-            st.session_state.answers[i] = idx
-            st.session_state.reset_trigger += 1
-            st.rerun()
-
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown(
+        """
+        <div class="scale-row">
+            <span>Aldrig</span>
+            <span>Sjældent</span>
+            <span>Nogle gange</span>
+            <span>Ofte</span>
+            <span>Altid</span>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 # -------------------------------------------------------------
 # RESET BUTTON
@@ -197,7 +186,7 @@ if st.button("Nulstil svar"):
     st.rerun()
 
 # -------------------------------------------------------------
-# INTERPRETATION + RESULTS + PDF (UNCHANGED)
+# INTERPRETATION
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
@@ -208,14 +197,38 @@ def interpret_score(score):
         return "HSP"
 
 PROFILE_TEXT = {
-    "HSP": [...],
-    "Slow Processor": [...],
-    "Mellemprofil": [...]
+    "HSP": [
+        "Du registrerer flere nuancer i både indtryk og stemninger.",
+        "Du bearbejder oplevelser dybt og grundigt.",
+        "Du reagerer stærkt på stimuli og kan blive overstimuleret.",
+        "Du har en rig indre verden og et fintfølende nervesystem.",
+        "Du er empatisk og opmærksom på andre.",
+        "Du har brug for ro og pauser for at lade op."
+    ],
+    "Slow Processor": [
+        "Du arbejder bedst i roligt tempo og med forudsigelighed.",
+        "Du bearbejder indtryk grundigt, men langsomt.",
+        "Du har brug for ekstra tid til omstilling og beslutninger.",
+        "Du trives med faste rammer og struktur.",
+        "Du kan føle dig presset, når tingene går hurtigt.",
+        "Du har god udholdenhed, når du arbejder i dit eget tempo."
+    ],
+    "Mellemprofil": [
+        "Du veksler naturligt mellem hurtig og langsom bearbejdning.",
+        "Du håndterer de fleste stimuli uden at blive overvældet.",
+        "Du har en god balance mellem intuition og eftertænksomhed.",
+        "Du kan tilpasse dig forskellige miljøer og tempoer.",
+        "Du bliver påvirket i perioder, men finder hurtigt balancen igen.",
+        "Du fungerer bredt socialt og mentalt i mange typer situationer."
+    ]
 }
 
 total_score = sum(st.session_state.answers)
 profile = interpret_score(total_score)
 
+# -------------------------------------------------------------
+# RESULT
+# -------------------------------------------------------------
 st.header("Dit resultat")
 st.subheader(f"Score: {total_score} / 80")
 st.subheader(f"Profil: {profile}")
@@ -224,17 +237,23 @@ st.write("### Karakteristika for din profil:")
 for s in PROFILE_TEXT[profile]:
     st.write(f"- {s}")
 
+# -------------------------------------------------------------
+# PDF GENERATOR
+# -------------------------------------------------------------
 def generate_pdf(score, profile):
     buf = BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=letter)
     styles = getSampleStyleSheet()
     story = []
+
     story.append(Paragraph("HSP / Slow Processor – Rapport", styles["Title"]))
     story.append(Paragraph(f"Score: {score} / 80", styles["Heading2"]))
     story.append(Paragraph(f"Profil: {profile}", styles["Heading2"]))
     story.append(Spacer(1, 12))
+
     for i, q in enumerate(questions):
         story.append(Paragraph(f"{i+1}. {q} – {labels[st.session_state.answers[i]]}", styles["BodyText"]))
+
     doc.build(story)
     buf.seek(0)
     return buf
@@ -246,4 +265,7 @@ st.download_button(
     mime="application/pdf"
 )
 
-st.markdown("<div style='font-size:0.8rem; margin-top:20px;'>Version v31</div>", unsafe_allow_html=True)
+# -------------------------------------------------------------
+# VERSION NUMBER
+# -------------------------------------------------------------
+st.markdown("<div style='font-size:0.8rem; margin-top:20px;'>Version v30 (BASIS)</div>", unsafe_allow_html=True)
