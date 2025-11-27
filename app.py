@@ -4,13 +4,10 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
 
-# -------------------------------------------------------------
-# PAGE CONFIG
-# -------------------------------------------------------------
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# GLOBAL CSS
+# CSS
 # -------------------------------------------------------------
 st.markdown("""
 <style>
@@ -18,52 +15,33 @@ st.markdown("""
 html, body, .stApp {
     background-color:#1A6333 !important;
     color:white !important;
-    font-family:Arial, sans-serif !important;
+    font-family:Arial, sans-serif;
 }
 
-/* LOGO */
-.center-logo {
-    text-align:center;
-    margin-top:15px;
-    margin-bottom:10px;
-}
-
-/* QUESTION TEXT */
+/* QUESTION */
 .question-text {
     font-size:1.1rem;
     font-weight:600;
     margin-top:22px;
-    margin-bottom:10px;
 }
 
-/* SCALE WRAPPER */
-.scale-wrapper {
-    display:flex;
-    width:100%;
-    justify-content:space-between;
-    margin-top:4px;
-    margin-bottom:25px;
+/* TEXT BUTTONS */
+.choice-btn {
+    background: none;
+    color: white;
+    border: none;
+    font-size: 1rem;
+    width: 100%;
+    padding: 8px 0;
 }
 
-/* TEXTPICKER ITEM */
-.scale-item {
-    flex:1;
-    text-align:center;
-    font-size:1rem;
-    cursor:pointer;
-    padding:8px 0;
-    color:white;
-    border-radius:6px;
+.choice-btn-selected {
+    color: #FF5252 !important;
+    font-weight: 700 !important;
 }
 
-.scale-item:hover {
-    background-color:rgba(255,255,255,0.12);
-}
-
-/* SELECTED STATE */
-.scale-item.selected {
-    color:#FF5252 !important;
-    font-weight:700;
+.choice-btn:hover {
+    opacity: 0.6;
 }
 
 /* RED BUTTONS */
@@ -75,14 +53,16 @@ html, body, .stApp {
     padding:0.7rem 1.3rem !important;
     font-weight:600 !important;
 }
-.stButton > button:hover, .stDownloadButton > button:hover {
-    background:#B71C1C !important;
+
+.center-logo {
+    text-align:center;
+    margin-top:15px;
 }
 
-.version-tag {
-    font-size:0.8rem;
-    margin-top:30px;
+.version {
     color:white;
+    font-size:0.8rem;
+    margin-top:25px;
 }
 
 </style>
@@ -92,8 +72,8 @@ html, body, .stApp {
 # LOGO
 # -------------------------------------------------------------
 st.markdown("""
-<div class='center-logo'>
-    <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="160">
+<div class="center-logo">
+<img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="160">
 </div>
 """, unsafe_allow_html=True)
 
@@ -143,34 +123,24 @@ if "answers" not in st.session_state:
     st.session_state.answers = [0] * len(questions)
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS (PURE TEXT BUTTONS)
+# RENDER QUESTIONS
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    # Start scale row
-    st.markdown("<div class='scale-wrapper'>", unsafe_allow_html=True)
+    cols = st.columns(5)
+    for idx, lbl in enumerate(labels):
+        selected = st.session_state.answers[i] == idx
+        btn_class = "choice-btn-selected" if selected else ""
 
-    for idx, label in enumerate(labels):
-        selected = "selected" if st.session_state.answers[i] == idx else ""
-
-        # Hidden button used as trigger
-        if st.button(f"{label}_{i}", key=f"btn_{i}_{idx}", help=""):
+        if cols[idx].button(lbl, key=f"btn_{i}_{idx}", help="", use_container_width=True):
             st.session_state.answers[i] = idx
             st.rerun()
 
-        # Visual clickable label
-        st.markdown(
-            f"""
-            <div class="scale-item {selected}" 
-                 onclick="window.parent.document.getElementById('btn_{i}_{idx}').click()">
-                {label}
-            </div>
-            """,
-            unsafe_allow_html=True,
+        cols[idx].markdown(
+            f"<div class='choice-btn {btn_class}'>{lbl}</div>",
+            unsafe_allow_html=True
         )
-
-    st.markdown("</div>", unsafe_allow_html=True)
 
 # -------------------------------------------------------------
 # RESET BUTTON
@@ -180,14 +150,15 @@ if st.button("Nulstil svar"):
     st.rerun()
 
 # -------------------------------------------------------------
-# INTERPRETATION
+# SCORE + PDF
 # -------------------------------------------------------------
+score = sum(st.session_state.answers)
+
 def interpret(score):
     if score <= 26: return "Slow Processor"
     if score <= 53: return "Mellemprofil"
     return "HSP"
 
-score = sum(st.session_state.answers)
 profile = interpret(score)
 
 st.header("Dit resultat")
@@ -195,16 +166,15 @@ st.subheader(f"Score: {score} / 80")
 st.subheader(f"Profil: {profile}")
 
 # -------------------------------------------------------------
-# PDF GENERATOR
+# PDF
 # -------------------------------------------------------------
-def pdf(score, profile):
+def make_pdf(score, profile):
     buf = BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=letter)
     styles = getSampleStyleSheet()
     story = []
 
     story.append(Paragraph("HSP / Slow Processor – Rapport", styles["Title"]))
-    story.append(Spacer(1,12))
     story.append(Paragraph(f"Score: {score} / 80", styles["Heading2"]))
     story.append(Paragraph(f"Profil: {profile}", styles["Heading2"]))
     story.append(Spacer(1,12))
@@ -217,11 +187,8 @@ def pdf(score, profile):
     return buf
 
 st.download_button("Download PDF-rapport",
-                   pdf(score, profile),
+                   make_pdf(score, profile),
                    file_name="rapport.pdf",
                    mime="application/pdf")
 
-# -------------------------------------------------------------
-# VERSION NUMBER
-# -------------------------------------------------------------
-st.markdown("<div class='version-tag'>Version v26</div>", unsafe_allow_html=True)
+st.markdown("<div class='version'>Version v27</div>", unsafe_allow_html=True)
