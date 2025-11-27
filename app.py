@@ -57,11 +57,11 @@ html, body, .stApp {
     justify-content: space-between !important;
 }
 
-/* Labels under knapperne */
+/* Labels under knapperne — now moved closer */
 .scale-row {
     display: flex;
     justify-content: space-between;
-    margin-top: -3px;
+    margin-top: -10px;    /* moved up closer to the radios */
     margin-bottom: 30px;
     width: 100%;
 }
@@ -268,4 +268,4 @@ st.download_button(
 # -------------------------------------------------------------
 # VERSION NUMBER
 # -------------------------------------------------------------
-st.markdown("<div style='font-size:0.8rem; margin-top:20px;'>Version v30.1 (BASIS)</div>", unsafe_allow_html=True)
+st.markdown("<div style='font-size:0.8rem; margin-top:20px;'>Version v32</div>", unsafe_allow_html=True)
