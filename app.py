@@ -21,18 +21,17 @@ html, body, .stApp {
 }
 
 .question-text {
-    font-size: 1.1rem;
+    font-size: 1.15rem;
     font-weight: 600;
-    margin-top: 22px;
-    margin-bottom: 10px;
+    margin-top: 24px;
+    margin-bottom: 8px;
 }
 
-/* Radio labels hvide */
 .stRadio label {
     color: white !important;
+    font-size: 1rem;
 }
 
-/* Røde knapper */
 .stButton > button, .stDownloadButton > button {
     background-color: #C62828 !important;
     color: white !important;
@@ -41,6 +40,7 @@ html, body, .stApp {
     font-weight: 600 !important;
     border: none !important;
 }
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -92,7 +92,7 @@ questions = [
     "Jeg bliver let distraheret, når der sker meget omkring mig."
 ]
 
-scale_labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
+scale_options = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
 
 # -------------------------------------------------------------
 # SESSION
@@ -101,29 +101,22 @@ if "answers" not in st.session_state:
     st.session_state.answers = [0] * len(questions)
 
 # -------------------------------------------------------------
-# RENDER EACH QUESTION (5-column stable layout)
+# RENDER QUESTIONS — stable radios
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
-
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    cols = st.columns(5)
-    current = st.session_state.answers[i]
+    choice = st.radio(
+        "",
+        scale_options,
+        horizontal=True,
+        key=f"q_{i}",
+        index=st.session_state.answers[i],
+        label_visibility="collapsed"
+    )
 
-    for idx in range(5):
-        with cols[idx]:
-            clicked = st.radio(
-                label=f"<span style='color:white;'>{scale_labels[idx]}</span>",
-                options=[0],     # Streamlit requires an options list
-                key=f"q_{i}_{idx}",
-                label_visibility="visible"
-            )
-
-            # Hvis denne radioknap blev trykket ⇒ opdater svaret
-            if f"q_{i}_{idx}" in st.session_state:
-                if st.session_state.answers[i] != idx:
-                    st.session_state.answers[i] = idx
-                    st.rerun()
+    # Gem valgt index
+    st.session_state.answers[i] = scale_options.index(choice)
 
 # -------------------------------------------------------------
 # RESET BUTTON
@@ -147,26 +140,26 @@ PROFILE_TEXT = {
     "HSP": [
         "Du registrerer flere nuancer i både indtryk og stemninger.",
         "Du bearbejder oplevelser dybt og grundigt.",
-        "Du reagerer stærkt på stimuli og kan blive overstimuleret.",
-        "Du har en rig indre verden og et fintfølende nervesystem.",
-        "Du er empatisk og opmærksom på andre.",
-        "Du har brug for ro og pauser for at lade op."
+        "Du reagerer stærkt på stimuli.",
+        "Du kan blive overstimuleret i travle miljøer.",
+        "Du har en dyb indre verden.",
+        "Du har brug for pauser for at lade op."
     ],
     "Slow Processor": [
-        "Du arbejder bedst i roligt tempo og med forudsigelighed.",
-        "Du bearbejder indtryk grundigt, men langsomt.",
-        "Du har brug for ekstra tid til omstilling og beslutninger.",
-        "Du trives med faste rammer og struktur.",
-        "Du kan føle dig presset, når tingene går hurtigt.",
-        "Du har god udholdenhed, når du arbejder i dit eget tempo."
+        "Du arbejder bedst i roligt tempo.",
+        "Du bearbejder indtryk grundigt.",
+        "Du har brug for ekstra tid til omstilling.",
+        "Du trives med faste rammer.",
+        "Du kan føle dig presset, når der er fart på.",
+        "Du er udholdende i dit eget tempo."
     ],
     "Mellemprofil": [
-        "Du veksler naturligt mellem hurtig og langsom bearbejdning.",
-        "Du håndterer de fleste stimuli uden at blive overvældet.",
-        "Du har en god balance mellem intuition og eftertænksomhed.",
-        "Du kan tilpasse dig forskellige miljøer og tempoer.",
-        "Du bliver påvirket i perioder, men finder hurtigt balancen igen.",
-        "Du fungerer bredt socialt og mentalt i mange typer situationer."
+        "Du balancerer mellem hurtig og langsom bearbejdning.",
+        "Du håndterer stimuli uden at blive overvældet.",
+        "Du er fleksibel i forskellige miljøer.",
+        "Du finder balance hurtigt.",
+        "Du fungerer socialt og mentalt i mange situationer.",
+        "Du er robust og tilpasningsdygtig."
     ]
 }
 
@@ -206,7 +199,7 @@ def generate_pdf(score, profile):
 
     story.append(Paragraph("Dine svar:", styles["Heading2"]))
     for i, q in enumerate(questions):
-        story.append(Paragraph(f"{i+1}. {q} – Svar: {st.session_state.answers[i]}", styles["BodyText"]))
+        story.append(Paragraph(f"{i+1}. {q} - Svar: {st.session_state.answers[i]}", styles["BodyText"]))
 
     doc.build(story)
     buffer.seek(0)
@@ -222,4 +215,4 @@ st.download_button(
 # -------------------------------------------------------------
 # VERSION NUMBER
 # -------------------------------------------------------------
-st.markdown("<div style='color: white; font-size: 0.8rem;'>Version v19</div>", unsafe_allow_html=True)
+st.markdown("<div style='color: white; font-size: 0.8rem;'>Version v20</div>", unsafe_allow_html=True)
