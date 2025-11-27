@@ -4,43 +4,69 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
 
+# -------------------------------------------------------------
+# PAGE CONFIG
+# -------------------------------------------------------------
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# CSS – TEKST-SKALA I ÉN LINJE (IKKE-RADIO)
+# GLOBAL CSS
 # -------------------------------------------------------------
 st.markdown("""
 <style>
 
-body, html, .stApp {
+html, body, .stApp {
     background-color:#1A6333 !important;
     color:white !important;
-    font-family:Arial, sans-serif;
+    font-family:Arial, sans-serif !important;
 }
 
-/* Skala-knapper (kun tekst) */
+/* LOGO */
+.center-logo {
+    text-align:center;
+    margin-top:15px;
+    margin-bottom:10px;
+}
+
+/* QUESTION TEXT */
+.question-text {
+    font-size:1.1rem;
+    font-weight:600;
+    margin-top:22px;
+    margin-bottom:10px;
+}
+
+/* SCALE WRAPPER */
 .scale-wrapper {
     display:flex;
-    justify-content:space-between;
     width:100%;
-    margin: 4px 0 14px 0;
+    justify-content:space-between;
+    margin-top:4px;
+    margin-bottom:25px;
 }
 
+/* TEXTPICKER ITEM */
 .scale-item {
     flex:1;
     text-align:center;
     font-size:1rem;
     cursor:pointer;
-    color:white;
     padding:8px 0;
+    color:white;
+    border-radius:6px;
 }
 
+.scale-item:hover {
+    background-color:rgba(255,255,255,0.12);
+}
+
+/* SELECTED STATE */
 .scale-item.selected {
     color:#FF5252 !important;
     font-weight:700;
 }
 
-/* Røde knapper */
+/* RED BUTTONS */
 .stButton > button, .stDownloadButton > button {
     background:#C62828 !important;
     color:white !important;
@@ -49,6 +75,16 @@ body, html, .stApp {
     padding:0.7rem 1.3rem !important;
     font-weight:600 !important;
 }
+.stButton > button:hover, .stDownloadButton > button:hover {
+    background:#B71C1C !important;
+}
+
+.version-tag {
+    font-size:0.8rem;
+    margin-top:30px;
+    color:white;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -56,8 +92,8 @@ body, html, .stApp {
 # LOGO
 # -------------------------------------------------------------
 st.markdown("""
-<div style='text-align:center; margin:12px;'>
-<img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="160">
+<div class='center-logo'>
+    <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="160">
 </div>
 """, unsafe_allow_html=True)
 
@@ -73,7 +109,7 @@ Du besvarer 20 udsagn på en skala fra **Aldrig** til **Altid**.
 """)
 
 # -------------------------------------------------------------
-# QUESTIONS
+# DATA
 # -------------------------------------------------------------
 questions = [
     "Jeg bliver let overvældet af indtryk.",
@@ -101,55 +137,57 @@ questions = [
 labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
 
 # -------------------------------------------------------------
-# SESSION STATE
+# SESSION
 # -------------------------------------------------------------
 if "answers" not in st.session_state:
     st.session_state.answers = [0] * len(questions)
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS – REN TEKST-SKALA
+# RENDER QUESTIONS (PURE TEXT BUTTONS)
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
-    st.write(f"### {i+1}. {q}")
+    st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    # GUI wrapper
-    st.markdown('<div class="scale-wrapper">', unsafe_allow_html=True)
+    # Start scale row
+    st.markdown("<div class='scale-wrapper'>", unsafe_allow_html=True)
 
     for idx, label in enumerate(labels):
         selected = "selected" if st.session_state.answers[i] == idx else ""
-        if st.button(f"{label}_{i}", key=f"q{i}_{idx}"):
-            st.session_state.answers[i] = idx
 
-        # Render label
+        # Hidden button used as trigger
+        if st.button(f"{label}_{i}", key=f"btn_{i}_{idx}", help=""):
+            st.session_state.answers[i] = idx
+            st.rerun()
+
+        # Visual clickable label
         st.markdown(
             f"""
             <div class="scale-item {selected}" 
-                 onclick="window.parent.document.getElementById('q{i}_{idx}').click()">
+                 onclick="window.parent.document.getElementById('btn_{i}_{idx}').click()">
                 {label}
             </div>
             """,
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
 
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
 # -------------------------------------------------------------
 # RESET BUTTON
 # -------------------------------------------------------------
 if st.button("Nulstil svar"):
-    st.session_state.answers = [0]*len(questions)
+    st.session_state.answers = [0] * len(questions)
     st.rerun()
 
 # -------------------------------------------------------------
-# SCORE
+# INTERPRETATION
 # -------------------------------------------------------------
-score = sum(st.session_state.answers)
-
-def interpret(s):
-    if s <= 26: return "Slow Processor"
-    if s <= 53: return "Mellemprofil"
+def interpret(score):
+    if score <= 26: return "Slow Processor"
+    if score <= 53: return "Mellemprofil"
     return "HSP"
 
+score = sum(st.session_state.answers)
 profile = interpret(score)
 
 st.header("Dit resultat")
@@ -166,19 +204,24 @@ def pdf(score, profile):
     story = []
 
     story.append(Paragraph("HSP / Slow Processor – Rapport", styles["Title"]))
+    story.append(Spacer(1,12))
     story.append(Paragraph(f"Score: {score} / 80", styles["Heading2"]))
     story.append(Paragraph(f"Profil: {profile}", styles["Heading2"]))
     story.append(Spacer(1,12))
 
-    for i,q in enumerate(questions):
+    for i, q in enumerate(questions):
         story.append(Paragraph(f"{i+1}. {q} – {labels[st.session_state.answers[i]]}", styles["BodyText"]))
 
     doc.build(story)
     buf.seek(0)
     return buf
 
-st.download_button("Download PDF-rapport", pdf(score, profile),
-                   file_name="rapport.pdf", mime="application/pdf")
+st.download_button("Download PDF-rapport",
+                   pdf(score, profile),
+                   file_name="rapport.pdf",
+                   mime="application/pdf")
 
-# Version
-st.markdown("<div style='font-size:0.8rem; margin-top:20px;'>Version v24</div>", unsafe_allow_html=True)
+# -------------------------------------------------------------
+# VERSION NUMBER
+# -------------------------------------------------------------
+st.markdown("<div class='version-tag'>Version v26</div>", unsafe_allow_html=True)
