@@ -21,14 +21,6 @@ html, body, .stApp {
     font-family: Arial, sans-serif !important;
 }
 
-/* Centered logo */
-.center-logo {
-    display: flex;
-    justify-content: center;
-    margin-top: 20px;
-    margin-bottom: 5px;
-}
-
 /* Main title */
 .main-title {
     font-size: 2.3rem;
@@ -38,12 +30,12 @@ html, body, .stApp {
     margin-bottom: 25px;
 }
 
-/* Question text – reduced spacing below the question */
+/* Question text — reduced spacing ("B") */
 .question-text {
     font-size: 1.15rem;
     font-weight: 600;
-    margin-top: 14px;      /* reduced */
-    margin-bottom: 6px;    /* reduced */
+    margin-top: 12px;   /* was 22px */
+    margin-bottom: 6px; /* was 10px */
 }
 
 /* Hide radio numbers */
@@ -51,18 +43,19 @@ html, body, .stApp {
     display: none !important;
 }
 
-/* Radio layout (5 buttons in one row) */
+/* Horizontal radio alignment */
 .stRadio > div {
     display: flex !important;
     justify-content: space-between !important;
+    margin-bottom: -6px; /* pull labels closer */
 }
 
-/* Labels under the buttons */
+/* Labels under options */
 .scale-row {
     display: flex;
     justify-content: space-between;
-    margin-top: -2px;
-    margin-bottom: 16px;   /* reduced */
+    margin-top: 0px;       /* was -3px */
+    margin-bottom: 16px;   /* was 30px — reduces gap to next question */
     width: 100%;
 }
 
@@ -72,7 +65,7 @@ html, body, .stApp {
     font-size: 0.85rem;
 }
 
-/* Red buttons */
+/* Buttons */
 .stButton > button, .stDownloadButton > button {
     background-color: #C62828 !important;
     color: white !important;
@@ -86,15 +79,6 @@ html, body, .stApp {
 }
 
 </style>
-""", unsafe_allow_html=True)
-
-# -------------------------------------------------------------
-# LOGO
-# -------------------------------------------------------------
-st.markdown("""
-<div class="center-logo">
-    <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="160">
-</div>
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
@@ -139,9 +123,7 @@ questions = [
 
 labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
 
-# -------------------------------------------------------------
-# SESSION STATE INIT
-# -------------------------------------------------------------
+# SESSION STATE
 if "answers" not in st.session_state:
     st.session_state.answers = [0] * len(questions)
 if "reset_trigger" not in st.session_state:
@@ -265,7 +247,4 @@ st.download_button(
     mime="application/pdf"
 )
 
-# -------------------------------------------------------------
-# VERSION NUMBER
-# -------------------------------------------------------------
-st.markdown("<div style='font-size:0.8rem; margin-top:20px;'>Version v57</div>", unsafe_allow_html=True)
+st.markdown("<div style='font-size:0.8rem; margin-top:20px;'>Version v58</div>", unsafe_allow_html=True)
