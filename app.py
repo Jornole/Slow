@@ -14,14 +14,19 @@ st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 # -------------------------------------------------------------
 st.markdown("""
 <style>
-
 html, body, .stApp {
     background-color: #1A6333 !important;
     color: white !important;
     font-family: Arial, sans-serif !important;
 }
 
-/* Main title */
+.center-logo {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+    margin-bottom: 5px;
+}
+
 .main-title {
     font-size: 2.3rem;
     font-weight: 800;
@@ -30,32 +35,30 @@ html, body, .stApp {
     margin-bottom: 25px;
 }
 
-/* Question text — reduced spacing ("B") */
 .question-text {
     font-size: 1.15rem;
     font-weight: 600;
-    margin-top: 12px;   /* was 22px */
-    margin-bottom: 6px; /* was 10px */
+    margin-top: 10px;       /* ← REDUCED SPACING (was 22px in v48) */
+    margin-bottom: 8px;
 }
 
-/* Hide radio numbers */
+/* Hide default radio numbers */
 .stRadio > div > label > div:first-child {
     display: none !important;
 }
 
-/* Horizontal radio alignment */
+/* Radio buttons in one row */
 .stRadio > div {
     display: flex !important;
     justify-content: space-between !important;
-    margin-bottom: -6px; /* pull labels closer */
 }
 
-/* Labels under options */
+/* Labels */
 .scale-row {
     display: flex;
     justify-content: space-between;
-    margin-top: 0px;       /* was -3px */
-    margin-bottom: 16px;   /* was 30px — reduces gap to next question */
+    margin-top: -3px;
+    margin-bottom: 6px; 
     width: 100%;
 }
 
@@ -65,7 +68,7 @@ html, body, .stApp {
     font-size: 0.85rem;
 }
 
-/* Buttons */
+/* Red buttons */
 .stButton > button, .stDownloadButton > button {
     background-color: #C62828 !important;
     color: white !important;
@@ -77,12 +80,20 @@ html, body, .stApp {
 .stButton > button:hover, .stDownloadButton > button:hover {
     background-color: #B71C1C !important;
 }
-
 </style>
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# TITLE + INTRO
+# LOGO
+# -------------------------------------------------------------
+st.markdown("""
+<div class="center-logo">
+    <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="160">
+</div>
+""", unsafe_allow_html=True)
+
+# -------------------------------------------------------------
+# TITLE
 # -------------------------------------------------------------
 st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
 
@@ -130,21 +141,11 @@ if "reset_trigger" not in st.session_state:
     st.session_state.reset_trigger = 0
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS
+# RENDER QUESTIONS 
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
 
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
-
-    choice = st.radio(
-        "",
-        options=list(range(5)),
-        key=f"q_{i}_{st.session_state.reset_trigger}",
-        horizontal=True,
-        label_visibility="collapsed",
-        format_func=lambda x: ""
-    )
-    st.session_state.answers[i] = choice
 
     st.markdown(
         """
@@ -159,6 +160,16 @@ for i, q in enumerate(questions):
         unsafe_allow_html=True
     )
 
+    choice = st.radio(
+        "",
+        options=list(range(5)),
+        key=f"q_{i}_{st.session_state.reset_trigger}",
+        horizontal=True,
+        label_visibility="collapsed",
+        format_func=lambda x: ""
+    )
+    st.session_state.answers[i] = choice
+
 # -------------------------------------------------------------
 # RESET BUTTON
 # -------------------------------------------------------------
@@ -168,7 +179,7 @@ if st.button("Nulstil svar"):
     st.rerun()
 
 # -------------------------------------------------------------
-# INTERPRETATION
+# SCORE
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
@@ -220,7 +231,7 @@ for s in PROFILE_TEXT[profile]:
     st.write(f"- {s}")
 
 # -------------------------------------------------------------
-# PDF GENERATOR
+# PDF
 # -------------------------------------------------------------
 def generate_pdf(score, profile):
     buf = BytesIO()
@@ -247,4 +258,7 @@ st.download_button(
     mime="application/pdf"
 )
 
-st.markdown("<div style='font-size:0.8rem; margin-top:20px;'>Version v58</div>", unsafe_allow_html=True)
+# -------------------------------------------------------------
+# VERSION NUMBER
+# -------------------------------------------------------------
+st.markdown("<div style='font-size:0.8rem; margin-top:20px;'>Version v59</div>", unsafe_allow_html=True)
