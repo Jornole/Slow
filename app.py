@@ -38,15 +38,15 @@ html, body, .stApp {
     margin-bottom: 25px;
 }
 
-/* Question text — REDUCED from 22px to 12px */
+/* Question text — tightened spacing */
 .question-text {
     font-size: 1.15rem;
     font-weight: 600;
-    margin-top: 12px;
-    margin-bottom: 6px;
+    margin-top: 12px;   /* mindre top */
+    margin-bottom: 4px; /* meget tæt på labels */
 }
 
-/* Hide radio numbers */
+/* Hide radio numbers (keeps radios clean) */
 .stRadio > div > label > div:first-child {
     display: none !important;
 }
@@ -55,14 +55,17 @@ html, body, .stApp {
 .stRadio > div {
     display: flex !important;
     justify-content: space-between !important;
+    gap: 8px;
+    padding-left: 6px;
+    padding-right: 6px;
 }
 
-/* Labels under knapperne */
+/* Labels under knapperne — tæt på question */
 .scale-row {
     display: flex;
     justify-content: space-between;
-    margin-top: -3px;
-    margin-bottom: 18px;
+    margin-top: 6px;   /* tæt på radio-knapperne */
+    margin-bottom: 8px;/* lille afstand til næste spørgsmål */
     width: 100%;
 }
 
@@ -70,6 +73,9 @@ html, body, .stApp {
     flex: 1;
     text-align: center;
     font-size: 0.85rem;
+    line-height: 1.1;
+    padding-left: 2px;
+    padding-right: 2px;
 }
 
 /* Red buttons */
@@ -268,4 +274,4 @@ st.download_button(
 # -------------------------------------------------------------
 # VERSION NUMBER
 # -------------------------------------------------------------
-st.markdown("<div style='font-size:0.8rem; margin-top:20px;'>Version v49</div>", unsafe_allow_html=True)
+st.markdown("<div style='font-size:0.8rem; margin-top:20px;'>Version v50</div>", unsafe_allow_html=True)
