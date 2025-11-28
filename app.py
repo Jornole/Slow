@@ -38,15 +38,15 @@ html, body, .stApp {
     margin-bottom: 25px;
 }
 
-/* Question text */
+/* Question text – reduced spacing below the question */
 .question-text {
     font-size: 1.15rem;
     font-weight: 600;
-    margin-top: 22px;
-    margin-bottom: 6px;   /* <-- v56: mindre afstand under spørgsmålet */
+    margin-top: 14px;      /* reduced */
+    margin-bottom: 6px;    /* reduced */
 }
 
-/* Hide radio numbers (kept) */
+/* Hide radio numbers */
 .stRadio > div > label > div:first-child {
     display: none !important;
 }
@@ -57,12 +57,12 @@ html, body, .stApp {
     justify-content: space-between !important;
 }
 
-/* Labels under knapperne */
+/* Labels under the buttons */
 .scale-row {
     display: flex;
     justify-content: space-between;
-    margin-top: -3px;
-    margin-bottom: 10px;   /* <-- v56: mindre mellemrum før næste spørgsmål */
+    margin-top: -2px;
+    margin-bottom: 16px;   /* reduced */
     width: 100%;
 }
 
@@ -160,7 +160,7 @@ for i, q in enumerate(questions):
         key=f"q_{i}_{st.session_state.reset_trigger}",
         horizontal=True,
         label_visibility="collapsed",
-        format_func=lambda x: ""  # hide numbers
+        format_func=lambda x: ""
     )
     st.session_state.answers[i] = choice
 
@@ -268,4 +268,4 @@ st.download_button(
 # -------------------------------------------------------------
 # VERSION NUMBER
 # -------------------------------------------------------------
-st.markdown("<div style='font-size:0.8rem; margin-top:20px;'>Version v56 (sikker, spacing-justering)</div>", unsafe_allow_html=True)
+st.markdown("<div style='font-size:0.8rem; margin-top:20px;'>Version v57</div>", unsafe_allow_html=True)
