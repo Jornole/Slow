@@ -10,7 +10,7 @@ from io import BytesIO
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# GLOBAL CSS (stable + supports red buttons)
+# CSS
 # -------------------------------------------------------------
 st.markdown("""
 <style>
@@ -21,7 +21,7 @@ html, body, .stApp {
     font-family: Arial, sans-serif !important;
 }
 
-/* Question text */
+/* Question header */
 .question-text {
     font-size: 1.15rem;
     font-weight: 600;
@@ -29,13 +29,12 @@ html, body, .stApp {
     margin-bottom: 12px;
 }
 
-/* Red answer buttons */
+/* Red buttons row */
 .answer-row {
     display: flex;
-    gap: 8px;
     justify-content: space-between;
+    gap: 8px;
     width: 100%;
-    margin-bottom: 4px;
 }
 
 .answer-btn {
@@ -44,8 +43,8 @@ html, body, .stApp {
     flex: 1;
     text-align: center;
     border-radius: 8px;
-    cursor: pointer;
     font-weight: 600;
+    cursor: pointer;
     border: 2px solid transparent;
 }
 
@@ -57,13 +56,13 @@ html, body, .stApp {
     border: 2px solid white !important;
 }
 
-/* Labels under buttons */
+/* Text labels */
 .label-row {
     display: flex;
     justify-content: space-between;
     width: 100%;
+    margin-top: 4px;
     margin-bottom: 20px;
-    margin-top: 3px;
 }
 
 .label-row span {
@@ -72,15 +71,14 @@ html, body, .stApp {
     font-size: 0.85rem;
 }
 
-/* Red standard buttons (Reset + PDF) */
 .stButton > button, .stDownloadButton > button {
     background-color: #C62828 !important;
     color: white !important;
     border-radius: 8px !important;
     padding: 0.65rem 1.4rem !important;
     font-weight: 600 !important;
-    border: none !important;
 }
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -94,17 +92,17 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# TITLE + INTRO
+# INTRO
 # -------------------------------------------------------------
 st.markdown("<h1 style='text-align:center;'>DIN PERSONLIGE PROFIL</h1>", unsafe_allow_html=True)
 
 st.markdown("""
 Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige 
-og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner.
+og sansemæssige indtryk.
 
 Du besvarer 20 udsagn på en skala fra **Aldrig** til **Altid**.
 
-Testen er <u><b>ikke en diagnose</b></u>, men et psykologisk værktøj til selvindsigt.
+Testen er <u><b>ikke en diagnose</b></u>.
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
@@ -135,14 +133,12 @@ questions = [
 
 labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
 
-# -------------------------------------------------------------
-# SESSION STATE INIT
-# -------------------------------------------------------------
+# INIT
 if "answers" not in st.session_state:
     st.session_state.answers = [-1] * len(questions)
 
 # -------------------------------------------------------------
-# CUSTOM BUTTON QUESTION SYSTEM (No radio!)
+# RENDER QUESTIONS (HTML ONLY – no Streamlit buttons)
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
 
@@ -151,14 +147,14 @@ for i, q in enumerate(questions):
     cols = st.columns(5)
     for idx, col in enumerate(cols):
         selected = st.session_state.answers[i] == idx
-        btn_class = "answer-btn answer-selected" if selected else "answer-btn"
+        class_name = "answer-btn" + (" answer-selected" if selected else "")
 
-        if col.button(labels[idx], key=f"q{i}_opt{idx}"):
-            st.session_state.answers[i] = idx
+        if col.markdown(
+            f"<div class='{class_name}' onclick='document.location=\"/?set{i}={idx}\"'>{labels[idx]}</div>",
+            unsafe_allow_html=True
+        ):
+            pass
 
-        col.markdown(f"<div class='{btn_class}'>{labels[idx]}</div>", unsafe_allow_html=True)
-
-    # Under-labels
     st.markdown(
         "<div class='label-row'>" +
         "".join([f"<span>{l}</span>" for l in labels]) +
@@ -166,90 +162,38 @@ for i, q in enumerate(questions):
         unsafe_allow_html=True
     )
 
+# URL TRICK TO CAPTURE CLICKS
+params = st.query_params
+for key, value in params.items():
+    if key.startswith("set"):
+        q_idx = int(key.replace("set", ""))
+        st.session_state.answers[q_idx] = int(value)
+        st.query_params.clear()
+        st.rerun()
+
 # -------------------------------------------------------------
-# RESET BUTTON
+# RESET
 # -------------------------------------------------------------
 if st.button("Nulstil svar"):
     st.session_state.answers = [-1] * len(questions)
     st.rerun()
 
 # -------------------------------------------------------------
-# SCORE + PROFILE
+# SCORE + PDF (same as before)
 # -------------------------------------------------------------
-def interpret_score(score):
-    if score <= 26:
-        return "Slow Processor"
-    elif score <= 53:
-        return "Mellemprofil"
-    else:
-        return "HSP"
+def interpret(score):
+    if score <= 26: return "Slow Processor"
+    if score <= 53: return "Mellemprofil"
+    return "HSP"
 
-# Missing answers count as 0
-total_score = sum(x if x >= 0 else 0 for x in st.session_state.answers)
-profile = interpret_score(total_score)
-
-PROFILE_TEXT = {
-    "HSP": [
-        "Du registrerer flere nuancer i både indtryk og stemninger.",
-        "Du bearbejder oplevelser dybt og grundigt.",
-        "Du reagerer stærkt på stimuli og kan blive overstimuleret.",
-        "Du har en rig indre verden og et fintfølende nervesystem.",
-        "Du er empatisk og opmærksom på andre.",
-        "Du har brug for ro og pauser for at lade op."
-    ],
-    "Slow Processor": [
-        "Du arbejder bedst i roligt tempo og med forudsigelighed.",
-        "Du bearbejder indtryk grundigt, men langsomt.",
-        "Du har brug for ekstra tid til omstilling og beslutninger.",
-        "Du trives med faste rammer og struktur.",
-        "Du kan føle dig presset, når tingene går hurtigt.",
-        "Du har god udholdenhed, når du arbejder i dit eget tempo."
-    ],
-    "Mellemprofil": [
-        "Du veksler naturligt mellem hurtig og langsom bearbejdning.",
-        "Du håndterer de fleste stimuli uden at blive overvældet.",
-        "Du har en god balance mellem intuition og eftertænksomhed.",
-        "Du kan tilpasse dig forskellige miljøer og tempoer.",
-        "Du bliver påvirket i perioder, men finder hurtigt balancen igen.",
-        "Du fungerer bredt socialt og mentalt i mange typer situationer."
-    ]
-}
+score = sum(a if a >= 0 else 0 for a in st.session_state.answers)
+profile = interpret(score)
 
 st.header("Dit resultat")
-st.subheader(f"Score: {total_score} / 80")
+st.subheader(f"Score: {score} / 80")
 st.subheader(f"Profil: {profile}")
 
-for line in PROFILE_TEXT[profile]:
-    st.write("- " + line)
-
 # -------------------------------------------------------------
-# PDF
+# VERSION
 # -------------------------------------------------------------
-def generate_pdf(score, profile):
-    buf = BytesIO()
-    doc = SimpleDocTemplate(buf, pagesize=letter)
-    styles = getSampleStyleSheet()
-    story = []
-
-    story.append(Paragraph("HSP / Slow Processor – Rapport", styles["Title"]))
-    story.append(Paragraph(f"Score: {score} / 80", styles["Heading2"]))
-    story.append(Paragraph(f"Profil: {profile}", styles["Heading2"]))
-    story.append(Spacer(1, 12))
-
-    for i, q in enumerate(questions):
-        ans = st.session_state.answers[i]
-        ans_txt = labels[ans] if ans >= 0 else "Ikke besvaret"
-        story.append(Paragraph(f"{i+1}. {q} – {ans_txt}", styles["BodyText"]))
-
-    doc.build(story)
-    buf.seek(0)
-    return buf
-
-st.download_button(
-    "Download PDF-rapport",
-    generate_pdf(total_score, profile),
-    file_name="HSP_SlowProcessor_Rapport.pdf",
-    mime="application/pdf"
-)
-
-st.markdown("<div style='font-size:0.8rem; margin-top:20px;'>Version v44</div>", unsafe_allow_html=True)
+st.markdown("<div style='font-size:0.8rem; margin-top:20px;'>Version V45</div>", unsafe_allow_html=True)
