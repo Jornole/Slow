@@ -14,14 +14,12 @@ st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 # -------------------------------------------------------------
 st.markdown("""
 <style>
-
 html, body, .stApp {
     background-color: #1A6333 !important;
     color: white !important;
     font-family: Arial, sans-serif !important;
 }
 
-/* Logo centreret */
 .center-logo {
     display: flex;
     justify-content: center;
@@ -29,7 +27,6 @@ html, body, .stApp {
     margin-bottom: 5px;
 }
 
-/* Titel */
 .main-title {
     font-size: 2.3rem;
     font-weight: 800;
@@ -38,33 +35,31 @@ html, body, .stApp {
     margin-bottom: 25px;
 }
 
-/* Spørgsmålstekst */
 .question-text {
     font-size: 1.15rem;
     font-weight: 600;
     margin-top: 22px;
-    margin-bottom: 2px;   /* << Tættere på labels */
+    margin-bottom: 8px;
 }
 
-/* Fjern radio-tal */
+/* Hide default radio numbers */
 .stRadio > div > label > div:first-child {
     display: none !important;
 }
 
-/* Vandret radiogruppe */
+/* Radio buttons in one row */
 .stRadio > div {
     display: flex !important;
     justify-content: space-between !important;
-    margin-bottom: -6px !important;  /* << Trækker labels op */
 }
 
-/* Labels under knapperne */
+/* Labels */
 .scale-row {
     display: flex;
     justify-content: space-between;
+    margin-top: -3px;
+    margin-bottom: 6px; /* VERY IMPORTANT: now closer to question */
     width: 100%;
-    margin-top: 0px;     /* << Helt tæt på radioknapper */
-    margin-bottom: 26px;
 }
 
 .scale-row span {
@@ -73,7 +68,7 @@ html, body, .stApp {
     font-size: 0.85rem;
 }
 
-/* Røde knapper */
+/* Red buttons */
 .stButton > button, .stDownloadButton > button {
     background-color: #C62828 !important;
     color: white !important;
@@ -85,7 +80,6 @@ html, body, .stApp {
 .stButton > button:hover, .stDownloadButton > button:hover {
     background-color: #B71C1C !important;
 }
-
 </style>
 """, unsafe_allow_html=True)
 
@@ -99,7 +93,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# TITEL + INTRO
+# TITLE
 # -------------------------------------------------------------
 st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
 
@@ -149,22 +143,14 @@ if "reset_trigger" not in st.session_state:
     st.session_state.reset_trigger = 0
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS
+# RENDER QUESTIONS (NEW FIXED LAYOUT)
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
 
+    # Spørgsmål
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    choice = st.radio(
-        "",
-        options=list(range(5)),
-        key=f"q_{i}_{st.session_state.reset_trigger}",
-        horizontal=True,
-        label_visibility="collapsed",
-        format_func=lambda x: ""
-    )
-    st.session_state.answers[i] = choice
-
+    # *** LABELS placed ABOVE radiobuttons — stable solution ***
     st.markdown(
         """
         <div class="scale-row">
@@ -178,6 +164,17 @@ for i, q in enumerate(questions):
         unsafe_allow_html=True
     )
 
+    # Radioknapper — below labels
+    choice = st.radio(
+        "",
+        options=list(range(5)),
+        key=f"q_{i}_{st.session_state.reset_trigger}",
+        horizontal=True,
+        label_visibility="collapsed",
+        format_func=lambda x: ""
+    )
+    st.session_state.answers[i] = choice
+
 # -------------------------------------------------------------
 # RESET BUTTON
 # -------------------------------------------------------------
@@ -187,7 +184,7 @@ if st.button("Nulstil svar"):
     st.rerun()
 
 # -------------------------------------------------------------
-# INTERPRETATION
+# SCORE & PROFILE
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
@@ -269,4 +266,4 @@ st.download_button(
 # -------------------------------------------------------------
 # VERSION NUMBER
 # -------------------------------------------------------------
-st.markdown("<div style='font-size:0.8rem; margin-top:20px;'>Version v47</div>", unsafe_allow_html=True)
+st.markdown("<div style='font-size:0.8rem; margin-top:20px;'>Version v48</div>", unsafe_allow_html=True)
