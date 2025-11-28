@@ -20,43 +20,82 @@ html, body, .stApp {
     font-family: Arial, sans-serif !important;
 }
 
+.center-logo {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+    margin-bottom: 5px;
+}
+
+.main-title {
+    font-size: 2.3rem;
+    font-weight: 800;
+    text-align: center;
+    margin-top: 10px;
+    margin-bottom: 25px;
+}
+
 .question-text {
     font-size: 1.15rem;
     font-weight: 600;
-    margin-top: 18px;
-    margin-bottom: 6px;
+    margin-top: 22px;
+    margin-bottom: 8px;
 }
 
-/* Button-row layout */
-.button-row {
+/* clickable text buttons */
+.choice-text {
+    cursor: pointer;
+    padding: 6px 12px;
+    border-radius: 6px;
+    display: inline-block;
+}
+
+/* selected state */
+.choice-selected {
+    color: #C62828 !important;
+    font-weight: 700;
+}
+
+.scale-row {
     display: flex;
     justify-content: space-between;
-    margin-top: 2px;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
+    width: 100%;
 }
 
-/* Default button style */
-.choice-btn {
-    background-color: #ffffff22;
-    color: white;
-    padding: 6px 10px;
-    border-radius: 6px;
-    border: 1px solid #ffffff55;
-    font-size: 0.95rem;
+.scale-row span {
     flex: 1;
     text-align: center;
-    margin: 0 4px;
-    cursor: pointer;
-}
-
-/* Selected button */
-.choice-btn.selected {
-    background-color: #C62828 !important;
-    border-color: #C62828 !important;
-    font-weight: 600;
+    font-size: 0.95rem;
 }
 </style>
 """, unsafe_allow_html=True)
+
+
+# -------------------------------------------------------------
+# LOGO
+# -------------------------------------------------------------
+st.markdown("""
+<div class="center-logo">
+    <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="160">
+</div>
+""", unsafe_allow_html=True)
+
+
+# -------------------------------------------------------------
+# TITLE
+# -------------------------------------------------------------
+st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
+
+st.markdown("""
+Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige 
+og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner.
+
+Du besvarer 20 udsagn på en skala fra **Aldrig** til **Altid**.
+
+Testen er <u><b>ikke en diagnose</b></u>, men et psykologisk værktøj til selvindsigt.
+""", unsafe_allow_html=True)
+
 
 # -------------------------------------------------------------
 # QUESTIONS
@@ -86,79 +125,106 @@ questions = [
 
 labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
 
+
 # -------------------------------------------------------------
 # SESSION STATE
 # -------------------------------------------------------------
 if "answers" not in st.session_state:
-    st.session_state.answers = [-1] * len(questions)
-if "reset" not in st.session_state:
-    st.session_state.reset = 0
+    st.session_state.answers = [None] * len(questions)
 
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS WITH CUSTOM BUTTONS
+# RENDER QUESTIONS WITH TEXT-BUTTONS
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
 
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    st.markdown("<div class='button-row'>", unsafe_allow_html=True)
+    cols = st.columns(5)
 
-    for idx, label in enumerate(labels):
-        selected = st.session_state.answers[i] == idx
+    for j, label in enumerate(labels):
+        is_selected = (st.session_state.answers[i] == j)
 
-        button_html = f"""
-        <div class="choice-btn {'selected' if selected else ''}" 
-             onclick="fetch('/_set_answer?i={i}&v={idx}', {{method: 'POST'}}).then(() => window.location.reload())">
-            {label}
-        </div>
-        """
+        css_class = "choice-text choice-selected" if is_selected else "choice-text"
 
-        st.markdown(button_html, unsafe_allow_html=True)
+        if cols[j].button(label, key=f"{i}_{j}"):
+            st.session_state.answers[i] = j
 
-    st.markdown("</div>", unsafe_allow_html=True)
+        cols[j].markdown(
+            f"<span class='{css_class}'>{label}</span>",
+            unsafe_allow_html=True
+        )
 
-
-# -------------------------------------------------------------
-# LOW-LEVEL ENDPOINT — updates state without visible widgets
-# -------------------------------------------------------------
-def update_answer():
-    query = st.query_params
-    if "_action" in query and query["_action"] == "set":
-        i = int(query["i"])
-        v = int(query["v"])
-        st.session_state.answers[i] = v
-        st.query_params.clear()
-
-if "_action" in st.query_params:
-    update_answer()
+    st.markdown("<br>", unsafe_allow_html=True)
 
 
 # -------------------------------------------------------------
 # RESET BUTTON
 # -------------------------------------------------------------
 if st.button("Nulstil svar"):
-    st.session_state.answers = [-1] * len(questions)
+    st.session_state.answers = [None] * len(questions)
     st.rerun()
 
 
 # -------------------------------------------------------------
-# SCORING
+# SCORE & PROFILE
 # -------------------------------------------------------------
-def profile_of(score):
-    if score <= 26: return "Slow Processor"
-    if score <= 53: return "Mellemprofil"
-    return "HSP"
+def interpret_score(score):
+    if score <= 26:
+        return "Slow Processor"
+    elif score <= 53:
+        return "Mellemprofil"
+    else:
+        return "HSP"
 
-if all(x >= 0 for x in st.session_state.answers):
-    total = sum(st.session_state.answers)
-    profile = profile_of(total)
+if None not in st.session_state.answers:
+    total_score = sum(st.session_state.answers)
+    profile = interpret_score(total_score)
 
     st.header("Dit resultat")
-    st.subheader(f"Score: {total} / 80")
+    st.subheader(f"Score: {total_score} / 80")
     st.subheader(f"Profil: {profile}")
 
+else:
+    st.header("Dit resultat")
+    st.write("Besvar alle spørgsmål for at se dit resultat.")
+    total_score = 0
+    profile = None
+
+
 # -------------------------------------------------------------
-# VERSION
+# PDF GENERATOR
 # -------------------------------------------------------------
-st.markdown("<div style='font-size:0.8rem; margin-top:20px;'>Version v60</div>", unsafe_allow_html=True)
+def generate_pdf(score, profile):
+    buf = BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=letter)
+    styles = getSampleStyleSheet()
+    story = []
+
+    story.append(Paragraph("HSP / Slow Processor – Rapport", styles["Title"]))
+    story.append(Paragraph(f"Score: {score} / 80", styles["Heading2"]))
+    story.append(Paragraph(f"Profil: {profile}", styles["Heading2"]))
+    story.append(Spacer(1, 12))
+
+    for i, q in enumerate(questions):
+        ans = st.session_state.answers[i]
+        text = labels[ans] if ans is not None else "Ikke besvaret"
+        story.append(Paragraph(f"{i+1}. {q} – {text}", styles["BodyText"]))
+
+    doc.build(story)
+    buf.seek(0)
+    return buf
+
+
+st.download_button(
+    "Download PDF-rapport",
+    generate_pdf(total_score, profile),
+    file_name="HSP_SlowProcessor_Rapport.pdf",
+    mime="application/pdf"
+)
+
+
+# -------------------------------------------------------------
+# VERSION NUMBER
+# -------------------------------------------------------------
+st.markdown("<div style='font-size:0.8rem; margin-top:20px;'>Version v61</div>", unsafe_allow_html=True)
