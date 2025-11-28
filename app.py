@@ -14,12 +14,14 @@ st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 # -------------------------------------------------------------
 st.markdown("""
 <style>
+
 html, body, .stApp {
     background-color: #1A6333 !important;
     color: white !important;
     font-family: Arial, sans-serif !important;
 }
 
+/* Centered logo */
 .center-logo {
     display: flex;
     justify-content: center;
@@ -27,6 +29,7 @@ html, body, .stApp {
     margin-bottom: 5px;
 }
 
+/* Main title */
 .main-title {
     font-size: 2.3rem;
     font-weight: 800;
@@ -35,30 +38,31 @@ html, body, .stApp {
     margin-bottom: 25px;
 }
 
+/* Question text */
 .question-text {
     font-size: 1.15rem;
     font-weight: 600;
     margin-top: 22px;
-    margin-bottom: 8px;
+    margin-bottom: 6px;   /* <-- v56: mindre afstand under spørgsmålet */
 }
 
-/* Hide default radio numbers */
+/* Hide radio numbers (kept) */
 .stRadio > div > label > div:first-child {
     display: none !important;
 }
 
-/* Radio buttons in one row */
+/* Radio layout (5 buttons in one row) */
 .stRadio > div {
     display: flex !important;
     justify-content: space-between !important;
 }
 
-/* Labels */
+/* Labels under knapperne */
 .scale-row {
     display: flex;
     justify-content: space-between;
     margin-top: -3px;
-    margin-bottom: 6px; /* VERY IMPORTANT: now closer to question */
+    margin-bottom: 10px;   /* <-- v56: mindre mellemrum før næste spørgsmål */
     width: 100%;
 }
 
@@ -80,6 +84,7 @@ html, body, .stApp {
 .stButton > button:hover, .stDownloadButton > button:hover {
     background-color: #B71C1C !important;
 }
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -93,7 +98,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# TITLE
+# TITLE + INTRO
 # -------------------------------------------------------------
 st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
 
@@ -135,7 +140,7 @@ questions = [
 labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
 
 # -------------------------------------------------------------
-# SESSION STATE
+# SESSION STATE INIT
 # -------------------------------------------------------------
 if "answers" not in st.session_state:
     st.session_state.answers = [0] * len(questions)
@@ -143,14 +148,22 @@ if "reset_trigger" not in st.session_state:
     st.session_state.reset_trigger = 0
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS (NEW FIXED LAYOUT)
+# RENDER QUESTIONS
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
 
-    # Spørgsmål
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    # *** LABELS placed ABOVE radiobuttons — stable solution ***
+    choice = st.radio(
+        "",
+        options=list(range(5)),
+        key=f"q_{i}_{st.session_state.reset_trigger}",
+        horizontal=True,
+        label_visibility="collapsed",
+        format_func=lambda x: ""  # hide numbers
+    )
+    st.session_state.answers[i] = choice
+
     st.markdown(
         """
         <div class="scale-row">
@@ -164,17 +177,6 @@ for i, q in enumerate(questions):
         unsafe_allow_html=True
     )
 
-    # Radioknapper — below labels
-    choice = st.radio(
-        "",
-        options=list(range(5)),
-        key=f"q_{i}_{st.session_state.reset_trigger}",
-        horizontal=True,
-        label_visibility="collapsed",
-        format_func=lambda x: ""
-    )
-    st.session_state.answers[i] = choice
-
 # -------------------------------------------------------------
 # RESET BUTTON
 # -------------------------------------------------------------
@@ -184,7 +186,7 @@ if st.button("Nulstil svar"):
     st.rerun()
 
 # -------------------------------------------------------------
-# SCORE & PROFILE
+# INTERPRETATION
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
@@ -266,4 +268,4 @@ st.download_button(
 # -------------------------------------------------------------
 # VERSION NUMBER
 # -------------------------------------------------------------
-st.markdown("<div style='font-size:0.8rem; margin-top:20px;'>Version v48</div>", unsafe_allow_html=True)
+st.markdown("<div style='font-size:0.8rem; margin-top:20px;'>Version v56 (sikker, spacing-justering)</div>", unsafe_allow_html=True)
