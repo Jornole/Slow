@@ -38,34 +38,31 @@ html, body, .stApp {
     margin-bottom: 25px;
 }
 
-/* Question text — tightened spacing */
+/* Question text — LESS TOP MARGIN (closer to labels) */
 .question-text {
     font-size: 1.15rem;
     font-weight: 600;
-    margin-top: 12px;   /* mindre top */
-    margin-bottom: 4px; /* meget tæt på labels */
+    margin-top: 10px;      /* WAS 22px — reduced */
+    margin-bottom: 6px;    /* WAS 10px — reduced */
 }
 
-/* Hide radio numbers (keeps radios clean) */
+/* Hide radio numbers */
 .stRadio > div > label > div:first-child {
     display: none !important;
 }
 
-/* Radio layout (5 buttons in one row) */
+/* Radio layout (5 dots in one row) */
 .stRadio > div {
     display: flex !important;
     justify-content: space-between !important;
-    gap: 8px;
-    padding-left: 6px;
-    padding-right: 6px;
 }
 
-/* Labels under knapperne — tæt på question */
+/* Labels under the dots — LESS BOTTOM MARGIN */
 .scale-row {
     display: flex;
     justify-content: space-between;
-    margin-top: 6px;   /* tæt på radio-knapperne */
-    margin-bottom: 8px;/* lille afstand til næste spørgsmål */
+    margin-top: -4px;
+    margin-bottom: 18px;   /* WAS 30px — reduced spacing */
     width: 100%;
 }
 
@@ -73,9 +70,6 @@ html, body, .stApp {
     flex: 1;
     text-align: center;
     font-size: 0.85rem;
-    line-height: 1.1;
-    padding-left: 2px;
-    padding-right: 2px;
 }
 
 /* Red buttons */
@@ -274,4 +268,4 @@ st.download_button(
 # -------------------------------------------------------------
 # VERSION NUMBER
 # -------------------------------------------------------------
-st.markdown("<div style='font-size:0.8rem; margin-top:20px;'>Version v50</div>", unsafe_allow_html=True)
+st.markdown("<div style='font-size:0.8rem; margin-top:20px;'>Version v51</div>", unsafe_allow_html=True)
