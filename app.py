@@ -14,7 +14,6 @@ st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 # -------------------------------------------------------------
 st.markdown("""
 <style>
-
 html, body, .stApp {
     background-color: #1A6333 !important;
     color: white !important;
@@ -31,59 +30,48 @@ html, body, .stApp {
 
 /* Main title */
 .main-title {
-    font-size: 2.3rem;
+    font-size: 2.1rem;
     font-weight: 800;
-    text-align: center;
-    margin-top: 10px;
-    margin-bottom: 25px;
+    text-align: left;
+    margin-top: 6px;
+    margin-bottom: 18px;
 }
 
 /* Question text */
 .question-text {
     font-size: 1.15rem;
-    font-weight: 600;
-    margin-top: 22px;
-    margin-bottom: 2px !important;   /* <-- V41: tættere på knapperne */
+    font-weight: 700;
+    margin-top: 18px;
+    margin-bottom: 8px;
 }
 
-/* Hide radio numbers */
-.stRadio > div > label > div:first-child {
-    display: none !important;
-}
-
-/* Radio layout */
-.stRadio > div {
+/* Make the radio row use full width and spread items */
+.stRadio > div [role="radiogroup"] {
     display: flex !important;
     justify-content: space-between !important;
-    margin-top: -6px !important;      /* <-- V41: reduceret afstand */
+    width: 100% !important;
+    gap: 0.2rem;
 }
 
+/* Make each radio label take equal width and center text */
 .stRadio label {
-    padding-top: 0px !important;      /* <-- V41 */
-    padding-bottom: 0px !important;   /* <-- V41 */
-}
-
-/* Labels under knapperne */
-.scale-row {
-    display: flex;
-    justify-content: space-between;
-    margin-top: -8px !important;      /* <-- V41: flyttet tættere op */
-    margin-bottom: 22px !important;   /* <-- V41 */
-    width: 100%;
-}
-
-.scale-row span {
-    flex: 1;
+    flex: 1 1 0;
     text-align: center;
-    font-size: 0.85rem;
+    font-size: 0.95rem;
+    color: white !important;
 }
 
-/* Red buttons */
+/* Style radio circles (keeps native look but larger) */
+.stRadio input[type="radio"] {
+    transform: scale(1.05);
+}
+
+/* Red buttons (reset + download) */
 .stButton > button, .stDownloadButton > button {
     background-color: #C62828 !important;
     color: white !important;
     border-radius: 8px !important;
-    padding: 0.65rem 1.4rem !important;
+    padding: 0.65rem 1.2rem !important;
     font-weight: 600 !important;
     border: none !important;
 }
@@ -91,6 +79,8 @@ html, body, .stApp {
     background-color: #B71C1C !important;
 }
 
+/* Slight spacing under each question for clarity */
+.question-block { margin-bottom: 20px; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -154,42 +144,39 @@ if "reset_trigger" not in st.session_state:
     st.session_state.reset_trigger = 0
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS
+# RENDER QUESTIONS (native st.radio, horizontal)
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
+    # question text
+    st.markdown(f"<div class='question-block'><div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
-
-    choice = st.radio(
-        "",
-        options=list(range(5)),
+    # native radio with label options (these labels are clickable)
+    choice_label = st.radio(
+        label="",
+        options=labels,
+        index=st.session_state.answers[i] if st.session_state.answers[i] < len(labels) else 0,
         key=f"q_{i}_{st.session_state.reset_trigger}",
         horizontal=True,
-        label_visibility="collapsed",
-        format_func=lambda x: ""
+        label_visibility="collapsed"
     )
-    st.session_state.answers[i] = choice
 
-    st.markdown(
-        """
-        <div class="scale-row">
-            <span>Aldrig</span>
-            <span>Sjældent</span>
-            <span>Nogle gange</span>
-            <span>Ofte</span>
-            <span>Altid</span>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    # convert selected label back to index for scoring/storage
+    st.session_state.answers[i] = labels.index(choice_label)
+
+    st.markdown("</div>", unsafe_allow_html=True)
 
 # -------------------------------------------------------------
 # RESET BUTTON
 # -------------------------------------------------------------
-if st.button("Nulstil svar"):
-    st.session_state.answers = [0] * len(questions)
-    st.session_state.reset_trigger += 1
-    st.rerun()
+col1, col2 = st.columns([1, 4])
+with col1:
+    if st.button("Nulstil svar"):
+        st.session_state.answers = [0] * len(questions)
+        st.session_state.reset_trigger += 1
+        st.experimental_rerun()
+
+with col2:
+    st.write("")  # placeholder so buttons align left
 
 # -------------------------------------------------------------
 # INTERPRETATION
@@ -271,7 +258,4 @@ st.download_button(
     mime="application/pdf"
 )
 
-# -------------------------------------------------------------
-# VERSION NUMBER
-# -------------------------------------------------------------
-st.markdown("<div style='font-size:0.8rem; margin-top:20px;'>Version v41</div>", unsafe_allow_html=True)
+st.markdown("<div style='font-size:0.8rem; margin-top:20px;'>Version v42 (stable)</div>", unsafe_allow_html=True)
