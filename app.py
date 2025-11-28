@@ -1,14 +1,12 @@
-# -------------------------------------------------------------
-# Version v55 – SIKKER STABIL
-# Kun én ændring: mindre margin-bottom på scale-row
-# -------------------------------------------------------------
-
 import streamlit as st
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
 
+# -------------------------------------------------------------
+# BASIC SETUP
+# -------------------------------------------------------------
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
@@ -23,6 +21,7 @@ html, body, .stApp {
     font-family: Arial, sans-serif !important;
 }
 
+/* Centered logo */
 .center-logo {
     display: flex;
     justify-content: center;
@@ -30,6 +29,7 @@ html, body, .stApp {
     margin-bottom: 5px;
 }
 
+/* Main title */
 .main-title {
     font-size: 2.3rem;
     font-weight: 800;
@@ -38,31 +38,31 @@ html, body, .stApp {
     margin-bottom: 25px;
 }
 
+/* Question text */
 .question-text {
     font-size: 1.15rem;
     font-weight: 600;
     margin-top: 22px;
-    margin-bottom: 10px;
+    margin-bottom: 6px;   /* <-- v56: mindre afstand under spørgsmålet */
 }
 
-/* Hide native radio numbers */
+/* Hide radio numbers (kept) */
 .stRadio > div > label > div:first-child {
     display: none !important;
 }
 
-/* 5 radio buttons in a horizontal row */
+/* Radio layout (5 buttons in one row) */
 .stRadio > div {
     display: flex !important;
     justify-content: space-between !important;
 }
 
-/* Labels under the radio buttons */
-/* ← DEN ENESTE ÆNDRING I v55 */
+/* Labels under knapperne */
 .scale-row {
     display: flex;
     justify-content: space-between;
     margin-top: -3px;
-    margin-bottom: 18px;   /* v48 = 30px → sikker reduktion */
+    margin-bottom: 10px;   /* <-- v56: mindre mellemrum før næste spørgsmål */
     width: 100%;
 }
 
@@ -72,12 +72,14 @@ html, body, .stApp {
     font-size: 0.85rem;
 }
 
+/* Red buttons */
 .stButton > button, .stDownloadButton > button {
     background-color: #C62828 !important;
     color: white !important;
     border-radius: 8px !important;
     padding: 0.65rem 1.4rem !important;
     font-weight: 600 !important;
+    border: none !important;
 }
 .stButton > button:hover, .stDownloadButton > button:hover {
     background-color: #B71C1C !important;
@@ -96,7 +98,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# INTRO
+# TITLE + INTRO
 # -------------------------------------------------------------
 st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
 
@@ -137,7 +139,9 @@ questions = [
 
 labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
 
-# SESSION STATE
+# -------------------------------------------------------------
+# SESSION STATE INIT
+# -------------------------------------------------------------
 if "answers" not in st.session_state:
     st.session_state.answers = [0] * len(questions)
 if "reset_trigger" not in st.session_state:
@@ -156,7 +160,7 @@ for i, q in enumerate(questions):
         key=f"q_{i}_{st.session_state.reset_trigger}",
         horizontal=True,
         label_visibility="collapsed",
-        format_func=lambda x: ""
+        format_func=lambda x: ""  # hide numbers
     )
     st.session_state.answers[i] = choice
 
@@ -173,14 +177,16 @@ for i, q in enumerate(questions):
         unsafe_allow_html=True
     )
 
-# RESET
+# -------------------------------------------------------------
+# RESET BUTTON
+# -------------------------------------------------------------
 if st.button("Nulstil svar"):
     st.session_state.answers = [0] * len(questions)
     st.session_state.reset_trigger += 1
     st.rerun()
 
 # -------------------------------------------------------------
-# RESULT
+# INTERPRETATION
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
@@ -217,19 +223,22 @@ PROFILE_TEXT = {
     ]
 }
 
-score = sum(st.session_state.answers)
-profile = interpret_score(score)
+total_score = sum(st.session_state.answers)
+profile = interpret_score(total_score)
 
+# -------------------------------------------------------------
+# RESULT
+# -------------------------------------------------------------
 st.header("Dit resultat")
-st.subheader(f"Score: {score} / 80")
+st.subheader(f"Score: {total_score} / 80")
 st.subheader(f"Profil: {profile}")
 
 st.write("### Karakteristika for din profil:")
-for line in PROFILE_TEXT[profile]:
-    st.write(f"- {line}")
+for s in PROFILE_TEXT[profile]:
+    st.write(f"- {s}")
 
 # -------------------------------------------------------------
-# PDF
+# PDF GENERATOR
 # -------------------------------------------------------------
 def generate_pdf(score, profile):
     buf = BytesIO()
@@ -251,10 +260,12 @@ def generate_pdf(score, profile):
 
 st.download_button(
     "Download PDF-rapport",
-    generate_pdf(score, profile),
+    generate_pdf(total_score, profile),
     file_name="HSP_SlowProcessor_Rapport.pdf",
     mime="application/pdf"
 )
 
-# VERSION
-st.markdown("<div style='font-size:0.8rem; margin-top:20px;'>Version v55 (SIKKER STABIL)</div>", unsafe_allow_html=True)
+# -------------------------------------------------------------
+# VERSION NUMBER
+# -------------------------------------------------------------
+st.markdown("<div style='font-size:0.8rem; margin-top:20px;'>Version v56 (sikker, spacing-justering)</div>", unsafe_allow_html=True)
