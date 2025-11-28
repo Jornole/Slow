@@ -21,14 +21,6 @@ html, body, .stApp {
     font-family: Arial, sans-serif !important;
 }
 
-/* Centered logo */
-.center-logo {
-    display: flex;
-    justify-content: center;
-    margin-top: 20px;
-    margin-bottom: 5px;
-}
-
 /* Main title */
 .main-title {
     font-size: 2.3rem;
@@ -38,12 +30,12 @@ html, body, .stApp {
     margin-bottom: 25px;
 }
 
-/* Question text — LESS TOP MARGIN (closer to labels) */
+/* Question text */
 .question-text {
-    font-size: 1.15rem;
+    font-size: 1.20rem;
     font-weight: 600;
-    margin-top: 10px;      /* WAS 22px — reduced */
-    margin-bottom: 6px;    /* WAS 10px — reduced */
+    margin-top: 25px;          /* LIDT MINDRE end v48 */
+    margin-bottom: 3px;        /* Tættere på radioknapperne */
 }
 
 /* Hide radio numbers */
@@ -51,25 +43,26 @@ html, body, .stApp {
     display: none !important;
 }
 
-/* Radio layout (5 dots in one row) */
+/* Radio layout (5 buttons in one row) */
 .stRadio > div {
     display: flex !important;
     justify-content: space-between !important;
+    margin-top: -8px !important;    /* Radioknapper rykkes OP */
 }
 
-/* Labels under the dots — LESS BOTTOM MARGIN */
+/* Labels under knapperne */
 .scale-row {
     display: flex;
     justify-content: space-between;
-    margin-top: -4px;
-    margin-bottom: 18px;   /* WAS 30px — reduced spacing */
+    margin-top: -2px;      /* Labels rykkes OP */
+    margin-bottom: 18px;   /* Afstand til næste spørgsmål lidt mindre */
     width: 100%;
 }
 
 .scale-row span {
     flex: 1;
     text-align: center;
-    font-size: 0.85rem;
+    font-size: 0.88rem;
 }
 
 /* Red buttons */
@@ -92,7 +85,7 @@ html, body, .stApp {
 # LOGO
 # -------------------------------------------------------------
 st.markdown("""
-<div class="center-logo">
+<div style="display:flex; justify-content:center; margin-top:20px; margin-bottom:5px;">
     <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="160">
 </div>
 """, unsafe_allow_html=True)
@@ -160,7 +153,7 @@ for i, q in enumerate(questions):
         key=f"q_{i}_{st.session_state.reset_trigger}",
         horizontal=True,
         label_visibility="collapsed",
-        format_func=lambda x: ""
+        format_func=lambda x: ""  
     )
     st.session_state.answers[i] = choice
 
@@ -268,4 +261,4 @@ st.download_button(
 # -------------------------------------------------------------
 # VERSION NUMBER
 # -------------------------------------------------------------
-st.markdown("<div style='font-size:0.8rem; margin-top:20px;'>Version v51</div>", unsafe_allow_html=True)
+st.markdown("<div style='font-size:0.8rem; margin-top:20px;'>Version v52</div>", unsafe_allow_html=True)
