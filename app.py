@@ -16,66 +16,79 @@ st.markdown("""
 <style>
 
 html, body, .stApp {
-    background-color:#1A6333 !important;
-    color:white !important;
-    font-family:Arial, sans-serif !important;
+    background-color: #1A6333 !important;
+    color: white !important;
+    font-family: Arial, sans-serif !important;
 }
 
-/* Questions */
+/* Centered logo */
+.center-logo {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+    margin-bottom: 5px;
+}
+
+/* Main title */
+.main-title {
+    font-size: 2.3rem;
+    font-weight: 800;
+    text-align: center;
+    margin-top: 10px;
+    margin-bottom: 25px;
+}
+
+/* Question text */
 .question-text {
-    font-size:1.15rem;
-    font-weight:600;
-    margin-top:22px;
-    margin-bottom:6px;   /* ← tættere på labels */
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin-top: 22px;
+    margin-bottom: 2px !important;   /* <-- V41: tættere på knapperne */
 }
 
-/* Hide radiobutton dots */
+/* Hide radio numbers */
 .stRadio > div > label > div:first-child {
-    display:none !important;
+    display: none !important;
 }
 
-/* Force radios in one line */
+/* Radio layout */
 .stRadio > div {
-    display:flex !important;
-    justify-content:space-between !important;
-    width:100%;
+    display: flex !important;
+    justify-content: space-between !important;
+    margin-top: -6px !important;      /* <-- V41: reduceret afstand */
 }
 
-/* LABELS CLICKABLE */
+.stRadio label {
+    padding-top: 0px !important;      /* <-- V41 */
+    padding-bottom: 0px !important;   /* <-- V41 */
+}
+
+/* Labels under knapperne */
 .scale-row {
-    display:flex;
-    justify-content:space-between;
-    width:100%;
-    margin-top:-2px;     /* ← tættere på knapper */
-    margin-bottom:28px;
+    display: flex;
+    justify-content: space-between;
+    margin-top: -8px !important;      /* <-- V41: flyttet tættere op */
+    margin-bottom: 22px !important;   /* <-- V41 */
+    width: 100%;
 }
 
-.scale-item {
-    flex:1;
-    text-align:center;
-    cursor:pointer;
-    font-size:0.9rem;
-    color:white;
-}
-
-.scale-item:hover {
-    color:#FF9999;
-    font-weight:600;
-}
-
-.selected {
-    color:#FF4444;
-    font-weight:700;
+.scale-row span {
+    flex: 1;
+    text-align: center;
+    font-size: 0.85rem;
 }
 
 /* Red buttons */
 .stButton > button, .stDownloadButton > button {
-    background:#C62828 !important;
-    color:white !important;
-    border-radius:8px;
-    padding:0.65rem 1.4rem !important;
-    font-weight:600 !important;
-    border:none !important;
+    background-color: #C62828 !important;
+    color: white !important;
+    border-radius: 8px !important;
+    padding: 0.65rem 1.4rem !important;
+    font-weight: 600 !important;
+    border: none !important;
+}
+.stButton > button:hover, .stDownloadButton > button:hover {
+    background-color: #B71C1C !important;
 }
 
 </style>
@@ -85,7 +98,7 @@ html, body, .stApp {
 # LOGO
 # -------------------------------------------------------------
 st.markdown("""
-<div style='text-align:center; margin-top:20px; margin-bottom:5px;'>
+<div class="center-logo">
     <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="160">
 </div>
 """, unsafe_allow_html=True)
@@ -93,7 +106,7 @@ st.markdown("""
 # -------------------------------------------------------------
 # TITLE + INTRO
 # -------------------------------------------------------------
-st.markdown("<div class='main-title'>DIN PERSONLIGE PROFIL</div>", unsafe_allow_html=True)
+st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
 
 st.markdown("""
 Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige 
@@ -132,11 +145,13 @@ questions = [
 
 labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
 
-# Session state
+# -------------------------------------------------------------
+# SESSION STATE INIT
+# -------------------------------------------------------------
 if "answers" not in st.session_state:
-    st.session_state.answers = [0]*len(questions)
-if "reset" not in st.session_state:
-    st.session_state.reset = 0
+    st.session_state.answers = [0] * len(questions)
+if "reset_trigger" not in st.session_state:
+    st.session_state.reset_trigger = 0
 
 # -------------------------------------------------------------
 # RENDER QUESTIONS
@@ -145,54 +160,47 @@ for i, q in enumerate(questions):
 
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    selected_value = st.session_state.answers[i]
-
     choice = st.radio(
         "",
         options=list(range(5)),
-        key=f"radio_{i}_{st.session_state.reset}",
+        key=f"q_{i}_{st.session_state.reset_trigger}",
         horizontal=True,
         label_visibility="collapsed",
-        format_func=lambda x: ""   # hide numbers
+        format_func=lambda x: ""
     )
-
     st.session_state.answers[i] = choice
 
-    row_html = "<div class='scale-row'>"
-    for idx, lbl in enumerate(labels):
-        css = "scale-item selected" if choice == idx else "scale-item"
-        row_html += f"""
-            <div class='{css}' onclick="window.parent.document.getElementById('radio_{i}_{st.session_state.reset}').querySelectorAll('input')[{idx}].click()">
-                {lbl}
-            </div>
+    st.markdown(
         """
-    row_html += "</div>"
-
-    st.markdown(row_html, unsafe_allow_html=True)
+        <div class="scale-row">
+            <span>Aldrig</span>
+            <span>Sjældent</span>
+            <span>Nogle gange</span>
+            <span>Ofte</span>
+            <span>Altid</span>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 # -------------------------------------------------------------
 # RESET BUTTON
 # -------------------------------------------------------------
 if st.button("Nulstil svar"):
-    st.session_state.answers = [0]*len(questions)
-    st.session_state.reset += 1
+    st.session_state.answers = [0] * len(questions)
+    st.session_state.reset_trigger += 1
     st.rerun()
 
 # -------------------------------------------------------------
-# RESULT
+# INTERPRETATION
 # -------------------------------------------------------------
-score = sum(st.session_state.answers)
-
-def interpret_score(s):
-    if s <= 26: return "Slow Processor"
-    elif s <= 53: return "Mellemprofil"
-    return "HSP"
-
-profile = interpret_score(score)
-
-st.header("Dit resultat")
-st.subheader(f"Score: {score} / 80")
-st.subheader(f"Profil: {profile}")
+def interpret_score(score):
+    if score <= 26:
+        return "Slow Processor"
+    elif score <= 53:
+        return "Mellemprofil"
+    else:
+        return "HSP"
 
 PROFILE_TEXT = {
     "HSP": [
@@ -221,6 +229,16 @@ PROFILE_TEXT = {
     ]
 }
 
+total_score = sum(st.session_state.answers)
+profile = interpret_score(total_score)
+
+# -------------------------------------------------------------
+# RESULT
+# -------------------------------------------------------------
+st.header("Dit resultat")
+st.subheader(f"Score: {total_score} / 80")
+st.subheader(f"Profil: {profile}")
+
 st.write("### Karakteristika for din profil:")
 for s in PROFILE_TEXT[profile]:
     st.write(f"- {s}")
@@ -237,9 +255,9 @@ def generate_pdf(score, profile):
     story.append(Paragraph("HSP / Slow Processor – Rapport", styles["Title"]))
     story.append(Paragraph(f"Score: {score} / 80", styles["Heading2"]))
     story.append(Paragraph(f"Profil: {profile}", styles["Heading2"]))
-    story.append(Spacer(1,12))
+    story.append(Spacer(1, 12))
 
-    for i,q in enumerate(questions):
+    for i, q in enumerate(questions):
         story.append(Paragraph(f"{i+1}. {q} – {labels[st.session_state.answers[i]]}", styles["BodyText"]))
 
     doc.build(story)
@@ -248,10 +266,12 @@ def generate_pdf(score, profile):
 
 st.download_button(
     "Download PDF-rapport",
-    generate_pdf(score, profile),
+    generate_pdf(total_score, profile),
     file_name="HSP_SlowProcessor_Rapport.pdf",
     mime="application/pdf"
 )
 
-# VERSION
-st.markdown("<div style='font-size:0.8rem; margin-top:20px;'>Version V40</div>", unsafe_allow_html=True)
+# -------------------------------------------------------------
+# VERSION NUMBER
+# -------------------------------------------------------------
+st.markdown("<div style='font-size:0.8rem; margin-top:20px;'>Version v41</div>", unsafe_allow_html=True)
