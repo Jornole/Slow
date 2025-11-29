@@ -12,9 +12,9 @@ from datetime import datetime
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# VERSION + TIMESTAMP (v77)
+# VERSION + TIMESTAMP (v78)
 # -------------------------------------------------------------
-version = "v77"
+version = "v78"
 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
 
 st.markdown(
@@ -99,7 +99,6 @@ st.markdown(
         font-weight: 600 !important;
         border: none !important;
     }
-
     .stButton > button:hover, .stDownloadButton > button:hover {
         background-color: #B71C1C !important;
     }
@@ -166,7 +165,32 @@ labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
 # SESSION STATE
 # -------------------------------------------------------------
 if "answers" not in st.session_state:
-    st.session_state.answers = [None] * len(questions)
+    st.session_state.answers = [None] * len(questions)  # << ændret fra 0 til None
+
+# -------------------------------------------------------------
+# QUERY PARAMS → SESSION
+# -------------------------------------------------------------
+qparams = st.experimental_get_query_params()
+for i in range(len(questions)):
+    key = f"q_{i}"
+    if key in qparams:
+        try:
+            v = int(qparams[key][0])
+            if 0 <= v <= 4:
+                st.session_state.answers[i] = v
+        except:
+            pass
+
+# -------------------------------------------------------------
+# BUILD HREF (NO CHANGE)
+# -------------------------------------------------------------
+def build_href(q_index, value):
+    params = {}
+    for idx, ans in enumerate(st.session_state.answers):
+        if ans is not None:  # kun eksisterende svar
+            params[f"q_{idx}"] = str(ans)
+    params[f"q_{q_index}"] = str(value)
+    return "?" + urlencode(params)
 
 # -------------------------------------------------------------
 # RENDER QUESTIONS
@@ -174,29 +198,28 @@ if "answers" not in st.session_state:
 for i, q in enumerate(questions):
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    col = st.columns(5)
-    for idx_label, label in enumerate(labels):
-        with col[idx_label]:
-            if st.button(label, key=f"btn_{i}_{idx_label}"):
-                st.session_state.answers[i] = idx_label
+    html = "<div class='scale-row'>"
+    for v, lab in enumerate(labels):
 
-    # selected label (red text)
-    if st.session_state.answers[i] is not None:
-        st.markdown(
-            f"<div class='scale-row'><a class='selected'>{labels[st.session_state.answers[i]]}</a></div>",
-            unsafe_allow_html=True,
-        )
-    else:
-        st.markdown(
-            "<div class='scale-row'><a>Vælg et svar</a></div>",
-            unsafe_allow_html=True,
-        )
+        selected = ""
+        if st.session_state.answers[i] == v:
+            selected = "selected"
+
+        html += f"<a class='{selected}' href='{build_href(i, v)}'>{lab}</a>"
+
+    html += "</div>"
+    st.markdown(html, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# RESET BUTTON — v77 (helt stabil)
+# RESET BUTTON (fix: set to None)
 # -------------------------------------------------------------
 if st.button("Nulstil svar"):
     st.session_state.answers = [None] * len(questions)
+
+    try:
+        st.experimental_set_query_params()
+    except:
+        pass
 
 # -------------------------------------------------------------
 # SCORE + PROFILE
@@ -209,70 +232,73 @@ def interpret_score(score):
     else:
         return "HSP"
 
-if None not in st.session_state.answers:
-    total_score = sum(st.session_state.answers)
-    profile = interpret_score(total_score)
+# None → 0 scoring
+safe_answers = [a if a is not None else 0 for a in st.session_state.answers]
+total_score = sum(safe_answers)
+profile = interpret_score(total_score)
 
-    st.header("Dit resultat")
-    st.subheader(f"Score: {total_score} / 80")
-    st.subheader(f"Profil: {profile}")
+PROFILE_TEXT = {
+    "HSP": [
+        "Du registrerer flere nuancer i både indtryk og stemninger.",
+        "Du bearbejder oplevelser dybt og grundigt.",
+        "Du reagerer stærkt på stimuli og kan blive overstimuleret.",
+        "Du har en rig indre verden og et fintfølende nervesystem.",
+        "Du er empatisk og opmærksom på andre.",
+        "Du har brug for ro og pauser for at lade op.",
+    ],
+    "Slow Processor": [
+        "Du arbejder bedst i roligt tempo og med forudsigelighed.",
+        "Du bearbejder indtryk grundigt, men langsomt.",
+        "Du har brug for ekstra tid til omstilling og beslutninger.",
+        "Du trives med faste rammer og struktur.",
+        "Du kan føle dig presset, når tingene går hurtigt.",
+        "Du har god udholdenhed, når du arbejder i dit eget tempo.",
+    ],
+    "Mellemprofil": [
+        "Du veksler naturligt mellem hurtig og langsom bearbejdning.",
+        "Du håndterer de fleste stimuli uden at blive overvældet.",
+        "Du har en god balance mellem intuition og eftertænksomhed.",
+        "Du kan tilpasse dig forskellige miljøer og tempoer.",
+        "Du bliver påvirket i perioder, men finder hurtigt balancen igen.",
+        "Du fungerer bredt socialt og mentalt i mange typer situationer.",
+    ],
+}
 
-    PROFILE_TEXT = {
-        "HSP": [
-            "Du registrerer flere nuancer i både indtryk og stemninger.",
-            "Du bearbejder oplevelser dybt og grundigt.",
-            "Du reagerer stærkt på stimuli og kan blive overstimuleret.",
-            "Du har en rig indre verden og et fintfølende nervesystem.",
-            "Du er empatisk og opmærksom på andre.",
-            "Du har brug for ro og pauser for at lade op.",
-        ],
-        "Slow Processor": [
-            "Du arbejder bedst i roligt tempo og med forudsigelighed.",
-            "Du bearbejder indtryk grundigt, men langsomt.",
-            "Du har brug for ekstra tid til omstilling og beslutninger.",
-            "Du trives med faste rammer og struktur.",
-            "Du kan føle dig presset, når tingene går hurtigt.",
-            "Du har god udholdenhed, når du arbejder i dit eget tempo.",
-        ],
-        "Mellemprofil": [
-            "Du veksler naturligt mellem hurtig og langsom bearbejdning.",
-            "Du håndterer de fleste stimuli uden at blive overvældet.",
-            "Du har en god balance mellem intuition og eftertænksomhed.",
-            "Du kan tilpasse dig forskellige miljøer og tempoer.",
-            "Du bliver påvirket i perioder, men finder hurtigt balancen igen.",
-            "Du fungerer bredt socialt og mentalt i mange typer situationer.",
-        ],
-    }
+# -------------------------------------------------------------
+# RESULT
+# -------------------------------------------------------------
+st.header("Dit resultat")
+st.subheader(f"Score: {total_score} / 80")
+st.subheader(f"Profil: {profile}")
 
-    st.write("### Karakteristika for din profil:")
-    for s in PROFILE_TEXT[profile]:
-        st.write(f"- {s}")
+st.write("### Karakteristika for din profil:")
+for s in PROFILE_TEXT[profile]:
+    st.write(f"- {s}")
 
-    # -------------------------------------------------------------
-    # PDF DOWNLOAD
-    # -------------------------------------------------------------
-    def generate_pdf(score, profile):
-        buf = BytesIO()
-        doc = SimpleDocTemplate(buf, pagesize=letter)
-        styles = getSampleStyleSheet()
-        story = []
+# -------------------------------------------------------------
+# PDF
+# -------------------------------------------------------------
+def generate_pdf(score, profile):
+    buf = BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=letter)
+    styles = getSampleStyleSheet()
+    story = []
 
-        story.append(Paragraph("HSP / Slow Processor – Rapport", styles["Title"]))
-        story.append(Paragraph(f"Score: {score} / 80", styles["Heading2"]))
-        story.append(Paragraph(f"Profil: {profile}", styles["Heading2"]))
-        story.append(Spacer(1, 12))
+    story.append(Paragraph("HSP / Slow Processor – Rapport", styles["Title"]))
+    story.append(Paragraph(f"Score: {score} / 80", styles["Heading2"]))
+    story.append(Paragraph(f"Profil: {profile}", styles["Heading2"]))
+    story.append(Spacer(1, 12))
 
-        for i, q in enumerate(questions):
-            ans = labels[st.session_state.answers[i]]
-            story.append(Paragraph(f"{i+1}. {q} – {ans}", styles["BodyText"]))
+    for i, q in enumerate(questions):
+        story.append(Paragraph(f"{i+1}. {q} – {labels[safe_answers[i]]}", styles["BodyText"]))
 
-        doc.build(story)
-        buf.seek(0)
-        return buf
+    doc.build(story)
+    buf.seek(0)
+    return buf
 
-    st.download_button(
-        "Download PDF-rapport",
-        generate_pdf(total_score, profile),
-        file_name="HSP_SlowProcessor_Rapport.pdf",
-        mime="application/pdf"
-    )
+st.download_button(
+    "Download PDF-rapport",
+    generate_pdf(total_score, profile),
+    file_name="HSP_SlowProcessor_Rapport.pdf",
+    mime="application/pdf"
+)
