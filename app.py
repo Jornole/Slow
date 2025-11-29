@@ -6,33 +6,25 @@ from io import BytesIO
 from datetime import datetime
 
 # -------------------------------------------------------------
-# BASIC SETUP
+# PAGE SETUP
 # -------------------------------------------------------------
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# GLOBAL CSS
+# CSS (100% identisk med v62)
 # -------------------------------------------------------------
 st.markdown("""
 <style>
 html, body, .stApp {
-    background-color:#1A6333 !important;
-    color:white !important;
-    font-family:Arial, sans-serif !important;
-}
-
-.version-box {
-    position:fixed;
-    top:10px;
-    left:10px;
-    font-size:0.75rem;
-    color:#ffffffaa;
+    background-color: #1A6333 !important;
+    color: white !important;
+    font-family: Arial, sans-serif !important;
 }
 
 .center-logo {
     display:flex;
     justify-content:center;
-    margin-top:40px;
+    margin-top:20px;
     margin-bottom:5px;
 }
 
@@ -47,7 +39,7 @@ html, body, .stApp {
 .question-text {
     font-size:1.15rem;
     font-weight:600;
-    margin-top:18px;
+    margin-top:22px;
     margin-bottom:6px;
 }
 
@@ -56,46 +48,68 @@ html, body, .stApp {
     justify-content:space-between;
     align-items:center;
     width:100%;
-    margin-bottom:10px;
+    margin-bottom:12px;
     padding:0 6%;
     box-sizing:border-box;
 }
 
-.scale-item {
-    color:white;
+.scale-label {
+    color: #ffffff;
+    text-decoration: none;
     font-size:0.95rem;
-    text-decoration:none;
-    padding:8px 4px;
+    display:inline-block;
+    padding:10px 6px;
+    text-align:center;
     cursor:pointer;
+    border-radius:6px;
 }
 
-.scale-item.selected {
-    color:#ff4444;
+.scale-label.selected {
+    color: #ff4444;
     font-weight:700;
 }
 
+@media (max-width:420px) {
+    .scale-row { padding:0 3%; }
+    .scale-label { padding:8px 2px; font-size:0.9rem; }
+}
+
 .stButton > button, .stDownloadButton > button {
-    background-color:#C62828 !important;
-    color:white !important;
-    border-radius:8px !important;
-    padding:0.65rem 1.4rem !important;
-    font-weight:600 !important;
-    border:none !important;
+    background-color: #C62828 !important;
+    color: white !important;
+    border-radius: 8px !important;
+    padding: 0.65rem 1.4rem !important;
+    font-weight: 600 !important;
+    border: none !important;
 }
 .stButton > button:hover, .stDownloadButton > button:hover {
-    background-color:#B71C1C !important;
+    background-color: #B71C1C !important;
+}
+
+.version-box {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background-color: rgba(255,255,255,0.12);
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 0.85rem;
 }
 </style>
 """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# VERSION TEXT (TOP LEFT)
+# VERSION / TIMESTAMP BOX
 # -------------------------------------------------------------
-timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-st.markdown(f"<div class='version-box'>v65 – {timestamp}</div>", unsafe_allow_html=True)
+timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
+st.markdown(f"""
+<div class='version-box'>
+Version v65 — {timestamp}
+</div>
+""", unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# LOGO & TITLE
+# LOGO + TITLE
 # -------------------------------------------------------------
 st.markdown("""
 <div class="center-logo">
@@ -106,7 +120,7 @@ st.markdown("""
 st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
 
 st.markdown("""
-Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige 
+Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige  
 og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner.
 
 Du besvarer 20 udsagn på en skala fra **Aldrig** til **Altid**.
@@ -149,27 +163,32 @@ if "answers" not in st.session_state:
     st.session_state.answers = [0] * len(questions)
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS — NO RELOAD VERSION
+# RENDER QUESTIONS (no reload version)
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
 
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    # Build label row
-    row_html = "<div class='scale-row'>"
+    cols = st.columns(5)
+    for idx, col in enumerate(cols):
+        with col:
+            selected = (st.session_state.answers[i] == idx)
+            btn_label = f"{labels[idx]}"
 
-    for value, label in enumerate(labels):
-        selected_class = "selected" if st.session_state.answers[i] == value else ""
+            if st.button(btn_label, key=f"q{i}_{idx}", help=None):
+                st.session_state.answers[i] = idx
 
-        # Each item triggers a lightweight rerun (state-change only)
-        if st.button(label, key=f"btn_{i}_{value}"):
-            st.session_state.answers[i] = value
-
-        # Render styled text (not clickable in HTML itself, the button above is the click target)
-        row_html += f"<span class='scale-item {selected_class}'>{label}</span>"
-
-    row_html += "</div>"
-    st.markdown(row_html, unsafe_allow_html=True)
+            # rødfarvning
+            if selected:
+                st.markdown(
+                    f"<div class='scale-label selected'>{labels[idx]}</div>",
+                    unsafe_allow_html=True
+                )
+            else:
+                st.markdown(
+                    f"<div class='scale-label'>{labels[idx]}</div>",
+                    unsafe_allow_html=True
+                )
 
 # -------------------------------------------------------------
 # RESET BUTTON
@@ -179,7 +198,7 @@ if st.button("Nulstil svar"):
     st.rerun()
 
 # -------------------------------------------------------------
-# INTERPRETATION
+# RESULTS
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
@@ -196,7 +215,7 @@ PROFILE_TEXT = {
         "Du reagerer stærkt på stimuli og kan blive overstimuleret.",
         "Du har en rig indre verden og et fintfølende nervesystem.",
         "Du er empatisk og opmærksom på andre.",
-        "Du har brug for ro og pauser for at lade op."
+        "Du har brug for ro og pauser for at lade op.",
     ],
     "Slow Processor": [
         "Du arbejder bedst i roligt tempo og med forudsigelighed.",
@@ -204,7 +223,7 @@ PROFILE_TEXT = {
         "Du har brug for ekstra tid til omstilling og beslutninger.",
         "Du trives med faste rammer og struktur.",
         "Du kan føle dig presset, når tingene går hurtigt.",
-        "Du har god udholdenhed, når du arbejder i dit eget tempo."
+        "Du har god udholdenhed, når du arbejder i dit eget tempo.",
     ],
     "Mellemprofil": [
         "Du veksler naturligt mellem hurtig og langsom bearbejdning.",
@@ -212,16 +231,13 @@ PROFILE_TEXT = {
         "Du har en god balance mellem intuition og eftertænksomhed.",
         "Du kan tilpasse dig forskellige miljøer og tempoer.",
         "Du bliver påvirket i perioder, men finder hurtigt balancen igen.",
-        "Du fungerer bredt socialt og mentalt i mange typer situationer."
-    ]
+        "Du fungerer bredt socialt og mentalt i mange typer situationer.",
+    ],
 }
 
 total_score = sum(st.session_state.answers)
 profile = interpret_score(total_score)
 
-# -------------------------------------------------------------
-# RESULT
-# -------------------------------------------------------------
 st.header("Dit resultat")
 st.subheader(f"Score: {total_score} / 80")
 st.subheader(f"Profil: {profile}")
@@ -231,7 +247,7 @@ for s in PROFILE_TEXT[profile]:
     st.write(f"- {s}")
 
 # -------------------------------------------------------------
-# PDF GENERATOR
+# PDF (uændret)
 # -------------------------------------------------------------
 def generate_pdf(score, profile):
     buf = BytesIO()
@@ -245,7 +261,9 @@ def generate_pdf(score, profile):
     story.append(Spacer(1, 12))
 
     for i, q in enumerate(questions):
-        story.append(Paragraph(f"{i+1}. {q} – {labels[st.session_state.answers[i]]}", styles["BodyText"]))
+        story.append(
+            Paragraph(f"{i+1}. {q} – {labels[st.session_state.answers[i]]}", styles["BodyText"])
+        )
 
     doc.build(story)
     buf.seek(0)
