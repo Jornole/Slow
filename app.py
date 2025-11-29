@@ -12,9 +12,9 @@ from datetime import datetime
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# VERSION + TIMESTAMP (v67)
+# VERSION + TIMESTAMP (v68)
 # -------------------------------------------------------------
-version = "v67"
+version = "v68"
 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
 
 st.markdown(
@@ -99,6 +99,7 @@ st.markdown(
         font-weight: 600 !important;
         border: none !important;
     }
+
     .stButton > button:hover, .stDownloadButton > button:hover {
         background-color: #B71C1C !important;
     }
@@ -116,7 +117,7 @@ st.markdown(
         <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="160">
     </div>
     """,
-    unsafe_allow_html=True,
+    unsafe_allow_html=True
 )
 
 st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
@@ -130,7 +131,7 @@ st.markdown(
 
     Testen er <u><b>ikke en diagnose</b></u>, men et psykologisk værktøj til selvindsigt.
     """,
-    unsafe_allow_html=True,
+    unsafe_allow_html=True
 )
 
 # -------------------------------------------------------------
@@ -162,66 +163,61 @@ questions = [
 labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
 
 # -------------------------------------------------------------
-# SESSION STATE
+# SESSION STATE INIT
 # -------------------------------------------------------------
 if "answers" not in st.session_state:
-    st.session_state.answers = [0] * len(questions)
+    st.session_state.answers = [None] * len(questions)
+
 if "reset_trigger" not in st.session_state:
     st.session_state.reset_trigger = 0
 
-# read query params into state (safe)
-qparams = st.experimental_get_query_params()
-for i in range(len(questions)):
-    key = f"q_{i}"
-    if key in qparams:
-        try:
-            v = int(qparams[key][0])
-            if 0 <= v <= 4:
-                st.session_state.answers[i] = v
-        except:
-            pass
 
-def build_href(q_index, value):
-    params = {}
-    for idx, ans in enumerate(st.session_state.answers):
-        params[f"q_{idx}"] = str(ans)
-    params[f"q_{q_index}"] = str(value)
-    params["rt"] = str(st.session_state.reset_trigger)
-    return "?" + urlencode(params)
+# -------------------------------------------------------------
+# CLICK HANDLER — no reload
+# -------------------------------------------------------------
+def select_answer(q_index, value):
+    st.session_state.answers[q_index] = value
+
 
 # -------------------------------------------------------------
 # RENDER QUESTIONS
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
+
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
     html = "<div class='scale-row'>"
+
     for v, lab in enumerate(labels):
         selected = "selected" if st.session_state.answers[i] == v else ""
-        html += f"<a class='{selected}' href='{build_href(i, v)}'>{lab}</a>"
+
+        # Javascript click — updates Streamlit session state without reload
+        html += (
+            f"<a class='{selected}' href='#' "
+            f"onClick=\"parent.window.document.getElementById('form-q{i}-{v}').click(); return false;\">"
+            f"{lab}</a>"
+        )
+
     html += "</div>"
 
     st.markdown(html, unsafe_allow_html=True)
 
+    # Hidden form button to update session state
+    for v in range(5):
+        if st.button("", key=f"form-q{i}-{v}", on_click=select_answer, args=(i, v)):
+            pass
+
+
 # -------------------------------------------------------------
-# RESET BUTTON (v67: NO rerun)
+# RESET BUTTON (CLEAR COLORS + ANSWERS)
 # -------------------------------------------------------------
 if st.button("Nulstil svar"):
-    st.session_state.answers = [0] * len(questions)
+    st.session_state.answers = [None] * len(questions)
     st.session_state.reset_trigger += 1
-
-    # Rens query params — brug den eksperimentelle metode som er bredest understøttet
-    try:
-        st.experimental_set_query_params()  # sætter dem til tom
-    except:
-        # fallback (sikkerhed)
-        pass
-
-    # Vi undgår st.experimental_rerun() — ingen reload.
-    # (ingen st.stop() heller for at lade UI vise at svarene er nulstillede)
+    st.rerun()
 
 # -------------------------------------------------------------
-# SCORE + PROFILE
+# SCORING
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
@@ -258,12 +254,14 @@ PROFILE_TEXT = {
     ],
 }
 
+if None in st.session_state.answers:
+    st.header("Dit resultat")
+    st.write("Besvar alle spørgsmål for at se dit resultat.")
+    st.stop()
+
 total_score = sum(st.session_state.answers)
 profile = interpret_score(total_score)
 
-# -------------------------------------------------------------
-# RESULT
-# -------------------------------------------------------------
 st.header("Dit resultat")
 st.subheader(f"Score: {total_score} / 80")
 st.subheader(f"Profil: {profile}")
@@ -273,7 +271,7 @@ for s in PROFILE_TEXT[profile]:
     st.write(f"- {s}")
 
 # -------------------------------------------------------------
-# PDF
+# PDF EXPORT
 # -------------------------------------------------------------
 def generate_pdf(score, profile):
     buf = BytesIO()
