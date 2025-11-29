@@ -6,12 +6,15 @@ from io import BytesIO
 from datetime import datetime
 
 # -------------------------------------------------------------
-# VERSION
+# BASIC SETUP
 # -------------------------------------------------------------
-version = "v75"
-timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
-
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
+
+# -------------------------------------------------------------
+# VERSION + TIMESTAMP (v76 = v75 + spacing fix)
+# -------------------------------------------------------------
+version = "v76"
+timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
 
 st.markdown(
     f"""
@@ -25,102 +28,115 @@ st.markdown(
 )
 
 # -------------------------------------------------------------
-# GLOBAL CSS (radio-knapper skjules, tekst fungerer som knap)
+# GLOBAL CSS
 # -------------------------------------------------------------
-st.markdown("""
-<style>
+st.markdown(
+    """
+    <style>
 
-html, body, .stApp {
-    background-color:#1A6333 !important;
-    color:white !important;
-    font-family:Arial, sans-serif !important;
-}
+    html, body, .stApp {
+        background-color:#1A6333 !important;
+        color:white !important;
+        font-family:Arial, sans-serif !important;
+    }
 
-/* Hide radio buttons */
-.stRadio > div > label > div:first-child {
-    display:none !important;
-}
+    .center-logo {
+        display:flex;
+        justify-content:center;
+        margin-top:10px;
+        margin-bottom:5px;
+    }
 
-/* Place 5 answers on one line */
-.stRadio > div {
-    display:flex !important;
-    justify-content:space-between !important;
-    width:100%;
-}
+    .main-title {
+        font-size:2.3rem;
+        font-weight:800;
+        text-align:center;
+        margin-top:10px;
+        margin-bottom:25px;
+    }
 
-/* Text labels for answers */
-.stRadio label {
-    color:white !important;
-    font-size:0.95rem !important;
-    padding:8px 4px !important;
-    border-radius:4px;
-    cursor:pointer;
-}
+    .question-text {
+        font-size:1.15rem;
+        font-weight:600;
+        margin-top:22px;
+        margin-bottom:6px;
+    }
 
-/* Red when selected */
-.stRadio label[data-selected="true"] {
-    color:#ff4444 !important;
-    font-weight:700 !important;
-}
+    /* Hide default radio buttons */
+    .stRadio > div > label > div:first-child {
+        display:none !important;
+    }
 
-.center-logo {
-    display:flex;
-    justify-content:center;
-    margin-top:10px;
-    margin-bottom:5px;
-}
+    /* Layout: keep answers on one row */
+    .stRadio > div {
+        display:flex !important;
+        justify-content:space-between !important;
+        width:100%;
+    }
 
-.main-title {
-    font-size:2.3rem;
-    font-weight:800;
-    text-align:center;
-    margin-top:10px;
-    margin-bottom:25px;
-}
+    /* v76 fix: add spacing under each answer group */
+    .stRadio {
+        margin-bottom:25px !important;
+    }
 
-.question-text {
-    font-size:1.15rem;
-    font-weight:600;
-    margin-top:22px;
-    margin-bottom:6px;
-}
+    /* Labels */
+    .stRadio label {
+        color:white !important;
+        font-size:0.95rem !important;
+        padding:8px 4px !important;
+        border-radius:4px;
+        cursor:pointer;
+    }
 
-/* Red buttons */
-.stButton > button, .stDownloadButton > button {
-    background-color:#C62828 !important;
-    color:white !important;
-    border-radius:8px !important;
-    padding:0.65rem 1.4rem !important;
-    font-weight:600 !important;
-    border:none !important;
-}
+    /* Red when selected */
+    .stRadio label[data-selected="true"] {
+        color:#ff4444 !important;
+        font-weight:700 !important;
+    }
 
-.stButton > button:hover, .stDownloadButton > button:hover {
-    background-color:#B71C1C !important;
-}
+    .stButton > button, .stDownloadButton > button {
+        background-color:#C62828 !important;
+        color:white !important;
+        border-radius:8px !important;
+        padding:0.65rem 1.4rem !important;
+        font-weight:600 !important;
+        border:none !important;
+    }
 
-</style>
-""", unsafe_allow_html=True)
+    .stButton > button:hover, .stDownloadButton > button:hover {
+        background-color:#B71C1C !important;
+    }
+
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 # -------------------------------------------------------------
-# LOGO + TITLE
+# LOGO + INTRO
 # -------------------------------------------------------------
-st.markdown("""
-<div class="center-logo">
-    <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="160">
-</div>
-""", unsafe_allow_html=True)
+st.markdown(
+    """
+    <div class="center-logo">
+        <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="160">
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
 
-st.markdown("""
-Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige 
-og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner.
+st.markdown(
+    """
+    Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige
+    og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner.
 
-Du besvarer 20 udsagn på en skala fra **Aldrig** til **Altid**.
+    Du besvarer 20 udsagn på en skala fra **Aldrig** til **Altid**.
 
-Testen er <u><b>ikke en diagnose</b></u>, men et psykologisk værktøj til selvindsigt.
-""", unsafe_allow_html=True)
+    Testen er <u><b>ikke en diagnose</b></u>, men et psykologisk værktøj til selvindsigt.
+    """,
+    unsafe_allow_html=True,
+)
 
 # -------------------------------------------------------------
 # QUESTIONS
@@ -145,52 +161,45 @@ questions = [
     "Jeg foretrækker dybe samtaler frem for smalltalk.",
     "Jeg kan have svært ved at skifte fokus hurtigt.",
     "Jeg føler mig ofte overstimuleret.",
-    "Jeg bliver let distraheret, når der sker meget omkring mig."
+    "Jeg bliver let distraheret, når der sker meget omkring mig.",
 ]
 
 labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
 
 # -------------------------------------------------------------
-# SESSION
+# STATE (v75 logic unchanged)
 # -------------------------------------------------------------
 if "answers" not in st.session_state:
     st.session_state.answers = [0] * len(questions)
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS with hidden radios
+# RENDER QUESTIONS
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
-
-    # radio options are 0..4 but shown as labels
-    selected = st.radio(
-        "",
-        options=list(range(5)),
-        index=st.session_state.answers[i],
-        key=f"q{i}",
-        format_func=lambda x: labels[x],
-        label_visibility="collapsed",
-        horizontal=True
-    )
-
-    st.session_state.answers[i] = selected
+    selected = st.radio("", labels, horizontal=True, key=f"q_{i}")
+    st.session_state.answers[i] = labels.index(selected)
 
 # -------------------------------------------------------------
-# RESET
+# RESET BUTTON
 # -------------------------------------------------------------
 if st.button("Nulstil svar"):
-    st.session_state.answers = [0] * len(questions)
+    for i in range(len(questions)):
+        st.session_state[f"q_{i}"] = labels[0]
+        st.session_state.answers[i] = 0
 
 # -------------------------------------------------------------
 # SCORING
 # -------------------------------------------------------------
-def interpret(s):
-    if s <= 26: return "Slow Processor"
-    if s <= 53: return "Mellemprofil"
-    return "HSP"
+def interpret_score(score):
+    if score <= 26:
+        return "Slow Processor"
+    elif score <= 53:
+        return "Mellemprofil"
+    else:
+        return "HSP"
 
-score = sum(st.session_state.answers)
-profile = interpret(score)
+profile = interpret_score(sum(st.session_state.answers))
 
 PROFILE_TEXT = {
     "HSP": [
@@ -199,7 +208,7 @@ PROFILE_TEXT = {
         "Du reagerer stærkt på stimuli og kan blive overstimuleret.",
         "Du har en rig indre verden og et fintfølende nervesystem.",
         "Du er empatisk og opmærksom på andre.",
-        "Du har brug for ro og pauser for at lade op."
+        "Du har brug for ro og pauser for at lade op.",
     ],
     "Slow Processor": [
         "Du arbejder bedst i roligt tempo og med forudsigelighed.",
@@ -207,7 +216,7 @@ PROFILE_TEXT = {
         "Du har brug for ekstra tid til omstilling og beslutninger.",
         "Du trives med faste rammer og struktur.",
         "Du kan føle dig presset, når tingene går hurtigt.",
-        "Du har god udholdenhed, når du arbejder i dit eget tempo."
+        "Du har god udholdenhed, når du arbejder i dit eget tempo.",
     ],
     "Mellemprofil": [
         "Du veksler naturligt mellem hurtig og langsom bearbejdning.",
@@ -215,36 +224,38 @@ PROFILE_TEXT = {
         "Du har en god balance mellem intuition og eftertænksomhed.",
         "Du kan tilpasse dig forskellige miljøer og tempoer.",
         "Du bliver påvirket i perioder, men finder hurtigt balancen igen.",
-        "Du fungerer bredt socialt og mentalt i mange typer situationer."
-    ]
+        "Du fungerer bredt socialt og mentalt i mange typer situationer.",
+    ],
 }
 
 # -------------------------------------------------------------
-# RESULT
+# RESULT DISPLAY
 # -------------------------------------------------------------
 st.header("Dit resultat")
-st.subheader(f"Score: {score} / 80")
+st.subheader(f"Score: {sum(st.session_state.answers)} / 80")
 st.subheader(f"Profil: {profile}")
 
 st.write("### Karakteristika for din profil:")
-for s in PROFILE_TEXT[profile]:
-    st.write(f"- {s}")
+for t in PROFILE_TEXT[profile]:
+    st.write(f"- {t}")
 
 # -------------------------------------------------------------
-# PDF
+# PDF CREATION
 # -------------------------------------------------------------
 def generate_pdf(score, profile):
     buf = BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=letter)
     styles = getSampleStyleSheet()
     story = []
+
     story.append(Paragraph("HSP / Slow Processor – Rapport", styles["Title"]))
     story.append(Paragraph(f"Score: {score} / 80", styles["Heading2"]))
     story.append(Paragraph(f"Profil: {profile}", styles["Heading2"]))
     story.append(Spacer(1, 12))
 
     for i, q in enumerate(questions):
-        story.append(Paragraph(f"{i+1}. {q} – {labels[st.session_state.answers[i]]}", styles["BodyText"]))
+        story.append(Paragraph(f"{i+1}. {q} – {labels[st.session_state.answers[i]]}",
+                               styles["BodyText"]))
 
     doc.build(story)
     buf.seek(0)
@@ -252,7 +263,7 @@ def generate_pdf(score, profile):
 
 st.download_button(
     "Download PDF-rapport",
-    generate_pdf(score, profile),
+    generate_pdf(sum(st.session_state.answers), profile),
     file_name="HSP_SlowProcessor_Rapport.pdf",
     mime="application/pdf"
 )
