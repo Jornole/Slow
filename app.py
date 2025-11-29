@@ -3,6 +3,7 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
+from urllib.parse import urlencode
 from datetime import datetime
 
 # -------------------------------------------------------------
@@ -11,9 +12,9 @@ from datetime import datetime
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# VERSION + TIMESTAMP (v76 = v75 + spacing fix)
+# VERSION + TIMESTAMP (v77)
 # -------------------------------------------------------------
-version = "v76"
+version = "v77"
 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
 
 st.markdown(
@@ -33,11 +34,10 @@ st.markdown(
 st.markdown(
     """
     <style>
-
     html, body, .stApp {
-        background-color:#1A6333 !important;
-        color:white !important;
-        font-family:Arial, sans-serif !important;
+        background-color: #1A6333 !important;
+        color: white !important;
+        font-family: Arial, sans-serif !important;
     }
 
     .center-logo {
@@ -62,58 +62,54 @@ st.markdown(
         margin-bottom:6px;
     }
 
-    /* Hide default radio buttons */
-    .stRadio > div > label > div:first-child {
-        display:none !important;
-    }
-
-    /* Layout: keep answers on one row */
-    .stRadio > div {
-        display:flex !important;
-        justify-content:space-between !important;
+    .scale-row {
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
         width:100%;
+        margin-bottom:12px;
+        padding:0 6%;
+        box-sizing:border-box;
     }
 
-    /* v76 fix: add spacing under each answer group */
-    .stRadio {
-        margin-bottom:25px !important;
+    .scale-row a {
+        color: #ffffff;
+        text-decoration: none;
+        font-size:0.95rem;
+        display:inline-block;
+        padding:10px 6px;
+        text-align:center;
     }
 
-    /* Labels */
-    .stRadio label {
-        color:white !important;
-        font-size:0.95rem !important;
-        padding:8px 4px !important;
-        border-radius:4px;
-        cursor:pointer;
+    .scale-row a.selected {
+        color: #ff4444;
+        font-weight:700;
     }
 
-    /* Red when selected */
-    .stRadio label[data-selected="true"] {
-        color:#ff4444 !important;
-        font-weight:700 !important;
+    @media (max-width:420px) {
+        .scale-row { padding:0 3%; }
+        .scale-row a { padding:8px 2px; font-size:0.9rem; }
     }
 
     .stButton > button, .stDownloadButton > button {
-        background-color:#C62828 !important;
-        color:white !important;
-        border-radius:8px !important;
-        padding:0.65rem 1.4rem !important;
-        font-weight:600 !important;
-        border:none !important;
+        background-color: #C62828 !important;
+        color: white !important;
+        border-radius: 8px !important;
+        padding: 0.65rem 1.4rem !important;
+        font-weight: 600 !important;
+        border: none !important;
     }
 
     .stButton > button:hover, .stDownloadButton > button:hover {
-        background-color:#B71C1C !important;
+        background-color: #B71C1C !important;
     }
-
     </style>
     """,
     unsafe_allow_html=True
 )
 
 # -------------------------------------------------------------
-# LOGO + INTRO
+# LOGO + TITLE
 # -------------------------------------------------------------
 st.markdown(
     """
@@ -167,29 +163,43 @@ questions = [
 labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
 
 # -------------------------------------------------------------
-# STATE (v75 logic unchanged)
+# SESSION STATE
 # -------------------------------------------------------------
 if "answers" not in st.session_state:
-    st.session_state.answers = [0] * len(questions)
+    st.session_state.answers = [None] * len(questions)
 
 # -------------------------------------------------------------
 # RENDER QUESTIONS
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
-    selected = st.radio("", labels, horizontal=True, key=f"q_{i}")
-    st.session_state.answers[i] = labels.index(selected)
+
+    col = st.columns(5)
+    for idx_label, label in enumerate(labels):
+        with col[idx_label]:
+            if st.button(label, key=f"btn_{i}_{idx_label}"):
+                st.session_state.answers[i] = idx_label
+
+    # selected label (red text)
+    if st.session_state.answers[i] is not None:
+        st.markdown(
+            f"<div class='scale-row'><a class='selected'>{labels[st.session_state.answers[i]]}</a></div>",
+            unsafe_allow_html=True,
+        )
+    else:
+        st.markdown(
+            "<div class='scale-row'><a>Vælg et svar</a></div>",
+            unsafe_allow_html=True,
+        )
 
 # -------------------------------------------------------------
-# RESET BUTTON
+# RESET BUTTON — v77 (helt stabil)
 # -------------------------------------------------------------
 if st.button("Nulstil svar"):
-    for i in range(len(questions)):
-        st.session_state[f"q_{i}"] = labels[0]
-        st.session_state.answers[i] = 0
+    st.session_state.answers = [None] * len(questions)
 
 # -------------------------------------------------------------
-# SCORING
+# SCORE + PROFILE
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
@@ -199,71 +209,70 @@ def interpret_score(score):
     else:
         return "HSP"
 
-profile = interpret_score(sum(st.session_state.answers))
+if None not in st.session_state.answers:
+    total_score = sum(st.session_state.answers)
+    profile = interpret_score(total_score)
 
-PROFILE_TEXT = {
-    "HSP": [
-        "Du registrerer flere nuancer i både indtryk og stemninger.",
-        "Du bearbejder oplevelser dybt og grundigt.",
-        "Du reagerer stærkt på stimuli og kan blive overstimuleret.",
-        "Du har en rig indre verden og et fintfølende nervesystem.",
-        "Du er empatisk og opmærksom på andre.",
-        "Du har brug for ro og pauser for at lade op.",
-    ],
-    "Slow Processor": [
-        "Du arbejder bedst i roligt tempo og med forudsigelighed.",
-        "Du bearbejder indtryk grundigt, men langsomt.",
-        "Du har brug for ekstra tid til omstilling og beslutninger.",
-        "Du trives med faste rammer og struktur.",
-        "Du kan føle dig presset, når tingene går hurtigt.",
-        "Du har god udholdenhed, når du arbejder i dit eget tempo.",
-    ],
-    "Mellemprofil": [
-        "Du veksler naturligt mellem hurtig og langsom bearbejdning.",
-        "Du håndterer de fleste stimuli uden at blive overvældet.",
-        "Du har en god balance mellem intuition og eftertænksomhed.",
-        "Du kan tilpasse dig forskellige miljøer og tempoer.",
-        "Du bliver påvirket i perioder, men finder hurtigt balancen igen.",
-        "Du fungerer bredt socialt og mentalt i mange typer situationer.",
-    ],
-}
+    st.header("Dit resultat")
+    st.subheader(f"Score: {total_score} / 80")
+    st.subheader(f"Profil: {profile}")
 
-# -------------------------------------------------------------
-# RESULT DISPLAY
-# -------------------------------------------------------------
-st.header("Dit resultat")
-st.subheader(f"Score: {sum(st.session_state.answers)} / 80")
-st.subheader(f"Profil: {profile}")
+    PROFILE_TEXT = {
+        "HSP": [
+            "Du registrerer flere nuancer i både indtryk og stemninger.",
+            "Du bearbejder oplevelser dybt og grundigt.",
+            "Du reagerer stærkt på stimuli og kan blive overstimuleret.",
+            "Du har en rig indre verden og et fintfølende nervesystem.",
+            "Du er empatisk og opmærksom på andre.",
+            "Du har brug for ro og pauser for at lade op.",
+        ],
+        "Slow Processor": [
+            "Du arbejder bedst i roligt tempo og med forudsigelighed.",
+            "Du bearbejder indtryk grundigt, men langsomt.",
+            "Du har brug for ekstra tid til omstilling og beslutninger.",
+            "Du trives med faste rammer og struktur.",
+            "Du kan føle dig presset, når tingene går hurtigt.",
+            "Du har god udholdenhed, når du arbejder i dit eget tempo.",
+        ],
+        "Mellemprofil": [
+            "Du veksler naturligt mellem hurtig og langsom bearbejdning.",
+            "Du håndterer de fleste stimuli uden at blive overvældet.",
+            "Du har en god balance mellem intuition og eftertænksomhed.",
+            "Du kan tilpasse dig forskellige miljøer og tempoer.",
+            "Du bliver påvirket i perioder, men finder hurtigt balancen igen.",
+            "Du fungerer bredt socialt og mentalt i mange typer situationer.",
+        ],
+    }
 
-st.write("### Karakteristika for din profil:")
-for t in PROFILE_TEXT[profile]:
-    st.write(f"- {t}")
+    st.write("### Karakteristika for din profil:")
+    for s in PROFILE_TEXT[profile]:
+        st.write(f"- {s}")
 
-# -------------------------------------------------------------
-# PDF CREATION
-# -------------------------------------------------------------
-def generate_pdf(score, profile):
-    buf = BytesIO()
-    doc = SimpleDocTemplate(buf, pagesize=letter)
-    styles = getSampleStyleSheet()
-    story = []
+    # -------------------------------------------------------------
+    # PDF DOWNLOAD
+    # -------------------------------------------------------------
+    def generate_pdf(score, profile):
+        buf = BytesIO()
+        doc = SimpleDocTemplate(buf, pagesize=letter)
+        styles = getSampleStyleSheet()
+        story = []
 
-    story.append(Paragraph("HSP / Slow Processor – Rapport", styles["Title"]))
-    story.append(Paragraph(f"Score: {score} / 80", styles["Heading2"]))
-    story.append(Paragraph(f"Profil: {profile}", styles["Heading2"]))
-    story.append(Spacer(1, 12))
+        story.append(Paragraph("HSP / Slow Processor – Rapport", styles["Title"]))
+        story.append(Paragraph(f"Score: {score} / 80", styles["Heading2"]))
+        story.append(Paragraph(f"Profil: {profile}", styles["Heading2"]))
+        story.append(Spacer(1, 12))
 
-    for i, q in enumerate(questions):
-        story.append(Paragraph(f"{i+1}. {q} – {labels[st.session_state.answers[i]]}",
-                               styles["BodyText"]))
+        for i, q in enumerate(questions):
+            ans = labels[st.session_state.answers[i]]
+            story.append(Paragraph(f"{i+1}. {q} – {ans}", styles["BodyText"]))
 
-    doc.build(story)
-    buf.seek(0)
-    return buf
+        doc.build(story)
+        buf.seek(0)
+        return buf
 
-st.download_button(
-    "Download PDF-rapport",
-    generate_pdf(sum(st.session_state.answers), profile),
-    file_name="HSP_SlowProcessor_Rapport.pdf",
-    mime="application/pdf"
-)
+    st.download_button(
+        "Download PDF-rapport",
+        generate_pdf(total_score, profile),
+        file_name="HSP_SlowProcessor_Rapport.pdf",
+        mime="application/pdf"
+    )
