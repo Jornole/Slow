@@ -3,6 +3,7 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
+from urllib.parse import urlencode
 from datetime import datetime
 
 # -------------------------------------------------------------
@@ -11,9 +12,9 @@ from datetime import datetime
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# VERSION + TIMESTAMP (v66)
+# VERSION + TIMESTAMP (v67)
 # -------------------------------------------------------------
-version = "v66"
+version = "v67"
 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
 
 st.markdown(
@@ -71,18 +72,23 @@ st.markdown(
         box-sizing:border-box;
     }
 
-    .scale-row button {
-        background:none;
-        border:none;
-        color:white;
+    .scale-row a {
+        color: #ffffff;
+        text-decoration: none;
         font-size:0.95rem;
-        padding:8px 4px;
-        cursor:pointer;
+        display:inline-block;
+        padding:10px 6px;
+        text-align:center;
     }
 
-    .scale-row .selected {
-        color:#ff4444;
+    .scale-row a.selected {
+        color: #ff4444;
         font-weight:700;
+    }
+
+    @media (max-width:420px) {
+        .scale-row { padding:0 3%; }
+        .scale-row a { padding:8px 2px; font-size:0.9rem; }
     }
 
     .stButton > button, .stDownloadButton > button {
@@ -110,14 +116,14 @@ st.markdown(
         <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="160">
     </div>
     """,
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
 
 st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
 
 st.markdown(
     """
-    Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige 
+    Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige
     og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner.
 
     Du besvarer 20 udsagn på en skala fra **Aldrig** til **Altid**.
@@ -160,34 +166,59 @@ labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
 # -------------------------------------------------------------
 if "answers" not in st.session_state:
     st.session_state.answers = [0] * len(questions)
+if "reset_trigger" not in st.session_state:
+    st.session_state.reset_trigger = 0
+
+# read query params into state (safe)
+qparams = st.experimental_get_query_params()
+for i in range(len(questions)):
+    key = f"q_{i}"
+    if key in qparams:
+        try:
+            v = int(qparams[key][0])
+            if 0 <= v <= 4:
+                st.session_state.answers[i] = v
+        except:
+            pass
+
+def build_href(q_index, value):
+    params = {}
+    for idx, ans in enumerate(st.session_state.answers):
+        params[f"q_{idx}"] = str(ans)
+    params[f"q_{q_index}"] = str(value)
+    params["rt"] = str(st.session_state.reset_trigger)
+    return "?" + urlencode(params)
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS (NO RELOAD)
+# RENDER QUESTIONS
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    cols = st.columns(5)
-
+    html = "<div class='scale-row'>"
     for v, lab in enumerate(labels):
-        with cols[v]:
-            is_selected = st.session_state.answers[i] == v
-            css_class = "selected" if is_selected else ""
+        selected = "selected" if st.session_state.answers[i] == v else ""
+        html += f"<a class='{selected}' href='{build_href(i, v)}'>{lab}</a>"
+    html += "</div>"
 
-            if st.button(lab, key=f"{i}_{v}"):
-                st.session_state.answers[i] = v
-
-            st.markdown(
-                f"<div class='{css_class}'></div>",
-                unsafe_allow_html=True
-            )
+    st.markdown(html, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# RESET BUTTON
+# RESET BUTTON (v67: NO rerun)
 # -------------------------------------------------------------
 if st.button("Nulstil svar"):
     st.session_state.answers = [0] * len(questions)
-    st.experimental_rerun()
+    st.session_state.reset_trigger += 1
+
+    # Rens query params — brug den eksperimentelle metode som er bredest understøttet
+    try:
+        st.experimental_set_query_params()  # sætter dem til tom
+    except:
+        # fallback (sikkerhed)
+        pass
+
+    # Vi undgår st.experimental_rerun() — ingen reload.
+    # (ingen st.stop() heller for at lade UI vise at svarene er nulstillede)
 
 # -------------------------------------------------------------
 # SCORE + PROFILE
