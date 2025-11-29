@@ -6,127 +6,126 @@ from io import BytesIO
 from datetime import datetime
 
 # -------------------------------------------------------------
-# PAGE SETUP
+# BASIC SETUP
 # -------------------------------------------------------------
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# CSS (100% identisk med v62)
+# VERSION + TIMESTAMP (v66)
 # -------------------------------------------------------------
-st.markdown("""
-<style>
-html, body, .stApp {
-    background-color: #1A6333 !important;
-    color: white !important;
-    font-family: Arial, sans-serif !important;
-}
-
-.center-logo {
-    display:flex;
-    justify-content:center;
-    margin-top:20px;
-    margin-bottom:5px;
-}
-
-.main-title {
-    font-size:2.3rem;
-    font-weight:800;
-    text-align:center;
-    margin-top:10px;
-    margin-bottom:25px;
-}
-
-.question-text {
-    font-size:1.15rem;
-    font-weight:600;
-    margin-top:22px;
-    margin-bottom:6px;
-}
-
-.scale-row {
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    width:100%;
-    margin-bottom:12px;
-    padding:0 6%;
-    box-sizing:border-box;
-}
-
-.scale-label {
-    color: #ffffff;
-    text-decoration: none;
-    font-size:0.95rem;
-    display:inline-block;
-    padding:10px 6px;
-    text-align:center;
-    cursor:pointer;
-    border-radius:6px;
-}
-
-.scale-label.selected {
-    color: #ff4444;
-    font-weight:700;
-}
-
-@media (max-width:420px) {
-    .scale-row { padding:0 3%; }
-    .scale-label { padding:8px 2px; font-size:0.9rem; }
-}
-
-.stButton > button, .stDownloadButton > button {
-    background-color: #C62828 !important;
-    color: white !important;
-    border-radius: 8px !important;
-    padding: 0.65rem 1.4rem !important;
-    font-weight: 600 !important;
-    border: none !important;
-}
-.stButton > button:hover, .stDownloadButton > button:hover {
-    background-color: #B71C1C !important;
-}
-
-.version-box {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    background-color: rgba(255,255,255,0.12);
-    padding: 6px 14px;
-    border-radius: 8px;
-    font-size: 0.85rem;
-}
-</style>
-""", unsafe_allow_html=True)
-
-# -------------------------------------------------------------
-# VERSION / TIMESTAMP BOX
-# -------------------------------------------------------------
+version = "v66"
 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
-st.markdown(f"""
-<div class='version-box'>
-Version v65 — {timestamp}
-</div>
-""", unsafe_allow_html=True)
+
+st.markdown(
+    f"""
+    <div style="font-size:0.85rem; background-color:#144d27;
+                padding:6px 10px; width:fit-content;
+                border-radius:6px; margin-bottom:10px;">
+        Version {version} — {timestamp}
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+# -------------------------------------------------------------
+# GLOBAL CSS
+# -------------------------------------------------------------
+st.markdown(
+    """
+    <style>
+    html, body, .stApp {
+        background-color: #1A6333 !important;
+        color: white !important;
+        font-family: Arial, sans-serif !important;
+    }
+
+    .center-logo {
+        display:flex;
+        justify-content:center;
+        margin-top:10px;
+        margin-bottom:5px;
+    }
+
+    .main-title {
+        font-size:2.3rem;
+        font-weight:800;
+        text-align:center;
+        margin-top:10px;
+        margin-bottom:25px;
+    }
+
+    .question-text {
+        font-size:1.15rem;
+        font-weight:600;
+        margin-top:22px;
+        margin-bottom:6px;
+    }
+
+    .scale-row {
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        width:100%;
+        margin-bottom:12px;
+        padding:0 6%;
+        box-sizing:border-box;
+    }
+
+    .scale-row button {
+        background:none;
+        border:none;
+        color:white;
+        font-size:0.95rem;
+        padding:8px 4px;
+        cursor:pointer;
+    }
+
+    .scale-row .selected {
+        color:#ff4444;
+        font-weight:700;
+    }
+
+    .stButton > button, .stDownloadButton > button {
+        background-color: #C62828 !important;
+        color: white !important;
+        border-radius: 8px !important;
+        padding: 0.65rem 1.4rem !important;
+        font-weight: 600 !important;
+        border: none !important;
+    }
+    .stButton > button:hover, .stDownloadButton > button:hover {
+        background-color: #B71C1C !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 # -------------------------------------------------------------
 # LOGO + TITLE
 # -------------------------------------------------------------
-st.markdown("""
-<div class="center-logo">
-    <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="160">
-</div>
-""", unsafe_allow_html=True)
+st.markdown(
+    """
+    <div class="center-logo">
+        <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="160">
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
 
-st.markdown("""
-Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige  
-og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner.
+st.markdown(
+    """
+    Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige 
+    og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner.
 
-Du besvarer 20 udsagn på en skala fra **Aldrig** til **Altid**.
+    Du besvarer 20 udsagn på en skala fra **Aldrig** til **Altid**.
 
-Testen er <u><b>ikke en diagnose</b></u>, men et psykologisk værktøj til selvindsigt.
-""", unsafe_allow_html=True)
+    Testen er <u><b>ikke en diagnose</b></u>, men et psykologisk værktøj til selvindsigt.
+    """,
+    unsafe_allow_html=True,
+)
 
 # -------------------------------------------------------------
 # QUESTIONS
@@ -151,7 +150,7 @@ questions = [
     "Jeg foretrækker dybe samtaler frem for smalltalk.",
     "Jeg kan have svært ved at skifte fokus hurtigt.",
     "Jeg føler mig ofte overstimuleret.",
-    "Jeg bliver let distraheret, når der sker meget omkring mig."
+    "Jeg bliver let distraheret, når der sker meget omkring mig.",
 ]
 
 labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
@@ -163,42 +162,35 @@ if "answers" not in st.session_state:
     st.session_state.answers = [0] * len(questions)
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS (no reload version)
+# RENDER QUESTIONS (NO RELOAD)
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
-
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
     cols = st.columns(5)
-    for idx, col in enumerate(cols):
-        with col:
-            selected = (st.session_state.answers[i] == idx)
-            btn_label = f"{labels[idx]}"
 
-            if st.button(btn_label, key=f"q{i}_{idx}", help=None):
-                st.session_state.answers[i] = idx
+    for v, lab in enumerate(labels):
+        with cols[v]:
+            is_selected = st.session_state.answers[i] == v
+            css_class = "selected" if is_selected else ""
 
-            # rødfarvning
-            if selected:
-                st.markdown(
-                    f"<div class='scale-label selected'>{labels[idx]}</div>",
-                    unsafe_allow_html=True
-                )
-            else:
-                st.markdown(
-                    f"<div class='scale-label'>{labels[idx]}</div>",
-                    unsafe_allow_html=True
-                )
+            if st.button(lab, key=f"{i}_{v}"):
+                st.session_state.answers[i] = v
+
+            st.markdown(
+                f"<div class='{css_class}'></div>",
+                unsafe_allow_html=True
+            )
 
 # -------------------------------------------------------------
 # RESET BUTTON
 # -------------------------------------------------------------
 if st.button("Nulstil svar"):
     st.session_state.answers = [0] * len(questions)
-    st.rerun()
+    st.experimental_rerun()
 
 # -------------------------------------------------------------
-# RESULTS
+# SCORE + PROFILE
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
@@ -238,6 +230,9 @@ PROFILE_TEXT = {
 total_score = sum(st.session_state.answers)
 profile = interpret_score(total_score)
 
+# -------------------------------------------------------------
+# RESULT
+# -------------------------------------------------------------
 st.header("Dit resultat")
 st.subheader(f"Score: {total_score} / 80")
 st.subheader(f"Profil: {profile}")
@@ -247,7 +242,7 @@ for s in PROFILE_TEXT[profile]:
     st.write(f"- {s}")
 
 # -------------------------------------------------------------
-# PDF (uændret)
+# PDF
 # -------------------------------------------------------------
 def generate_pdf(score, profile):
     buf = BytesIO()
@@ -261,9 +256,7 @@ def generate_pdf(score, profile):
     story.append(Spacer(1, 12))
 
     for i, q in enumerate(questions):
-        story.append(
-            Paragraph(f"{i+1}. {q} – {labels[st.session_state.answers[i]]}", styles["BodyText"])
-        )
+        story.append(Paragraph(f"{i+1}. {q} – {labels[st.session_state.answers[i]]}", styles["BodyText"]))
 
     doc.build(story)
     buf.seek(0)
