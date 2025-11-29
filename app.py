@@ -6,14 +6,14 @@ from io import BytesIO
 from datetime import datetime
 
 # -------------------------------------------------------------
-# VERSION + TIMESTAMP (ALENE I TOPPEN)
+# VERSION + TIMESTAMP (ONLY CHANGE FROM v62)
 # -------------------------------------------------------------
-VERSION = "v64"
+VERSION = "v63"
 TIMESTAMP = datetime.now().strftime("%Y-%m-%d %H:%M")
 
 st.markdown(
     f"""
-    <div style='position:fixed; top:8px; left:10px; 
+    <div style='position:fixed; top:8px; left:10px;
                 color:white; font-size:0.8rem; z-index:9999;'>
         {VERSION} — {TIMESTAMP}
     </div>
@@ -27,7 +27,7 @@ st.markdown(
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# GLOBAL CSS
+# GLOBAL CSS (unchanged from v62)
 # -------------------------------------------------------------
 st.markdown("""
 <style>
@@ -56,14 +56,26 @@ html, body, .stApp {
     font-size: 1.15rem;
     font-weight: 600;
     margin-top: 22px;
-    margin-bottom: 4px;
+    margin-bottom: 8px;
 }
 
+/* Hide default radio numbers */
+.stRadio > div > label > div:first-child {
+    display: none !important;
+}
+
+/* Radio buttons in one row */
+.stRadio > div {
+    display: flex !important;
+    justify-content: space-between !important;
+}
+
+/* Labels */
 .scale-row {
     display: flex;
     justify-content: space-between;
-    margin-top: -4px;
-    margin-bottom: 8px;
+    margin-top: -3px;
+    margin-bottom: 6px;
     width: 100%;
 }
 
@@ -71,15 +83,9 @@ html, body, .stApp {
     flex: 1;
     text-align: center;
     font-size: 0.85rem;
-    cursor: pointer;
-    padding: 6px 0;
 }
 
-.scale-row span.selected {
-    color: #FF5252 !important;
-    font-weight: 700;
-}
-
+/* Red buttons */
 .stButton > button, .stDownloadButton > button {
     background-color: #C62828 !important;
     color: white !important;
@@ -154,67 +160,89 @@ if "reset_trigger" not in st.session_state:
     st.session_state.reset_trigger = 0
 
 # -------------------------------------------------------------
-# CLICKABLE LABELS (NO RADIO)
+# QUESTIONS + LABELS + RADIO (original v62 behaviour)
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
 
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    cols = st.columns(5)
+    st.markdown(
+        """
+        <div class="scale-row">
+            <span>Aldrig</span>
+            <span>Sjældent</span>
+            <span>Nogle gange</span>
+            <span>Ofte</span>
+            <span>Altid</span>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
-    for idx, label in enumerate(labels):
-        selected = "selected" if st.session_state.answers[i] == idx else ""
-        with cols[idx]:
-            if st.button(f"{label}_{i}", key=f"b{i}_{idx}"):
-                st.session_state.answers[i] = idx
-            st.markdown(
-                f"<span class='{selected}'>{label}</span>",
-                unsafe_allow_html=True
-            )
+    choice = st.radio(
+        "",
+        options=list(range(5)),
+        key=f"q_{i}_{st.session_state.reset_trigger}",
+        horizontal=True,
+        label_visibility="collapsed",
+        format_func=lambda x: ""
+    )
+
+    st.session_state.answers[i] = choice
 
 # -------------------------------------------------------------
-# RESET
+# RESET BUTTON
 # -------------------------------------------------------------
 if st.button("Nulstil svar"):
-    st.session_state.answers = [0]*len(questions)
+    st.session_state.answers = [0] * len(questions)
+    st.session_state.reset_trigger += 1
     st.rerun()
 
 # -------------------------------------------------------------
-# SCORE
+# SCORE & PROFILE
 # -------------------------------------------------------------
-score = sum(st.session_state.answers)
+def interpret_score(score):
+    if score <= 26:
+        return "Slow Processor"
+    elif score <= 53:
+        return "Mellemprofil"
+    else:
+        return "HSP"
 
-def interpret(score):
-    if score <= 26: return "Slow Processor"
-    if score <= 53: return "Mellemprofil"
-    return "HSP"
-
-profile = interpret(score)
+total_score = sum(st.session_state.answers)
+profile = interpret_score(total_score)
 
 # -------------------------------------------------------------
 # RESULT
 # -------------------------------------------------------------
 st.header("Dit resultat")
-st.subheader(f"Score: {score} / 80")
+st.subheader(f"Score: {total_score} / 80")
 st.subheader(f"Profil: {profile}")
 
 # -------------------------------------------------------------
-# PDF
+# PDF GENERATOR
 # -------------------------------------------------------------
-def pdf(score, profile):
+def generate_pdf(score, profile):
     buf = BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=letter)
     styles = getSampleStyleSheet()
     story = []
+
     story.append(Paragraph("HSP / Slow Processor – Rapport", styles["Title"]))
     story.append(Paragraph(f"Score: {score} / 80", styles["Heading2"]))
     story.append(Paragraph(f"Profil: {profile}", styles["Heading2"]))
-    story.append(Spacer(1,12))
-    for i,q in enumerate(questions):
+    story.append(Spacer(1, 12))
+
+    for i, q in enumerate(questions):
         story.append(Paragraph(f"{i+1}. {q} – {labels[st.session_state.answers[i]]}", styles["BodyText"]))
+
     doc.build(story)
     buf.seek(0)
     return buf
 
-st.download_button("Download PDF-rapport", pdf(score, profile),
-                   file_name="rapport.pdf", mime="application/pdf")
+st.download_button(
+    "Download PDF-rapport",
+    generate_pdf(total_score, profile),
+    file_name="HSP_SlowProcessor_Rapport.pdf",
+    mime="application/pdf"
+)
