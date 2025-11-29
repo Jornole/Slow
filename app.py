@@ -12,20 +12,20 @@ from datetime import datetime
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# VERSION + TIMESTAMP (TOP-LEFT)
+# VERSION + TIMESTAMP (NEW FOR v64)
 # -------------------------------------------------------------
+version = "v64"
 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
 
 st.markdown(
     f"""
-    <div style='position:fixed; top:8px; left:8px; 
-                font-size:0.85rem; color:white; 
-                background:rgba(0,0,0,0.25); 
-                padding:4px 8px; border-radius:4px;'>
-        v63 — {timestamp}
+    <div style="font-size:0.85rem; background-color:#144d27; 
+                padding:6px 10px; width:fit-content; 
+                border-radius:6px; margin-bottom:10px;">
+        Version {version} — {timestamp}
     </div>
     """,
-    unsafe_allow_html=True,
+    unsafe_allow_html=True
 )
 
 # -------------------------------------------------------------
@@ -43,7 +43,7 @@ st.markdown(
     .center-logo {
         display:flex;
         justify-content:center;
-        margin-top:20px;
+        margin-top:10px;
         margin-bottom:5px;
     }
 
@@ -104,7 +104,7 @@ st.markdown(
     }
     </style>
     """,
-    unsafe_allow_html=True,
+    unsafe_allow_html=True
 )
 
 # -------------------------------------------------------------
@@ -116,7 +116,7 @@ st.markdown(
         <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="160">
     </div>
     """,
-    unsafe_allow_html=True,
+    unsafe_allow_html=True
 )
 
 st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
@@ -134,7 +134,7 @@ st.markdown(
 )
 
 # -------------------------------------------------------------
-# QUESTIONS + LABELS
+# QUESTIONS
 # -------------------------------------------------------------
 questions = [
     "Jeg bliver let overvældet af indtryk.",
@@ -162,32 +162,29 @@ questions = [
 labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
 
 # -------------------------------------------------------------
-# SESSION STATE INIT
+# SESSION STATE
 # -------------------------------------------------------------
 if "answers" not in st.session_state:
     st.session_state.answers = [0] * len(questions)
 if "reset_trigger" not in st.session_state:
     st.session_state.reset_trigger = 0
 
-# -------------------------------------------------------------
-# QUERY PARAMS SYNC
-# -------------------------------------------------------------
 qparams = st.experimental_get_query_params()
 for i in range(len(questions)):
     key = f"q_{i}"
     if key in qparams:
         try:
-            val = int(qparams[key][0])
-            if 0 <= val <= 4:
-                st.session_state.answers[i] = val
+            v = int(qparams[key][0])
+            if 0 <= v <= 4:
+                st.session_state.answers[i] = v
         except:
             pass
 
-def build_href(question_index: int, value: int):
+def build_href(q_index, value):
     params = {}
     for idx, ans in enumerate(st.session_state.answers):
         params[f"q_{idx}"] = str(ans)
-    params[f"q_{question_index}"] = str(value)
+    params[f"q_{q_index}"] = str(value)
     params["rt"] = str(st.session_state.reset_trigger)
     return "?" + urlencode(params)
 
@@ -197,14 +194,13 @@ def build_href(question_index: int, value: int):
 for i, q in enumerate(questions):
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    html_labels = "<div class='scale-row'>"
+    html = "<div class='scale-row'>"
     for v, lab in enumerate(labels):
         selected = "selected" if st.session_state.answers[i] == v else ""
-        href = build_href(i, v)
-        html_labels += f"<a class='{selected}' href='{href}'>{lab}</a>"
-    html_labels += "</div>"
+        html += f"<a class='{selected}' href='{build_href(i, v)}'>{lab}</a>"
+    html += "</div>"
 
-    st.markdown(html_labels, unsafe_allow_html=True)
+    st.markdown(html, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
 # RESET BUTTON
@@ -216,7 +212,7 @@ if st.button("Nulstil svar"):
     st.experimental_rerun()
 
 # -------------------------------------------------------------
-# INTERPRETATION
+# SCORE + PROFILE
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
@@ -268,7 +264,7 @@ for s in PROFILE_TEXT[profile]:
     st.write(f"- {s}")
 
 # -------------------------------------------------------------
-# PDF GENERATOR
+# PDF
 # -------------------------------------------------------------
 def generate_pdf(score, profile):
     buf = BytesIO()
@@ -282,12 +278,7 @@ def generate_pdf(score, profile):
     story.append(Spacer(1, 12))
 
     for i, q in enumerate(questions):
-        story.append(
-            Paragraph(
-                f"{i+1}. {q} – {labels[st.session_state.answers[i]]}",
-                styles["BodyText"],
-            )
-        )
+        story.append(Paragraph(f"{i+1}. {q} – {labels[st.session_state.answers[i]]}", styles["BodyText"]))
 
     doc.build(story)
     buf.seek(0)
@@ -297,9 +288,5 @@ st.download_button(
     "Download PDF-rapport",
     generate_pdf(total_score, profile),
     file_name="HSP_SlowProcessor_Rapport.pdf",
-    mime="application/pdf",
+    mime="application/pdf"
 )
-
-# -------------------------------------------------------------
-# (Removed: footer version text — now top-left)
-# -------------------------------------------------------------
