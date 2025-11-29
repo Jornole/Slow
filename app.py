@@ -3,7 +3,6 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
-from urllib.parse import urlencode
 from datetime import datetime
 
 # -------------------------------------------------------------
@@ -12,9 +11,9 @@ from datetime import datetime
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# VERSION + TIMESTAMP (v68)
+# VERSION + TIMESTAMP
 # -------------------------------------------------------------
-version = "v68"
+version = "v69"
 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
 
 st.markdown(
@@ -62,6 +61,7 @@ st.markdown(
         margin-bottom:6px;
     }
 
+    /* LABEL ROW */
     .scale-row {
         display:flex;
         justify-content:space-between;
@@ -72,25 +72,26 @@ st.markdown(
         box-sizing:border-box;
     }
 
-    .scale-row a {
-        color: #ffffff;
-        text-decoration: none;
-        font-size:0.95rem;
-        display:inline-block;
-        padding:10px 6px;
-        text-align:center;
+    /* LABELS */
+    .scale-label {
+        cursor:pointer;
+        font-size:1rem;
+        padding:6px 10px;
+        border-radius:6px;
+        transition:0.2s;
     }
 
-    .scale-row a.selected {
-        color: #ff4444;
+    .scale-label.selected {
+        color:#ff4444;
         font-weight:700;
     }
 
-    @media (max-width:420px) {
-        .scale-row { padding:0 3%; }
-        .scale-row a { padding:8px 2px; font-size:0.9rem; }
+    /* Make labels look clickable */
+    .scale-label:hover {
+        opacity:0.7;
     }
 
+    /* BUTTONS */
     .stButton > button, .stDownloadButton > button {
         background-color: #C62828 !important;
         color: white !important;
@@ -99,7 +100,6 @@ st.markdown(
         font-weight: 600 !important;
         border: none !important;
     }
-
     .stButton > button:hover, .stDownloadButton > button:hover {
         background-color: #B71C1C !important;
     }
@@ -109,7 +109,7 @@ st.markdown(
 )
 
 # -------------------------------------------------------------
-# LOGO + TITLE
+# LOGO + INTRO
 # -------------------------------------------------------------
 st.markdown(
     """
@@ -163,21 +163,16 @@ questions = [
 labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
 
 # -------------------------------------------------------------
-# SESSION STATE INIT
+# SESSION STATE
 # -------------------------------------------------------------
 if "answers" not in st.session_state:
-    st.session_state.answers = [None] * len(questions)
-
-if "reset_trigger" not in st.session_state:
-    st.session_state.reset_trigger = 0
-
+    st.session_state.answers = [None] * len(questions)  # None = no selection
 
 # -------------------------------------------------------------
-# CLICK HANDLER — no reload
+# CLICK HANDLER (NO RELOAD)
 # -------------------------------------------------------------
 def select_answer(q_index, value):
     st.session_state.answers[q_index] = value
-
 
 # -------------------------------------------------------------
 # RENDER QUESTIONS
@@ -186,38 +181,31 @@ for i, q in enumerate(questions):
 
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    html = "<div class='scale-row'>"
+    label_html = "<div class='scale-row'>"
 
     for v, lab in enumerate(labels):
         selected = "selected" if st.session_state.answers[i] == v else ""
+        click = f"select_{i}_{v}"
+        if click not in st.session_state:
+            st.session_state[click] = False
 
-        # Javascript click — updates Streamlit session state without reload
-        html += (
-            f"<a class='{selected}' href='#' "
-            f"onClick=\"parent.window.document.getElementById('form-q{i}-{v}').click(); return false;\">"
-            f"{lab}</a>"
-        )
+        if st.button(lab, key=f"btn_{i}_{v}"):
+            select_answer(i, v)
 
-    html += "</div>"
+        # style via html label line
+        label_html += f"<span class='scale-label {selected}'>{lab}</span>"
 
-    st.markdown(html, unsafe_allow_html=True)
-
-    # Hidden form button to update session state
-    for v in range(5):
-        if st.button("", key=f"form-q{i}-{v}", on_click=select_answer, args=(i, v)):
-            pass
-
+    label_html += "</div>"
+    st.markdown(label_html, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# RESET BUTTON (CLEAR COLORS + ANSWERS)
+# RESET
 # -------------------------------------------------------------
 if st.button("Nulstil svar"):
     st.session_state.answers = [None] * len(questions)
-    st.session_state.reset_trigger += 1
-    st.rerun()
 
 # -------------------------------------------------------------
-# SCORING
+# RESULT
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
@@ -227,73 +215,67 @@ def interpret_score(score):
     else:
         return "HSP"
 
-PROFILE_TEXT = {
-    "HSP": [
-        "Du registrerer flere nuancer i både indtryk og stemninger.",
-        "Du bearbejder oplevelser dybt og grundigt.",
-        "Du reagerer stærkt på stimuli og kan blive overstimuleret.",
-        "Du har en rig indre verden og et fintfølende nervesystem.",
-        "Du er empatisk og opmærksom på andre.",
-        "Du har brug for ro og pauser for at lade op.",
-    ],
-    "Slow Processor": [
-        "Du arbejder bedst i roligt tempo og med forudsigelighed.",
-        "Du bearbejder indtryk grundigt, men langsomt.",
-        "Du har brug for ekstra tid til omstilling og beslutninger.",
-        "Du trives med faste rammer og struktur.",
-        "Du kan føle dig presset, når tingene går hurtigt.",
-        "Du har god udholdenhed, når du arbejder i dit eget tempo.",
-    ],
-    "Mellemprofil": [
-        "Du veksler naturligt mellem hurtig og langsom bearbejdning.",
-        "Du håndterer de fleste stimuli uden at blive overvældet.",
-        "Du har en god balance mellem intuition og eftertænksomhed.",
-        "Du kan tilpasse dig forskellige miljøer og tempoer.",
-        "Du bliver påvirket i perioder, men finder hurtigt balancen igen.",
-        "Du fungerer bredt socialt og mentalt i mange typer situationer.",
-    ],
-}
+if None not in st.session_state.answers:
+    total_score = sum(st.session_state.answers)
+    profile = interpret_score(total_score)
 
-if None in st.session_state.answers:
     st.header("Dit resultat")
-    st.write("Besvar alle spørgsmål for at se dit resultat.")
-    st.stop()
+    st.subheader(f"Score: {total_score} / 80")
+    st.subheader(f"Profil: {profile}")
 
-total_score = sum(st.session_state.answers)
-profile = interpret_score(total_score)
+    PROFILE_TEXT = {
+        "HSP": [
+            "Du registrerer flere nuancer i både indtryk og stemninger.",
+            "Du bearbejder oplevelser dybt og grundigt.",
+            "Du reagerer stærkt på stimuli og kan blive overstimuleret.",
+            "Du har en rig indre verden og et fintfølende nervesystem.",
+            "Du er empatisk og opmærksom på andre.",
+            "Du har brug for ro og pauser for at lade op.",
+        ],
+        "Slow Processor": [
+            "Du arbejder bedst i roligt tempo og med forudsigelighed.",
+            "Du bearbejder indtryk grundigt, men langsomt.",
+            "Du har brug for ekstra tid til omstilling og beslutninger.",
+            "Du trives med faste rammer og struktur.",
+            "Du kan føle dig presset, når tingene går hurtigt.",
+            "Du har god udholdenhed, når du arbejder i dit eget tempo.",
+        ],
+        "Mellemprofil": [
+            "Du veksler naturligt mellem hurtig og langsom bearbejdning.",
+            "Du håndterer de fleste stimuli uden at blive overvældet.",
+            "Du har en god balance mellem intuition og eftertænksomhed.",
+            "Du kan tilpasse dig forskellige miljøer og tempoer.",
+            "Du bliver påvirket i perioder, men finder hurtigt balancen igen.",
+            "Du fungerer bredt socialt og mentalt i mange typer situationer.",
+        ],
+    }
 
-st.header("Dit resultat")
-st.subheader(f"Score: {total_score} / 80")
-st.subheader(f"Profil: {profile}")
+    st.write("### Karakteristika for din profil:")
+    for s in PROFILE_TEXT[profile]:
+        st.write(f"- {s}")
 
-st.write("### Karakteristika for din profil:")
-for s in PROFILE_TEXT[profile]:
-    st.write(f"- {s}")
+    # PDF DOWNLOAD
+    def generate_pdf(score, profile):
+        buf = BytesIO()
+        doc = SimpleDocTemplate(buf, pagesize=letter)
+        styles = getSampleStyleSheet()
+        story = []
 
-# -------------------------------------------------------------
-# PDF EXPORT
-# -------------------------------------------------------------
-def generate_pdf(score, profile):
-    buf = BytesIO()
-    doc = SimpleDocTemplate(buf, pagesize=letter)
-    styles = getSampleStyleSheet()
-    story = []
+        story.append(Paragraph("HSP / Slow Processor – Rapport", styles["Title"]))
+        story.append(Paragraph(f"Score: {score} / 80", styles["Heading2"]))
+        story.append(Paragraph(f"Profil: {profile}", styles["Heading2"]))
+        story.append(Spacer(1, 12))
 
-    story.append(Paragraph("HSP / Slow Processor – Rapport", styles["Title"]))
-    story.append(Paragraph(f"Score: {score} / 80", styles["Heading2"]))
-    story.append(Paragraph(f"Profil: {profile}", styles["Heading2"]))
-    story.append(Spacer(1, 12))
+        for i, q in enumerate(questions):
+            story.append(Paragraph(f"{i+1}. {q} – {labels[st.session_state.answers[i]]}", styles["BodyText"]))
 
-    for i, q in enumerate(questions):
-        story.append(Paragraph(f"{i+1}. {q} – {labels[st.session_state.answers[i]]}", styles["BodyText"]))
+        doc.build(story)
+        buf.seek(0)
+        return buf
 
-    doc.build(story)
-    buf.seek(0)
-    return buf
-
-st.download_button(
-    "Download PDF-rapport",
-    generate_pdf(total_score, profile),
-    file_name="HSP_SlowProcessor_Rapport.pdf",
-    mime="application/pdf"
-)
+    st.download_button(
+        "Download PDF-rapport",
+        generate_pdf(total_score, profile),
+        file_name="HSP_SlowProcessor_Rapport.pdf",
+        mime="application/pdf"
+    )
