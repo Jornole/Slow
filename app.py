@@ -3,7 +3,9 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
+from urllib.parse import urlencode
 from datetime import datetime
+import json
 
 # -------------------------------------------------------------
 # BASIC SETUP
@@ -13,7 +15,7 @@ st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 # -------------------------------------------------------------
 # VERSION + TIMESTAMP
 # -------------------------------------------------------------
-version = "v71"
+version = "v72"
 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
 
 st.markdown(
@@ -28,105 +30,98 @@ st.markdown(
 )
 
 # -------------------------------------------------------------
-# GLOBAL CSS
+# GLOBAL CSS (identisk med v67)
 # -------------------------------------------------------------
-st.markdown("""
-<style>
+st.markdown(
+    """
+    <style>
+    html, body, .stApp {
+        background-color: #1A6333 !important;
+        color: white !important;
+        font-family: Arial, sans-serif !important;
+    }
 
-html, body, .stApp {
-    background-color: #1A6333 !important;
-    color: white !important;
-    font-family: Arial, sans-serif !important;
-}
+    .center-logo {
+        display:flex;
+        justify-content:center;
+        margin-top:10px;
+        margin-bottom:5px;
+    }
 
-.center-logo {
-    display:flex;
-    justify-content:center;
-    margin-top:10px;
-    margin-bottom:5px;
-}
+    .main-title {
+        font-size:2.3rem;
+        font-weight:800;
+        text-align:center;
+        margin-top:10px;
+        margin-bottom:25px;
+    }
 
-.main-title {
-    font-size:2.3rem;
-    font-weight:800;
-    text-align:center;
-    margin-top:10px;
-    margin-bottom:25px;
-}
+    .question-text {
+        font-size:1.15rem;
+        font-weight:600;
+        margin-top:22px;
+        margin-bottom:6px;
+    }
 
-/* Question text */
-.question-text {
-    font-size:1.15rem;
-    font-weight:600;
-    margin-top:22px;
-    margin-bottom:6px;
-}
+    .scale-row {
+        display:flex;
+        justify-content:space-between;
+        width:100%;
+        margin-bottom:12px;
+        padding:0 6%;
+        box-sizing:border-box;
+    }
 
-/* Row for answer buttons */
-.scale-row {
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    width:100%;
-    margin-bottom:12px;
-    padding:0 6%;
-    box-sizing:border-box;
-}
+    .scale-row a {
+        color: #ffffff;
+        text-decoration: none;
+        font-size:0.95rem;
+        padding:10px 6px;
+    }
 
-/* Fake-label buttons */
-.answer-btn {
-    background:#ffffff11;
-    padding:10px 12px;
-    border-radius:6px;
-    cursor:pointer;
-    font-size:0.95rem;
-    border:1px solid #ffffff44;
-}
+    .scale-row a.selected {
+        color: #ff4444;
+        font-weight:700;
+    }
 
-.answer-btn:hover {
-    background:#ffffff22;
-}
-
-/* Selected (red) */
-.answer-selected {
-    color:#ff4444 !important;
-    font-weight:700 !important;
-}
-
-.stButton > button {
-    background-color: #C62828 !important;
-    color: white !important;
-    border-radius: 8px !important;
-    padding: 0.65rem 1.4rem !important;
-    font-weight: 600 !important;
-    border: none !important;
-}
-.stButton > button:hover {
-    background-color: #B71C1C !important;
-}
-
-</style>
-""", unsafe_allow_html=True)
+    .stButton > button {
+        background-color: #C62828 !important;
+        color: white !important;
+        border-radius: 8px !important;
+        padding: 0.65rem 1.4rem !important;
+        font-weight: 600 !important;
+        border: none !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 # -------------------------------------------------------------
-# LOGO & INTRO
+# LOGO + INTRO TEKST (uændret fra v67)
 # -------------------------------------------------------------
-st.markdown("""
-<div class="center-logo">
-    <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="160">
-</div>
-""", unsafe_allow_html=True)
+st.markdown(
+    """
+    <div class="center-logo">
+        <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="160">
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
 
-st.markdown("""
-Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige
-og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner.
+st.markdown(
+    """
+    Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige
+    og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner.
 
-Du besvarer 20 udsagn på en skala fra **Aldrig** til **Altid**.
+    Du besvarer 20 udsagn på en skala fra **Aldrig** til **Altid**.
 
-Testen er <u><b>ikke en diagnose</b></u>, men et psykologisk værktøj til selvindsigt.
-""", unsafe_allow_html=True)
+    Testen er <u><b>ikke en diagnose</b></u>, men et psykologisk værktøj til selvindsigt.
+    """,
+    unsafe_allow_html=True,
+)
 
 # -------------------------------------------------------------
 # QUESTIONS
@@ -160,41 +155,68 @@ labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
 # SESSION STATE
 # -------------------------------------------------------------
 if "answers" not in st.session_state:
-    st.session_state.answers = [None] * len(questions)
+    st.session_state.answers = [-1] * len(questions)
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS (WITH REAL BUTTONS)
+# HANDLE JS POSTS
+# -------------------------------------------------------------
+if "user_input" in st.session_state:
+    data = st.session_state.user_input
+    if isinstance(data, dict) and "q" in data and "v" in data:
+        st.session_state.answers[int(data["q"])] = int(data["v"])
+
+# -------------------------------------------------------------
+# RENDER QUESTIONS (NO RELOAD)
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
 
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    cols = st.columns(5)
-    for idx, lab in enumerate(labels):
-        with cols[idx]:
-            selected = (st.session_state.answers[i] == idx)
+    html = "<div class='scale-row'>"
 
-            btn_css = "answer-btn"
-            if selected:
-                btn_css += " answer-selected"
+    for v, lab in enumerate(labels):
+        selected = "selected" if st.session_state.answers[i] == v else ""
+        html += (
+            f"<a class='{selected}' href='javascript:void(0);' "
+            f"onclick=\"window.parent.postMessage({{'q':{i},'v':{v}}}, '*');\">{lab}</a>"
+        )
 
-            if st.button(
-                f"{lab}", key=f"q{i}_v{idx}",
-                help="",  # avoid tooltip
-            ):
-                st.session_state.answers[i] = idx
-
-            st.markdown(f"<div class='{btn_css}'></div>", unsafe_allow_html=True)
+    html += "</div>"
+    st.markdown(html, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# RESET BUTTON (correct placement)
+# JS LISTENER (updates session_state silently)
+# -------------------------------------------------------------
+st.markdown(
+    """
+    <script>
+    window.addEventListener("message", (event) => {
+        if (event.data.q !== undefined) {
+            const payload = JSON.stringify(event.data);
+            const form = new FormData();
+            form.append("user_input", payload);
+
+            fetch(window.location.href, {method: "POST", body: form})
+                .then(() => window.location.reload());
+        }
+    });
+    </script>
+    """,
+    unsafe_allow_html=True
+)
+
+# -------------------------------------------------------------
+# RESET BUTTON
 # -------------------------------------------------------------
 if st.button("Nulstil svar"):
-    st.session_state.answers = [None] * len(questions)
+    st.session_state.answers = [-1] * len(questions)
 
 # -------------------------------------------------------------
-# SCORING
+# SCORE + PROFILE
 # -------------------------------------------------------------
+valid = [a for a in st.session_state.answers if a >= 0]
+total_score = sum(valid) if valid else 0
+
 def interpret_score(score):
     if score <= 26:
         return "Slow Processor"
@@ -203,19 +225,14 @@ def interpret_score(score):
     else:
         return "HSP"
 
-numeric = [x for x in st.session_state.answers if isinstance(x, int)]
-total_score = sum(numeric) if numeric else 0
 profile = interpret_score(total_score)
 
-# -------------------------------------------------------------
-# RESULT
-# -------------------------------------------------------------
 st.header("Dit resultat")
 st.subheader(f"Score: {total_score} / 80")
 st.subheader(f"Profil: {profile}")
 
 # -------------------------------------------------------------
-# PDF GENERATION
+# PDF GENERATION (identisk med v67)
 # -------------------------------------------------------------
 def generate_pdf(score, profile):
     buf = BytesIO()
@@ -229,8 +246,8 @@ def generate_pdf(score, profile):
     story.append(Spacer(1, 12))
 
     for i, q in enumerate(questions):
-        val = st.session_state.answers[i]
-        label = labels[val] if isinstance(val, int) else "Ikke besvaret"
+        ans = st.session_state.answers[i]
+        label = labels[ans] if ans >= 0 else "—"
         story.append(Paragraph(f"{i+1}. {q} – {label}", styles["BodyText"]))
 
     doc.build(story)
