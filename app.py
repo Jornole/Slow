@@ -3,6 +3,7 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
+from urllib.parse import urlencode
 
 # -------------------------------------------------------------
 # BASIC SETUP
@@ -12,93 +13,113 @@ st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 # -------------------------------------------------------------
 # GLOBAL CSS
 # -------------------------------------------------------------
-st.markdown("""
-<style>
-html, body, .stApp {
-    background-color: #1A6333 !important;
-    color: white !important;
-    font-family: Arial, sans-serif !important;
-}
+st.markdown(
+    """
+    <style>
+    html, body, .stApp {
+        background-color: #1A6333 !important;
+        color: white !important;
+        font-family: Arial, sans-serif !important;
+    }
 
-.center-logo {
-    display: flex;
-    justify-content: center;
-    margin-top: 20px;
-    margin-bottom: 5px;
-}
+    .center-logo { display:flex; justify-content:center; margin-top:20px; margin-bottom:5px; }
 
-.main-title {
-    font-size: 2.3rem;
-    font-weight: 800;
-    text-align: center;
-    margin-top: 10px;
-    margin-bottom: 25px;
-}
+    .main-title {
+        font-size:2.3rem;
+        font-weight:800;
+        text-align:center;
+        margin-top:10px;
+        margin-bottom:25px;
+    }
 
-.question-text {
-    font-size: 1.15rem;
-    font-weight: 600;
-    margin-top: 22px;
-    margin-bottom: 8px;
-}
+    .question-text {
+        font-size:1.15rem;
+        font-weight:600;
+        margin-top:22px;
+        margin-bottom:6px;
+    }
 
-/* clickable text buttons */
-.choice-text {
-    cursor: pointer;
-    padding: 6px 12px;
-    border-radius: 6px;
-    display: inline-block;
-}
+    /* The label-link row (one-line layout) */
+    .scale-row {
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        width:100%;
+        margin-bottom:12px; /* space to next question */
+        padding:0 6%;
+        box-sizing:border-box;
+    }
 
-/* selected state */
-.choice-selected {
-    color: #C62828 !important;
-    font-weight: 700;
-}
+    .scale-row a {
+        color: #ffffff;
+        text-decoration: none;
+        font-size:0.95rem;
+        display:inline-block;
+        padding:6px 2px;
+        min-width:0;
+        text-align:center;
+    }
 
-.scale-row {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 10px;
-    width: 100%;
-}
+    /* Selected state */
+    .scale-row a.selected {
+        color: #C62828;
+        font-weight:700;
+    }
 
-.scale-row span {
-    flex: 1;
-    text-align: center;
-    font-size: 0.95rem;
-}
-</style>
-""", unsafe_allow_html=True)
+    /* Make sure links are touch-friendly on mobile */
+    .scale-row a { padding:10px 6px; }
 
+    /* Buttons (download/reset) style retained */
+    .stButton > button, .stDownloadButton > button {
+        background-color: #C62828 !important;
+        color: white !important;
+        border-radius: 8px !important;
+        padding: 0.65rem 1.4rem !important;
+        font-weight: 600 !important;
+        border: none !important;
+    }
+    .stButton > button:hover, .stDownloadButton > button:hover {
+        background-color: #B71C1C !important;
+    }
+
+    /* Minor responsive tweak: reduce label padding on narrow screens */
+    @media (max-width:420px) {
+        .scale-row { padding:0 3%; }
+        .scale-row a { padding:8px 2px; font-size:0.9rem; }
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 # -------------------------------------------------------------
-# LOGO
+# LOGO + TITLE
 # -------------------------------------------------------------
-st.markdown("""
-<div class="center-logo">
-    <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="160">
-</div>
-""", unsafe_allow_html=True)
+st.markdown(
+    """
+    <div class="center-logo">
+        <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="160">
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
-
-# -------------------------------------------------------------
-# TITLE
-# -------------------------------------------------------------
 st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
 
-st.markdown("""
-Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige 
-og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner.
+st.markdown(
+    """
+    Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige 
+    og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner.
 
-Du besvarer 20 udsagn på en skala fra **Aldrig** til **Altid**.
+    Du besvarer 20 udsagn på en skala fra **Aldrig** til **Altid**.
 
-Testen er <u><b>ikke en diagnose</b></u>, men et psykologisk værktøj til selvindsigt.
-""", unsafe_allow_html=True)
-
+    Testen er <u><b>ikke en diagnose</b></u>, men et psykologisk værktøj til selvindsigt.
+    """,
+    unsafe_allow_html=True,
+)
 
 # -------------------------------------------------------------
-# QUESTIONS
+# QUESTIONS + LABELS (ONE-LINE LAYOUT)
 # -------------------------------------------------------------
 questions = [
     "Jeg bliver let overvældet af indtryk.",
@@ -120,54 +141,74 @@ questions = [
     "Jeg foretrækker dybe samtaler frem for smalltalk.",
     "Jeg kan have svært ved at skifte fokus hurtigt.",
     "Jeg føler mig ofte overstimuleret.",
-    "Jeg bliver let distraheret, når der sker meget omkring mig."
+    "Jeg bliver let distraheret, når der sker meget omkring mig.",
 ]
 
 labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
 
-
 # -------------------------------------------------------------
-# SESSION STATE
+# SESSION STATE INIT & query-param sync
 # -------------------------------------------------------------
 if "answers" not in st.session_state:
-    st.session_state.answers = [None] * len(questions)
+    st.session_state.answers = [0] * len(questions)
+if "reset_trigger" not in st.session_state:
+    st.session_state.reset_trigger = 0
 
+# Read query params and update session_state answers if present.
+# This allows clicking a label-link (which sets query params) to persist selection.
+qparams = st.experimental_get_query_params()
+for i in range(len(questions)):
+    key = f"q_{i}"
+    if key in qparams:
+        try:
+            val = int(qparams[key][0])
+            if 0 <= val <= 4:
+                st.session_state.answers[i] = val
+        except Exception:
+            pass
+
+# Helper to build href that preserves current answers and sets one change
+def build_href(question_index: int, value: int):
+    # start from current session answers
+    params = {}
+    for idx, ans in enumerate(st.session_state.answers):
+        # ensure we include current answers (as strings)
+        params[f"q_{idx}"] = str(ans)
+    # apply the new selection
+    params[f"q_{question_index}"] = str(value)
+    # attach a reset_trigger to avoid caching weirdness (optional)
+    params["rt"] = str(st.session_state.reset_trigger)
+    return "?" + urlencode(params)
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS WITH TEXT-BUTTONS
+# RENDER each question: question text + one-line labels (clickable links)
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
-
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    cols = st.columns(5)
+    # Build the inline one-line label row where each label is a link
+    html_labels = "<div class='scale-row'>"
+    for v, lab in enumerate(labels):
+        sel_class = "selected" if st.session_state.answers[i] == v else ""
+        href = build_href(i, v)
+        # single-letter spacing preserved by inline-block; clickable text only
+        html_labels += f"<a class='{sel_class}' href='{href}'>{lab}</a>"
+    html_labels += "</div>"
 
-    for j, label in enumerate(labels):
-        is_selected = (st.session_state.answers[i] == j)
-
-        css_class = "choice-text choice-selected" if is_selected else "choice-text"
-
-        if cols[j].button(label, key=f"{i}_{j}"):
-            st.session_state.answers[i] = j
-
-        cols[j].markdown(
-            f"<span class='{css_class}'>{label}</span>",
-            unsafe_allow_html=True
-        )
-
-    st.markdown("<br>", unsafe_allow_html=True)
-
+    st.markdown(html_labels, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
 # RESET BUTTON
 # -------------------------------------------------------------
 if st.button("Nulstil svar"):
-    st.session_state.answers = [None] * len(questions)
-    st.rerun()
-
+    st.session_state.answers = [0] * len(questions)
+    st.session_state.reset_trigger += 1
+    # clear query params by navigating to base path without params
+    st.experimental_set_query_params()
+    st.experimental_rerun()
 
 # -------------------------------------------------------------
-# SCORE & PROFILE
+# INTERPRETATION
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
@@ -177,20 +218,46 @@ def interpret_score(score):
     else:
         return "HSP"
 
-if None not in st.session_state.answers:
-    total_score = sum(st.session_state.answers)
-    profile = interpret_score(total_score)
+PROFILE_TEXT = {
+    "HSP": [
+        "Du registrerer flere nuancer i både indtryk og stemninger.",
+        "Du bearbejder oplevelser dybt og grundigt.",
+        "Du reagerer stærkt på stimuli og kan blive overstimuleret.",
+        "Du har en rig indre verden og et fintfølende nervesystem.",
+        "Du er empatisk og opmærksom på andre.",
+        "Du har brug for ro og pauser for at lade op.",
+    ],
+    "Slow Processor": [
+        "Du arbejder bedst i roligt tempo og med forudsigelighed.",
+        "Du bearbejder indtryk grundigt, men langsomt.",
+        "Du har brug for ekstra tid til omstilling og beslutninger.",
+        "Du trives med faste rammer og struktur.",
+        "Du kan føle dig presset, når tingene går hurtigt.",
+        "Du har god udholdenhed, når du arbejder i dit eget tempo.",
+    ],
+    "Mellemprofil": [
+        "Du veksler naturligt mellem hurtig og langsom bearbejdning.",
+        "Du håndterer de fleste stimuli uden at blive overvældet.",
+        "Du har en god balance mellem intuition og eftertænksomhed.",
+        "Du kan tilpasse dig forskellige miljøer og tempoer.",
+        "Du bliver påvirket i perioder, men finder hurtigt balancen igen.",
+        "Du fungerer bredt socialt og mentalt i mange typer situationer.",
+    ],
+}
 
-    st.header("Dit resultat")
-    st.subheader(f"Score: {total_score} / 80")
-    st.subheader(f"Profil: {profile}")
+total_score = sum(st.session_state.answers)
+profile = interpret_score(total_score)
 
-else:
-    st.header("Dit resultat")
-    st.write("Besvar alle spørgsmål for at se dit resultat.")
-    total_score = 0
-    profile = None
+# -------------------------------------------------------------
+# RESULT
+# -------------------------------------------------------------
+st.header("Dit resultat")
+st.subheader(f"Score: {total_score} / 80")
+st.subheader(f"Profil: {profile}")
 
+st.write("### Karakteristika for din profil:")
+for s in PROFILE_TEXT[profile]:
+    st.write(f"- {s}")
 
 # -------------------------------------------------------------
 # PDF GENERATOR
@@ -207,24 +274,21 @@ def generate_pdf(score, profile):
     story.append(Spacer(1, 12))
 
     for i, q in enumerate(questions):
-        ans = st.session_state.answers[i]
-        text = labels[ans] if ans is not None else "Ikke besvaret"
-        story.append(Paragraph(f"{i+1}. {q} – {text}", styles["BodyText"]))
+        story.append(Paragraph(f"{i+1}. {q} – {labels[st.session_state.answers[i]]}", styles["BodyText"]))
 
     doc.build(story)
     buf.seek(0)
     return buf
 
-
 st.download_button(
     "Download PDF-rapport",
     generate_pdf(total_score, profile),
     file_name="HSP_SlowProcessor_Rapport.pdf",
-    mime="application/pdf"
+    mime="application/pdf",
 )
-
 
 # -------------------------------------------------------------
 # VERSION NUMBER
 # -------------------------------------------------------------
-st.markdown("<div style='font-size:0.8rem; margin-top:20px;'>Version v61</div>", unsafe_allow_html=True)
+st.markdown("<div style='font-size:0.8rem; margin-top:20px;'>Version v62</div>", unsafe_allow_html=True)
+```0
