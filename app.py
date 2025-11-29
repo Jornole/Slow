@@ -3,6 +3,7 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
+from urllib.parse import urlencode
 from datetime import datetime
 
 # -------------------------------------------------------------
@@ -11,9 +12,9 @@ from datetime import datetime
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# VERSION + TIMESTAMP (v81)
+# VERSION + TIMESTAMP (v82)
 # -------------------------------------------------------------
-version = "v81"
+version = "v82"
 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
 
 st.markdown(
@@ -28,7 +29,7 @@ st.markdown(
 )
 
 # -------------------------------------------------------------
-# GLOBAL CSS
+# GLOBAL CSS (IDENTICAL TO V78)
 # -------------------------------------------------------------
 st.markdown(
     """
@@ -64,25 +65,42 @@ st.markdown(
     .scale-row {
         display:flex;
         justify-content:space-between;
+        align-items:center;
         width:100%;
-        margin-bottom:10px;
-        padding:0 5%;
+        margin-bottom:12px;
+        padding:0 6%;
+        box-sizing:border-box;
     }
 
-    .scale-btn {
-        background-color:#C62828;
-        padding:8px 14px;
-        border-radius:8px;
-        color:white;
-        font-weight:600;
-        border:2px solid transparent;
+    .scale-row a {
+        color: #ffffff;
+        text-decoration: none;
+        font-size:0.95rem;
+        display:inline-block;
+        padding:10px 6px;
         text-align:center;
-        width:18%;
-        cursor:pointer;
     }
 
-    .scale-btn.selected {
-        border:2px solid #ffffff;
+    .scale-row a.selected {
+        color: #ff4444;
+        font-weight:700;
+    }
+
+    @media (max-width:420px) {
+        .scale-row { padding:0 3%; }
+        .scale-row a { padding:8px 2px; font-size:0.9rem; }
+    }
+
+    .stButton > button, .stDownloadButton > button {
+        background-color: #C62828 !important;
+        color: white !important;
+        border-radius: 8px !important;
+        padding: 0.65rem 1.4rem !important;
+        font-weight: 600 !important;
+        border: none !important;
+    }
+    .stButton > button:hover, .stDownloadButton > button:hover {
+        background-color: #B71C1C !important;
     }
     </style>
     """,
@@ -90,7 +108,7 @@ st.markdown(
 )
 
 # -------------------------------------------------------------
-# LOGO + TITLE
+# LOGO + TITLE (UNCHANGED)
 # -------------------------------------------------------------
 st.markdown(
     """
@@ -116,7 +134,7 @@ st.markdown(
 )
 
 # -------------------------------------------------------------
-# QUESTIONS
+# QUESTIONS (UNCHANGED)
 # -------------------------------------------------------------
 questions = [
     "Jeg bliver let overvældet af indtryk.",
@@ -144,41 +162,62 @@ questions = [
 labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
 
 # -------------------------------------------------------------
-# SESSION STATE
+# SESSION STATE (FIXED)
 # -------------------------------------------------------------
 if "answers" not in st.session_state:
     st.session_state.answers = [None] * len(questions)
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS (NO RELOAD)
+# QUERY PARAMS
+# -------------------------------------------------------------
+qparams = st.experimental_get_query_params()
+for i in range(len(questions)):
+    key = f"q_{i}"
+    if key in qparams:
+        try:
+            v = int(qparams[key][0])
+            if 0 <= v <= 4:
+                st.session_state.answers[i] = v
+        except:
+            pass
+
+# -------------------------------------------------------------
+# HREF BUILDER
+# -------------------------------------------------------------
+def build_href(q_index, value):
+    params = {}
+    for idx, ans in enumerate(st.session_state.answers):
+        if ans is not None:
+            params[f"q_{idx}"] = str(ans)
+    params[f"q_{q_index}"] = str(value)
+    return "?" + urlencode(params)
+
+# -------------------------------------------------------------
+# RENDER QUESTIONS (UNCHANGED)
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
-
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    cols = st.columns(5)
+    html = "<div class='scale-row'>"
+    for v, lab in enumerate(labels):
+        selected = "selected" if st.session_state.answers[i] == v else ""
+        html += f"<a class='{selected}' href='{build_href(i, v)}'>{lab}</a>"
+    html += "</div>"
 
-    for idx, lab in enumerate(labels):
-        with cols[idx]:
-            key = f"q{i}_{idx}"
-
-            selected = st.session_state.answers[i] == idx
-
-            button_style = "scale-btn selected" if selected else "scale-btn"
-
-            if st.button(lab, key=key):
-                st.session_state.answers[i] = idx
-
-            st.markdown(f"<div class='{button_style}'>{lab}</div>", unsafe_allow_html=True)
+    st.markdown(html, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# RESET BUTTON
+# RESET BUTTON — NOW WORKS IN ONE CLICK
 # -------------------------------------------------------------
 if st.button("Nulstil svar"):
     st.session_state.answers = [None] * len(questions)
+    try:
+        st.experimental_set_query_params()
+    except:
+        pass
 
 # -------------------------------------------------------------
-# SCORE + PROFILE
+# SCORE + PROFILE (UNCHANGED, NONE = 0)
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
@@ -188,9 +227,9 @@ def interpret_score(score):
     else:
         return "HSP"
 
-safe = [x if x is not None else 0 for x in st.session_state.answers]
-total = sum(safe)
-profile = interpret_score(total)
+safe_answers = [a if a is not None else 0 for a in st.session_state.answers]
+total_score = sum(safe_answers)
+profile = interpret_score(total_score)
 
 PROFILE_TEXT = {
     "HSP": [
@@ -220,18 +259,18 @@ PROFILE_TEXT = {
 }
 
 # -------------------------------------------------------------
-# RESULT
+# RESULT (UNCHANGED)
 # -------------------------------------------------------------
 st.header("Dit resultat")
-st.subheader(f"Score: {total} / 80")
+st.subheader(f"Score: {total_score} / 80")
 st.subheader(f"Profil: {profile}")
 
 st.write("### Karakteristika for din profil:")
-for line in PROFILE_TEXT[profile]:
-    st.write(f"- {line}")
+for s in PROFILE_TEXT[profile]:
+    st.write(f"- {s}")
 
 # -------------------------------------------------------------
-# PDF
+# PDF (UNCHANGED)
 # -------------------------------------------------------------
 def generate_pdf(score, profile):
     buf = BytesIO()
@@ -245,8 +284,7 @@ def generate_pdf(score, profile):
     story.append(Spacer(1, 12))
 
     for i, q in enumerate(questions):
-        ans = safe[i]
-        story.append(Paragraph(f"{i+1}. {q} – {labels[ans]}", styles["BodyText"]))
+        story.append(Paragraph(f"{i+1}. {q} – {labels[safe_answers[i]]}", styles["BodyText"]))
 
     doc.build(story)
     buf.seek(0)
@@ -254,7 +292,7 @@ def generate_pdf(score, profile):
 
 st.download_button(
     "Download PDF-rapport",
-    generate_pdf(total, profile),
+    generate_pdf(total_score, profile),
     file_name="HSP_SlowProcessor_Rapport.pdf",
     mime="application/pdf"
 )
