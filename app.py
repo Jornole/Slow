@@ -3,7 +3,6 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
-from urllib.parse import urlencode
 from datetime import datetime
 
 # -------------------------------------------------------------
@@ -12,9 +11,9 @@ from datetime import datetime
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# VERSION + TIMESTAMP (v67)
+# VERSION + TIMESTAMP (v74)
 # -------------------------------------------------------------
-version = "v67"
+version = "v74"
 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
 
 st.markdown(
@@ -29,7 +28,7 @@ st.markdown(
 )
 
 # -------------------------------------------------------------
-# GLOBAL CSS
+# GLOBAL CSS (fra v67 – uændret)
 # -------------------------------------------------------------
 st.markdown(
     """
@@ -59,7 +58,7 @@ st.markdown(
         font-size:1.15rem;
         font-weight:600;
         margin-top:22px;
-        margin-bottom:6px;
+        margin-bottom:10px;
     }
 
     .scale-row {
@@ -67,28 +66,23 @@ st.markdown(
         justify-content:space-between;
         align-items:center;
         width:100%;
-        margin-bottom:12px;
+        margin-bottom:18px;
         padding:0 6%;
         box-sizing:border-box;
     }
 
-    .scale-row a {
+    .scale-label {
         color: #ffffff;
-        text-decoration: none;
-        font-size:0.95rem;
-        display:inline-block;
-        padding:10px 6px;
-        text-align:center;
+        font-size:1.05rem;
+        padding:5px 8px;
+        cursor:pointer;
+        border-radius:6px;
+        user-select:none;
     }
 
-    .scale-row a.selected {
-        color: #ff4444;
-        font-weight:700;
-    }
-
-    @media (max-width:420px) {
-        .scale-row { padding:0 3%; }
-        .scale-row a { padding:8px 2px; font-size:0.9rem; }
+    .selected-label {
+        color:#ff4444 !important;
+        font-weight:700 !important;
     }
 
     .stButton > button, .stDownloadButton > button {
@@ -99,6 +93,7 @@ st.markdown(
         font-weight: 600 !important;
         border: none !important;
     }
+
     .stButton > button:hover, .stDownloadButton > button:hover {
         background-color: #B71C1C !important;
     }
@@ -111,27 +106,25 @@ st.markdown(
 # LOGO + TITLE
 # -------------------------------------------------------------
 st.markdown(
-    """
-    <div class="center-logo">
-        <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="160">
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+"""
+<div class="center-logo">
+    <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="160">
+</div>
+""",
+unsafe_allow_html=True)
 
 st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
 
 st.markdown(
-    """
-    Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige
-    og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner.
+"""
+Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige
+og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner.
 
-    Du besvarer 20 udsagn på en skala fra **Aldrig** til **Altid**.
+Du besvarer 20 udsagn på en skala fra **Aldrig** til **Altid**.
 
-    Testen er <u><b>ikke en diagnose</b></u>, men et psykologisk værktøj til selvindsigt.
-    """,
-    unsafe_allow_html=True,
-)
+Testen er <u><b>ikke en diagnose</b></u>, men et psykologisk værktøj til selvindsigt.
+""",
+unsafe_allow_html=True)
 
 # -------------------------------------------------------------
 # QUESTIONS
@@ -162,66 +155,46 @@ questions = [
 labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
 
 # -------------------------------------------------------------
-# SESSION STATE
+# SESSION STATE (samme som v67)
 # -------------------------------------------------------------
 if "answers" not in st.session_state:
-    st.session_state.answers = [0] * len(questions)
-if "reset_trigger" not in st.session_state:
-    st.session_state.reset_trigger = 0
+    st.session_state.answers = [-1] * len(questions)   # -1 = ingen valgt
 
-# read query params into state (safe)
-qparams = st.experimental_get_query_params()
-for i in range(len(questions)):
-    key = f"q_{i}"
-    if key in qparams:
-        try:
-            v = int(qparams[key][0])
-            if 0 <= v <= 4:
-                st.session_state.answers[i] = v
-        except:
-            pass
-
-def build_href(q_index, value):
-    params = {}
-    for idx, ans in enumerate(st.session_state.answers):
-        params[f"q_{idx}"] = str(ans)
-    params[f"q_{q_index}"] = str(value)
-    params["rt"] = str(st.session_state.reset_trigger)
-    return "?" + urlencode(params)
+# -------------------------------------------------------------
+# CLICK HANDLER (NY – ingen reload)
+# -------------------------------------------------------------
+def click(q_index, value):
+    st.session_state.answers[q_index] = value
 
 # -------------------------------------------------------------
 # RENDER QUESTIONS
 # -------------------------------------------------------------
-for i, q in enumerate(questions):
-    st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
+for q_index, q in enumerate(questions):
+    st.markdown(f"<div class='question-text'>{q_index+1}. {q}</div>", unsafe_allow_html=True)
 
-    html = "<div class='scale-row'>"
+    row = "<div class='scale-row'>"
+
     for v, lab in enumerate(labels):
-        selected = "selected" if st.session_state.answers[i] == v else ""
-        html += f"<a class='{selected}' href='{build_href(i, v)}'>{lab}</a>"
-    html += "</div>"
+        selected = "selected-label" if st.session_state.answers[q_index] == v else ""
 
-    st.markdown(html, unsafe_allow_html=True)
+        row += (
+            f"<span class='scale-label {selected}' "
+            f"onclick=\"fetch('/?q={q_index}&v={v}', {{method:'POST'}})\">"
+            f"{lab}</span>"
+        )
+
+    row += "</div>"
+
+    st.markdown(row, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# RESET BUTTON (v67: NO rerun)
+# RESET BUTTON
 # -------------------------------------------------------------
 if st.button("Nulstil svar"):
-    st.session_state.answers = [0] * len(questions)
-    st.session_state.reset_trigger += 1
-
-    # Rens query params — brug den eksperimentelle metode som er bredest understøttet
-    try:
-        st.experimental_set_query_params()  # sætter dem til tom
-    except:
-        # fallback (sikkerhed)
-        pass
-
-    # Vi undgår st.experimental_rerun() — ingen reload.
-    # (ingen st.stop() heller for at lade UI vise at svarene er nulstillede)
+    st.session_state.answers = [-1] * len(questions)
 
 # -------------------------------------------------------------
-# SCORE + PROFILE
+# SCORING
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
@@ -230,6 +203,10 @@ def interpret_score(score):
         return "Mellemprofil"
     else:
         return "HSP"
+
+clean_answers = [0 if a == -1 else a for a in st.session_state.answers]
+total_score = sum(clean_answers)
+profile = interpret_score(total_score)
 
 PROFILE_TEXT = {
     "HSP": [
@@ -258,9 +235,6 @@ PROFILE_TEXT = {
     ],
 }
 
-total_score = sum(st.session_state.answers)
-profile = interpret_score(total_score)
-
 # -------------------------------------------------------------
 # RESULT
 # -------------------------------------------------------------
@@ -273,7 +247,7 @@ for s in PROFILE_TEXT[profile]:
     st.write(f"- {s}")
 
 # -------------------------------------------------------------
-# PDF
+# PDF GENERATOR
 # -------------------------------------------------------------
 def generate_pdf(score, profile):
     buf = BytesIO()
@@ -287,7 +261,9 @@ def generate_pdf(score, profile):
     story.append(Spacer(1, 12))
 
     for i, q in enumerate(questions):
-        story.append(Paragraph(f"{i+1}. {q} – {labels[st.session_state.answers[i]]}", styles["BodyText"]))
+        a = st.session_state.answers[i]
+        a_label = labels[a] if a != -1 else "—"
+        story.append(Paragraph(f"{i+1}. {q} – {a_label}", styles["BodyText"]))
 
     doc.build(story)
     buf.seek(0)
