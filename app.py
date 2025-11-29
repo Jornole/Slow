@@ -22,7 +22,12 @@ st.markdown(
         font-family: Arial, sans-serif !important;
     }
 
-    .center-logo { display:flex; justify-content:center; margin-top:20px; margin-bottom:5px; }
+    .center-logo { 
+        display:flex; 
+        justify-content:center; 
+        margin-top:20px; 
+        margin-bottom:5px; 
+    }
 
     .main-title {
         font-size:2.3rem;
@@ -39,13 +44,12 @@ st.markdown(
         margin-bottom:6px;
     }
 
-    /* The label-link row (one-line layout) */
     .scale-row {
         display:flex;
         justify-content:space-between;
         align-items:center;
         width:100%;
-        margin-bottom:12px; /* space to next question */
+        margin-bottom:12px;
         padding:0 6%;
         box-sizing:border-box;
     }
@@ -55,21 +59,20 @@ st.markdown(
         text-decoration: none;
         font-size:0.95rem;
         display:inline-block;
-        padding:6px 2px;
-        min-width:0;
+        padding:10px 6px;
         text-align:center;
     }
 
-    /* Selected state */
     .scale-row a.selected {
-        color: #C62828;
+        color: #ff4444;
         font-weight:700;
     }
 
-    /* Make sure links are touch-friendly on mobile */
-    .scale-row a { padding:10px 6px; }
+    @media (max-width:420px) {
+        .scale-row { padding:0 3%; }
+        .scale-row a { padding:8px 2px; font-size:0.9rem; }
+    }
 
-    /* Buttons (download/reset) style retained */
     .stButton > button, .stDownloadButton > button {
         background-color: #C62828 !important;
         color: white !important;
@@ -80,12 +83,6 @@ st.markdown(
     }
     .stButton > button:hover, .stDownloadButton > button:hover {
         background-color: #B71C1C !important;
-    }
-
-    /* Minor responsive tweak: reduce label padding on narrow screens */
-    @media (max-width:420px) {
-        .scale-row { padding:0 3%; }
-        .scale-row a { padding:8px 2px; font-size:0.9rem; }
     }
     </style>
     """,
@@ -119,7 +116,7 @@ st.markdown(
 )
 
 # -------------------------------------------------------------
-# QUESTIONS + LABELS (ONE-LINE LAYOUT)
+# QUESTIONS + LABELS
 # -------------------------------------------------------------
 questions = [
     "Jeg bliver let overvældet af indtryk.",
@@ -147,15 +144,13 @@ questions = [
 labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
 
 # -------------------------------------------------------------
-# SESSION STATE INIT & query-param sync
+# SESSION STATE INIT & Query Param Sync
 # -------------------------------------------------------------
 if "answers" not in st.session_state:
     st.session_state.answers = [0] * len(questions)
 if "reset_trigger" not in st.session_state:
     st.session_state.reset_trigger = 0
 
-# Read query params and update session_state answers if present.
-# This allows clicking a label-link (which sets query params) to persist selection.
 qparams = st.experimental_get_query_params()
 for i in range(len(questions)):
     key = f"q_{i}"
@@ -164,35 +159,28 @@ for i in range(len(questions)):
             val = int(qparams[key][0])
             if 0 <= val <= 4:
                 st.session_state.answers[i] = val
-        except Exception:
+        except:
             pass
 
-# Helper to build href that preserves current answers and sets one change
 def build_href(question_index: int, value: int):
-    # start from current session answers
     params = {}
     for idx, ans in enumerate(st.session_state.answers):
-        # ensure we include current answers (as strings)
         params[f"q_{idx}"] = str(ans)
-    # apply the new selection
     params[f"q_{question_index}"] = str(value)
-    # attach a reset_trigger to avoid caching weirdness (optional)
     params["rt"] = str(st.session_state.reset_trigger)
     return "?" + urlencode(params)
 
 # -------------------------------------------------------------
-# RENDER each question: question text + one-line labels (clickable links)
+# RENDER QUESTIONS
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    # Build the inline one-line label row where each label is a link
     html_labels = "<div class='scale-row'>"
     for v, lab in enumerate(labels):
-        sel_class = "selected" if st.session_state.answers[i] == v else ""
+        selected = "selected" if st.session_state.answers[i] == v else ""
         href = build_href(i, v)
-        # single-letter spacing preserved by inline-block; clickable text only
-        html_labels += f"<a class='{sel_class}' href='{href}'>{lab}</a>"
+        html_labels += f"<a class='{selected}' href='{href}'>{lab}</a>"
     html_labels += "</div>"
 
     st.markdown(html_labels, unsafe_allow_html=True)
@@ -203,7 +191,6 @@ for i, q in enumerate(questions):
 if st.button("Nulstil svar"):
     st.session_state.answers = [0] * len(questions)
     st.session_state.reset_trigger += 1
-    # clear query params by navigating to base path without params
     st.experimental_set_query_params()
     st.experimental_rerun()
 
@@ -274,7 +261,12 @@ def generate_pdf(score, profile):
     story.append(Spacer(1, 12))
 
     for i, q in enumerate(questions):
-        story.append(Paragraph(f"{i+1}. {q} – {labels[st.session_state.answers[i]]}", styles["BodyText"]))
+        story.append(
+            Paragraph(
+                f"{i+1}. {q} – {labels[st.session_state.answers[i]]}",
+                styles["BodyText"],
+            )
+        )
 
     doc.build(story)
     buf.seek(0)
@@ -291,4 +283,3 @@ st.download_button(
 # VERSION NUMBER
 # -------------------------------------------------------------
 st.markdown("<div style='font-size:0.8rem; margin-top:20px;'>Version v62</div>", unsafe_allow_html=True)
-```0
