@@ -1,10 +1,11 @@
-import streamlit as st  
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer  
-from reportlab.lib.pagesizes import letter  
-from reportlab.lib.styles import getSampleStyleSheet  
-from io import BytesIO  
-from urllib.parse import urlencode  
-from datetime import datetime  
+import streamlit as st
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import getSampleStyleSheet
+from io import BytesIO
+from urllib.parse import urlencode
+from datetime import datetime
+import pytz
 
 # -------------------------------------------------------------
 # BASIC SETUP
@@ -12,10 +13,10 @@ from datetime import datetime
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# VERSION + TIMESTAMP
+# VERSION + TIMESTAMP (v87)
 # -------------------------------------------------------------
-version = "v84"
-timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
+version = "v87"
+timestamp = datetime.now(pytz.timezone("Europe/Copenhagen")).strftime("%Y-%m-%d %H:%M")
 
 st.markdown(
     f"""
@@ -29,7 +30,7 @@ st.markdown(
 )
 
 # -------------------------------------------------------------
-# GLOBAL CSS (NEW BUTTON DESIGN)
+# GLOBAL CSS (ONLY STYLING – NO FUNCTIONAL CHANGE)
 # -------------------------------------------------------------
 st.markdown(
     """
@@ -59,36 +60,39 @@ st.markdown(
         font-size:1.15rem;
         font-weight:600;
         margin-top:22px;
-        margin-bottom:4px;
+        margin-bottom:10px;
     }
 
-    /* NEW ROW STYLE */
+    /* --- NEW: horizontal scale buttons without affecting logic --- */
     .scale-row {
         display:flex;
-        justify-content:space-between;
-        align-items:center;
-        width:100%;
-        padding:0 4%;
-        margin-bottom:14px;
+        gap: 8px;
+        justify-content: space-between;
+        padding: 0 4%;
+        margin-bottom:20px;
     }
 
-    /* DEFAULT BUTTON STYLE (looks like text) */
     .scale-row a {
-        color: #ffffff;
-        text-decoration: none;
+        background-color:#C62828;
+        padding:10px 14px;
+        border-radius:8px;
+        text-decoration:none;
+        color:white !important;
         font-size:0.95rem;
-        padding:4px 8px;
-        border-radius:6px;
+        flex:1;
+        text-align:center;
+        display:flex;
+        justify-content:center;
+        align-items:center;
     }
 
-    /* SELECTED ANSWER (red text + light bg) */
     .scale-row a.selected {
-        color: #ff4444 !important;
-        font-weight:700 !important;
-        background-color: rgba(255,255,255,0.18);
+        background-color:white !important;
+        color:#C62828 !important;
+        font-weight:700;
+        border:2px solid #C62828;
     }
 
-    /* Buttons */
     .stButton > button, .stDownloadButton > button {
         background-color: #C62828 !important;
         color: white !important;
@@ -201,7 +205,6 @@ for i, q in enumerate(questions):
         selected = "selected" if st.session_state.answers[i] == v else ""
         html += f"<a class='{selected}' href='{build_href(i, v)}'>{lab}</a>"
     html += "</div>"
-
     st.markdown(html, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
