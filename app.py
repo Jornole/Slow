@@ -3,6 +3,7 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.pagesizes import letter  
 from reportlab.lib.styles import getSampleStyleSheet  
 from io import BytesIO  
+from urllib.parse import urlencode  
 from datetime import datetime
 
 # -------------------------------------------------------------
@@ -10,12 +11,9 @@ from datetime import datetime
 # -------------------------------------------------------------
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
-# -------------------------------------------------------------
-# VERSION + TIMESTAMP
-# -------------------------------------------------------------
-version = "v103"
+# Version label
+version = "v104"
 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
-
 st.markdown(
     f"""
     <div style="font-size:0.85rem; background-color:#144d27;
@@ -28,7 +26,7 @@ st.markdown(
 )
 
 # -------------------------------------------------------------
-# GLOBAL CSS  (identisk med v78)
+# GLOBAL CSS — V78 LOOK (NO BUTTON BOXES)
 # -------------------------------------------------------------
 st.markdown(
     """
@@ -61,25 +59,39 @@ st.markdown(
         margin-bottom:6px;
     }
 
-    .answer-btn {
-        background-color: transparent;
-        border: 1px solid white;
-        color: white;
-        padding: 10px 6px;
-        border-radius: 8px;
-        font-size: 0.95rem;
-        width: 100%;
-        text-align:center;
+    .scale-row {
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        width:100%;
+        margin-bottom:12px;
+        padding:0 6%;
+        box-sizing:border-box;
     }
 
-    .answer-selected {
-        background-color: #ff4444 !important;
-        color: white !important;
-        border-radius: 8px !important;
-        padding: 10px 6px;
+    /* ---- NEW v78-STYLE ANSWER BUTTONS ---- */
+    .scale-row a {
+        background-color: #1A6333 !important; /* same green as background */
+        color: #ffffff !important;
+        text-decoration: none !important;
+        font-size: 1.05rem !important;
+        padding: 12px 6px !important;
+        border-radius: 6px !important;  /* invisible */
+        display: inline-block !important;
+        border: none !important;
+    }
+
+    .scale-row a.selected {
+        color: #ff4444 !important;   /* only text turns red (v78 style) */
         font-weight: 700 !important;
     }
 
+    .scale-row a:hover {
+        background-color: #1A6333 !important;
+        opacity: 0.9;
+    }
+
+    /* Buttons */
     .stButton > button, .stDownloadButton > button {
         background-color: #C62828 !important;
         color: white !important;
@@ -88,7 +100,6 @@ st.markdown(
         font-weight: 600 !important;
         border: none !important;
     }
-
     .stButton > button:hover, .stDownloadButton > button:hover {
         background-color: #B71C1C !important;
     }
@@ -116,7 +127,7 @@ st.markdown(
     Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige
     og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner.
 
-    Du besvarer 20 udsagn på en skala fra **Aldrig** til **Altid**.
+    Du besvarer 20 udsagn på en skala fra <b>Aldrig</b> til <b>Altid</b>.
 
     Testen er <u><b>ikke en diagnose</b></u>, men et psykologisk værktøj til selvindsigt.
     """,
@@ -158,30 +169,56 @@ if "answers" not in st.session_state:
     st.session_state.answers = [None] * len(questions)
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS (NO RELOAD VERSION)
+# QUERY → STATE
+# -------------------------------------------------------------
+qparams = st.experimental_get_query_params()
+for i in range(len(questions)):
+    key = f"q_{i}"
+    if key in qparams:
+        try:
+            v = int(qparams[key][0])
+            if 0 <= v <= 4:
+                st.session_state.answers[i] = v
+        except:
+            pass
+
+# -------------------------------------------------------------
+# BUILD HREF
+# -------------------------------------------------------------
+def build_href(q_index, value):
+    params = {}
+    for idx, ans in enumerate(st.session_state.answers):
+        if ans is not None:
+            params[f"q_{idx}"] = str(ans)
+    params[f"q_{q_index}"] = str(value)
+    return "?" + urlencode(params)
+
+# -------------------------------------------------------------
+# RENDER QUESTIONS
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
-    st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
+    st.markdown(
+        f"<div class='question-text'>{i + 1}. {q}</div>",
+        unsafe_allow_html=True
+    )
 
-    cols = st.columns(5)
-
+    html = "<div class='scale-row'>"
     for v, lab in enumerate(labels):
-        with cols[v]:
-            is_selected = (st.session_state.answers[i] == v)
+        selected = "selected" if st.session_state.answers[i] == v else ""
+        html += f"<a class='{selected}' href='{build_href(i, v)}'>{lab}</a>"
+    html += "</div>"
 
-            button_label = f"**{lab}**" if is_selected else lab
-
-            if st.button(button_label, key=f"btn_{i}_{v}", use_container_width=True):
-                st.session_state.answers[i] = v
+    st.markdown(html, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# RESET BUTTON
+# RESET
 # -------------------------------------------------------------
 if st.button("Nulstil svar"):
     st.session_state.answers = [None] * len(questions)
+    st.experimental_set_query_params()
 
 # -------------------------------------------------------------
-# SCORE + PROFILE
+# SCORE & PROFILE
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
@@ -223,7 +260,7 @@ PROFILE_TEXT = {
 }
 
 # -------------------------------------------------------------
-# RESULT
+# RESULTS
 # -------------------------------------------------------------
 st.header("Dit resultat")
 st.subheader(f"Score: {total_score} / 80")
@@ -234,7 +271,7 @@ for s in PROFILE_TEXT[profile]:
     st.write(f"- {s}")
 
 # -------------------------------------------------------------
-# PDF EXPORT
+# PDF GENERATION
 # -------------------------------------------------------------
 def generate_pdf(score, profile):
     buf = BytesIO()
@@ -248,7 +285,12 @@ def generate_pdf(score, profile):
     story.append(Spacer(1, 12))
 
     for i, q in enumerate(questions):
-        story.append(Paragraph(f"{i+1}. {q} – {labels[safe_answers[i]]}", styles["BodyText"]))
+        story.append(
+            Paragraph(
+                f"{i+1}. {q} – {labels[safe_answers[i]]}",
+                styles["BodyText"]
+            )
+        )
 
     doc.build(story)
     buf.seek(0)
