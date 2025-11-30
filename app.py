@@ -10,9 +10,6 @@ from datetime import datetime
 # -------------------------------------------------------------
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
-# -------------------------------------------------------------
-# VERSION + TIMESTAMP (v106)
-# -------------------------------------------------------------
 version = "v106"
 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
 
@@ -28,7 +25,7 @@ st.markdown(
 )
 
 # -------------------------------------------------------------
-# GLOBAL CSS (same as v78)
+# GLOBAL CSS (from v78)
 # -------------------------------------------------------------
 st.markdown(
     """
@@ -61,11 +58,37 @@ st.markdown(
         margin-bottom:6px;
     }
 
-    /* Remove borders on Streamlit buttons */
-    .stButton > button {
+    .choice-btn {
+        background-color: #C62828 !important;
+        color: white !important;
+        border-radius: 8px !important;
+        padding: 10px 18px !important;
         border: none !important;
-        background: none !important;
-        padding: 0 !important;
+        width: 100%;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .choice-btn:hover {
+        background-color: #B71C1C !important;
+    }
+
+    .choice-btn.selected {
+        background-color: #ffffff !important;
+        color: #C62828 !important;
+        font-weight: 800 !important;
+    }
+
+    .stButton > button, .stDownloadButton > button {
+        background-color: #C62828 !important;
+        color: white !important;
+        border-radius: 8px !important;
+        padding: 0.65rem 1.4rem !important;
+        font-weight: 600 !important;
+        border: none !important;
+    }
+    .stButton > button:hover, .stDownloadButton > button:hover {
+        background-color: #B71C1C !important;
     }
     </style>
     """,
@@ -83,7 +106,6 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-
 st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
 
 st.markdown(
@@ -91,11 +113,10 @@ st.markdown(
     Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige
     og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner.
 
-    Du besvarer 20 udsagn på en skala fra **Aldrig** til **Altid**.
+    Du besvarer 20 udsagn på en skala fra Aldrig til Altid.
 
-    Testen er <u><b>ikke en diagnose</b></u>, men et psykologisk værktøj til selvindsigt.
-    """,
-    unsafe_allow_html=True,
+    Testen er ikke en diagnose, men et psykologisk værktøj til selvindsigt.
+    """
 )
 
 # -------------------------------------------------------------
@@ -127,31 +148,26 @@ questions = [
 labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
 
 # -------------------------------------------------------------
-# SESSION STATE
+# SESSION STATE (no reload behavior)
 # -------------------------------------------------------------
 if "answers" not in st.session_state:
     st.session_state.answers = [None] * len(questions)
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS — v106 (no reload, inline labels)
+# RENDER QUESTIONS (button-based, no reload)
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    cols = st.columns(5, gap="small")
+    cols = st.columns(5)
 
-    for v, label in enumerate(labels):
-        selected = (st.session_state.answers[i] == v)
-
-        color = "#ff4444" if selected else "white"
-        weight = "700" if selected else "400"
-
-        style = f"color:{color}; font-weight:{weight}; font-size:0.97rem;"
+    for v, lab in enumerate(labels):
+        selected = st.session_state.answers[i] == v
+        btn_style = "choice-btn selected" if selected else "choice-btn"
 
         with cols[v]:
-            if st.button(label, key=f"b_{i}_{v}"):
+            if st.button(lab, key=f"btn_{i}_{v}", use_container_width=True):
                 st.session_state.answers[i] = v
-            st.markdown(f"<div style='{style}'>{label}</div>", unsafe_allow_html=True)
 
 # -------------------------------------------------------------
 # RESET BUTTON
@@ -202,7 +218,7 @@ PROFILE_TEXT = {
 }
 
 # -------------------------------------------------------------
-# RESULT SECTION
+# RESULT
 # -------------------------------------------------------------
 st.header("Dit resultat")
 st.subheader(f"Score: {total_score} / 80")
@@ -213,7 +229,7 @@ for s in PROFILE_TEXT[profile]:
     st.write(f"- {s}")
 
 # -------------------------------------------------------------
-# PDF GENERATION
+# PDF
 # -------------------------------------------------------------
 def generate_pdf(score, profile):
     buf = BytesIO()
