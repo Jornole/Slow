@@ -1,3 +1,4 @@
+# app.py - v84
 import streamlit as st
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.pagesizes import letter
@@ -11,11 +12,10 @@ from datetime import datetime
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# VERSION + TIMESTAMP (v83)
+# VERSION + TIMESTAMP (v84)
 # -------------------------------------------------------------
-version = "v83"
+version = "v84"
 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
-
 st.markdown(
     f"""
     <div style="font-size:0.85rem; background-color:#144d27;
@@ -28,7 +28,7 @@ st.markdown(
 )
 
 # -------------------------------------------------------------
-# GLOBAL CSS
+# CSS
 # -------------------------------------------------------------
 st.markdown(
     """
@@ -38,65 +38,12 @@ st.markdown(
         color: white !important;
         font-family: Arial, sans-serif !important;
     }
-
-    .center-logo {
-        display:flex;
-        justify-content:center;
-        margin-top:10px;
-        margin-bottom:5px;
-    }
-
-    .main-title {
-        font-size:2.3rem;
-        font-weight:800;
-        text-align:center;
-        margin-top:10px;
-        margin-bottom:25px;
-    }
-
-    .question-text {
-        font-size:1.15rem;
-        font-weight:600;
-        margin-top:22px;
-        margin-bottom:6px;
-    }
-
-    .scale-row {
-        display:flex;
-        justify-content:space-between;
-        align-items:center;
-        width:100%;
-        margin-bottom:10px;
-        padding:0 6%;
-        box-sizing:border-box;
-    }
-
-    .scale-row span {
-        color:white;
-        font-size:0.95rem;
-        text-align:center;
-    }
-
-    .selected-label {
-        color:#ff4444 !important;
-        font-weight:700 !important;
-        text-decoration:none !important;
-    }
-
-    .stRadio > div { 
-        flex-direction:row !important;
-        justify-content:space-between !important;
-        width:100%;
-        padding:0 6%;
-    }
-
-    .stRadio label {
-        text-align:center;
-        flex:1;
-        cursor:pointer;
-        padding:6px 0;
-    }
-
+    .center-logo { display:flex; justify-content:center; margin-top:10px; margin-bottom:5px; }
+    .main-title { font-size:2.3rem; font-weight:800; text-align:center; margin-top:10px; margin-bottom:25px; }
+    .question-text { font-size:1.15rem; font-weight:600; margin-top:22px; margin-bottom:6px; }
+    .scale-row { display:flex; justify-content:space-between; align-items:center; width:100%; margin-bottom:12px; padding:0 6%; box-sizing:border-box; }
+    .scale-label { color:#ffffff; text-decoration:none; font-size:0.95rem; display:block; padding:6px 8px; text-align:center; }
+    .selected-label { color:#ff4444; font-weight:700; }
     .stButton > button, .stDownloadButton > button {
         background-color: #C62828 !important;
         color: white !important;
@@ -105,12 +52,14 @@ st.markdown(
         font-weight: 600 !important;
         border: none !important;
     }
-    .stButton > button:hover, .stDownloadButton > button:hover {
-        background-color: #B71C1C !important;
+    .stButton > button:hover, .stDownloadButton > button:hover { background-color: #B71C1C !important; }
+    @media (max-width:420px) {
+        .scale-row { padding:0 3%; }
+        .scale-label { padding:8px 2px; font-size:0.9rem; }
     }
     </style>
     """,
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
 
 # -------------------------------------------------------------
@@ -122,11 +71,9 @@ st.markdown(
         <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="160">
     </div>
     """,
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
-
 st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
-
 st.markdown(
     """
     Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige
@@ -136,11 +83,11 @@ st.markdown(
 
     Testen er <u><b>ikke en diagnose</b></u>, men et psykologisk værktøj til selvindsigt.
     """,
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
 
 # -------------------------------------------------------------
-# QUESTIONS
+# QUESTIONS + LABELS
 # -------------------------------------------------------------
 questions = [
     "Jeg bliver let overvældet af indtryk.",
@@ -162,47 +109,46 @@ questions = [
     "Jeg foretrækker dybe samtaler frem for smalltalk.",
     "Jeg kan have svært ved at skifte fokus hurtigt.",
     "Jeg føler mig ofte overstimuleret.",
-    "Jeg bliver let distraheret, når der sker meget omkring mig."
+    "Jeg bliver let distraheret, når der sker meget omkring mig.",
 ]
-
 labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
 
 # -------------------------------------------------------------
 # SESSION STATE
 # -------------------------------------------------------------
 if "answers" not in st.session_state:
+    # None = ikke besvaret; 0..4 = svar
     st.session_state.answers = [None] * len(questions)
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS — NEW SAFE METHOD
+# RENDER QUESTIONS (knapper, ingen links)
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
-
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    # labels (visual)
-    html = "<div class='scale-row'>"
-    for idx, lab in enumerate(labels):
-        css = "selected-label" if st.session_state.answers[i] == idx else ""
-        html += f"<span class='{css}'>{lab}</span>"
-    html += "</div>"
-    st.markdown(html, unsafe_allow_html=True)
+    # Vis valgt label som rød tekst (stabil visuel markør)
+    chosen = st.session_state.answers[i]
+    if chosen is not None:
+        txt = labels[chosen]
+        st.markdown(f"<div style='padding-left:6%; margin-bottom:6px;'><span class='selected-label'>{txt}</span></div>", unsafe_allow_html=True)
+    else:
+        st.markdown("<div style='padding-left:6%; margin-bottom:6px; color: #ffffff;'>Vælg et svar</div>", unsafe_allow_html=True)
 
-    # actual radio buttons (invisible labels)
-    choice = st.radio(
-        key=f"radio_{i}",
-        label="",
-        options=list(range(5)),
-        horizontal=True,
-        label_visibility="collapsed",
-        index=st.session_state.answers[i] if st.session_state.answers[i] is not None else 0
-    )
-
-    st.session_state.answers[i] = choice
+    # Knapper i én kolonnerække (mobil-venligt)
+    cols = st.columns(len(labels), gap="large")
+    for v, lab in enumerate(labels):
+        with cols[v]:
+            # unik nøgle per knap
+            key = f"q_{i}_btn_{v}"
+            if st.button(lab, key=key):
+                st.session_state.answers[i] = v
+                # Ingen manipulation af URL og ingen eksperimentelle reruns.
+                # Streamlit genkører naturligt ved interaktioner; vi lader det ske.
 
 # -------------------------------------------------------------
-# RESET BUTTON
+# RESET (ingen rerun, sætter None)
 # -------------------------------------------------------------
+st.markdown("<br>", unsafe_allow_html=True)
 if st.button("Nulstil svar"):
     st.session_state.answers = [None] * len(questions)
 
@@ -217,9 +163,14 @@ def interpret_score(score):
     else:
         return "HSP"
 
+# None -> 0 for scoring
 safe_answers = [a if a is not None else 0 for a in st.session_state.answers]
 total_score = sum(safe_answers)
 profile = interpret_score(total_score)
+
+st.header("Dit resultat")
+st.subheader(f"Score: {total_score} / 80")
+st.subheader(f"Profil: {profile}")
 
 PROFILE_TEXT = {
     "HSP": [
@@ -247,34 +198,27 @@ PROFILE_TEXT = {
         "Du fungerer bredt socialt og mentalt i mange typer situationer.",
     ],
 }
-
-# -------------------------------------------------------------
-# RESULT
-# -------------------------------------------------------------
-st.header("Dit resultat")
-st.subheader(f"Score: {total_score} / 80")
-st.subheader(f"Profil: {profile}")
-
 st.write("### Karakteristika for din profil:")
 for s in PROFILE_TEXT[profile]:
     st.write(f"- {s}")
 
 # -------------------------------------------------------------
-# PDF GENERATOR
+# PDF
 # -------------------------------------------------------------
 def generate_pdf(score, profile):
     buf = BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=letter)
     styles = getSampleStyleSheet()
-
     story = []
+
     story.append(Paragraph("HSP / Slow Processor – Rapport", styles["Title"]))
-    story.append(Paragraph(f"Score: {score} / 80", styles["Heading2"]))  
-    story.append(Paragraph(f"Profil: {profile}", styles["Heading2"]))  
+    story.append(Paragraph(f"Score: {score} / 80", styles["Heading2"]))
+    story.append(Paragraph(f"Profil: {profile}", styles["Heading2"]))
     story.append(Spacer(1, 12))
 
-    for i, q in enumerate(questions):  
-        story.append(Paragraph(f"{i+1}. {q} – {labels[safe_answers[i]]}", styles["BodyText"]))
+    for i, q in enumerate(questions):
+        answer_text = labels[safe_answers[i]]
+        story.append(Paragraph(f"{i+1}. {q} – {answer_text}", styles["BodyText"]))
 
     doc.build(story)
     buf.seek(0)
