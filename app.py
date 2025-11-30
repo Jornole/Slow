@@ -4,15 +4,18 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
 from datetime import datetime
+import pytz
 
 # -------------------------------------------------------------
 # BASIC SETUP
 # -------------------------------------------------------------
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
-# version + timestamp
-version = "v98"
-timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
+# Dansk tid
+tz = pytz.timezone("Europe/Copenhagen")
+timestamp = datetime.now(tz).strftime("%Y-%m-%d %H:%M")
+version = "v100"
+
 st.markdown(
     f"""
     <div style="font-size:0.85rem; background-color:#144d27;
@@ -25,36 +28,89 @@ st.markdown(
 )
 
 # -------------------------------------------------------------
-# CSS (bevart simpelt for nu)
+# GLOBAL CSS — V78 KNAPDESIGN
 # -------------------------------------------------------------
 st.markdown(
     """
     <style>
-    html, body, .stApp { background-color:#1A6333 !important; color:white !important; font-family: Arial, sans-serif !important; }
-    .main-title { font-size:2.3rem; font-weight:800; text-align:center; margin-top:10px; margin-bottom:25px; }
-    .question-text { font-size:1.15rem; font-weight:600; margin-top:22px; margin-bottom:6px; }
-    .stButton > button { background-color:#C62828 !important; color:white !important; border-radius:8px !important; padding:0.65rem 1.4rem !important; font-weight:600 !important; border:none !important; }
+    html, body, .stApp {
+        background-color: #1A6333 !important;
+        color: white !important;
+        font-family: Arial, sans-serif !important;
+    }
+
+    .center-logo {
+        display:flex;
+        justify-content:center;
+        margin-top:10px;
+        margin-bottom:5px;
+    }
+
+    .choice-btn {
+        display:inline-block;
+        padding: 14px 26px;
+        margin: 4px 6px;
+        border-radius: 10px;
+        background-color: #C62828;
+        color: white;
+        font-size: 1.0rem;
+        font-weight: 600;
+        cursor: pointer;
+        border: 2px solid #C62828;
+        text-align:center;
+        min-width:120px;
+    }
+    .choice-btn.selected {
+        background-color: white;
+        color: #C62828;
+        border: 2px solid white;
+    }
+    .choice-btn:hover {
+        background-color: #E53935;
+    }
+
+    .question-text {
+        font-size:1.2rem;
+        font-weight:600;
+        margin-top:22px;
+        margin-bottom:10px;
+    }
+
+    .stButton > button, .stDownloadButton > button {
+        background-color: #C62828 !important;
+        color: white !important;
+        border-radius: 8px !important;
+        padding: 0.65rem 1.4rem !important;
+        font-weight: 600 !important;
+        border: none !important;
+        margin-top:15px;
+    }
     </style>
     """,
-    unsafe_allow_html=True,
+    unsafe_allow_html=True
 )
 
 # -------------------------------------------------------------
-# LOGO + TITLE + intro
+# LOGO
 # -------------------------------------------------------------
-st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
 st.markdown(
     """
-    Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige
-    og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner.
-
-    Du besvarer 20 udsagn på en skala fra **Aldrig** til **Altid**.
+    <div class="center-logo">
+        <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="160">
+    </div>
     """,
-    unsafe_allow_html=True,
+    unsafe_allow_html=True
+)
+
+st.markdown("<h1 style='text-align:center;'>DIN PERSONLIGE PROFIL</h1>", unsafe_allow_html=True)
+
+st.write(
+    """Denne test giver dig indblik i, hvordan du bearbejder indtryk og hvilket mentalt tempo du har.
+    Du besvarer 20 udsagn fra **Aldrig** til **Altid**."""
 )
 
 # -------------------------------------------------------------
-# QUESTIONS + LABELS
+# QUESTIONS
 # -------------------------------------------------------------
 questions = [
     "Jeg bliver let overvældet af indtryk.",
@@ -76,55 +132,46 @@ questions = [
     "Jeg foretrækker dybe samtaler frem for smalltalk.",
     "Jeg kan have svært ved at skifte fokus hurtigt.",
     "Jeg føler mig ofte overstimuleret.",
-    "Jeg bliver let distraheret, når der sker meget omkring mig.",
+    "Jeg bliver let distraheret, når der sker meget omkring mig."
 ]
+
 labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
 
 # -------------------------------------------------------------
-# SESSION STATE (answers)
+# SESSION STATE
 # -------------------------------------------------------------
 if "answers" not in st.session_state:
     st.session_state.answers = [None] * len(questions)
 
-# Load existing values if keys are in session_state already (keeps state between reruns)
-# (vi undgår href-navigation helt i denne version for at stoppe browser reload)
+def set_answer(q_index, value):
+    st.session_state.answers[q_index] = value
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS (brug radio for at undgå browser navigation)
+# RENDER QUESTIONS
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    # sæt current default (hvis tidligere valgt)
-    current = st.session_state.answers[i]
-    # bruger st.radio (dette tricker en Streamlit-rerun, men uden browser reload/navigation)
-    choice = st.radio(
-        label="",
-        options=list(range(len(labels))),
-        format_func=lambda x, lab=labels: labels[x],
-        index=current if current is not None else 0,
-        key=f"radio_{i}",
-        horizontal=True
-    )
-    # gem valget i vores answers state
-    st.session_state.answers[i] = choice
+    cols = st.columns(5)
+    for idx, col in enumerate(cols):
+        selected = "selected" if st.session_state.answers[i] == idx else ""
+        with col:
+            if st.button(labels[idx], key=f"q{i}_{idx}"):
+                set_answer(i, idx)
+        st.markdown(
+            f"<div class='choice-btn {selected}'>{labels[idx]}</div>",
+            unsafe_allow_html=True
+        )
 
 # -------------------------------------------------------------
 # RESET
 # -------------------------------------------------------------
 if st.button("Nulstil svar"):
     st.session_state.answers = [None] * len(questions)
-    try:
-        st.experimental_set_query_params()  # ryd query params hvis nogle er der
-    except:
-        pass
 
 # -------------------------------------------------------------
-# SCORE + PROFILE (inkl. PROFILE_TEXT — genindsat)
+# SCORE + PROFILE
 # -------------------------------------------------------------
-safe_answers = [a if a is not None else 0 for a in st.session_state.answers]
-total_score = sum(safe_answers)
-
 def interpret_score(score):
     if score <= 26:
         return "Slow Processor"
@@ -132,6 +179,14 @@ def interpret_score(score):
         return "Mellemprofil"
     else:
         return "HSP"
+
+safe_answers = [a if a is not None else 0 for a in st.session_state.answers]
+total_score = sum(safe_answers)
+profile = interpret_score(total_score)
+
+st.header("Dit resultat")
+st.subheader(f"Score: {total_score} / 80")
+st.subheader(f"Profil: {profile}")
 
 PROFILE_TEXT = {
     "HSP": [
@@ -160,30 +215,29 @@ PROFILE_TEXT = {
     ],
 }
 
-profile = interpret_score(total_score)
-
-st.header("Dit resultat")
-st.subheader(f"Score: {total_score} / 80")
-st.subheader(f"Profil: {profile}")
-
 st.write("### Karakteristika for din profil:")
 for s in PROFILE_TEXT[profile]:
     st.write(f"- {s}")
 
 # -------------------------------------------------------------
-# PDF (uændret funktion)
+# PDF
 # -------------------------------------------------------------
 def generate_pdf(score, profile):
     buf = BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=letter)
     styles = getSampleStyleSheet()
     story = []
+
     story.append(Paragraph("HSP / Slow Processor – Rapport", styles["Title"]))
     story.append(Paragraph(f"Score: {score} / 80", styles["Heading2"]))
     story.append(Paragraph(f"Profil: {profile}", styles["Heading2"]))
     story.append(Spacer(1, 12))
+
     for i, q in enumerate(questions):
-        story.append(Paragraph(f"{i+1}. {q} – {labels[safe_answers[i]]}", styles["BodyText"]))
+        story.append(
+            Paragraph(f"{i+1}. {q} – {labels[safe_answers[i]]}", styles["BodyText"])
+        )
+
     doc.build(story)
     buf.seek(0)
     return buf
