@@ -3,18 +3,17 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
-from urllib.parse import urlencode
 from datetime import datetime
 
-# -------------------------------------------------------------
+# ---------------------------------------------------------
 # BASIC SETUP
-# -------------------------------------------------------------
+# ---------------------------------------------------------
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
-# -------------------------------------------------------------
-# VERSION + TIMESTAMP (v78)
-# -------------------------------------------------------------
-version = "v78"
+# ---------------------------------------------------------
+# VERSION + TIMESTAMP
+# ---------------------------------------------------------
+version = "v102"
 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
 
 st.markdown(
@@ -28,9 +27,9 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# -------------------------------------------------------------
-# GLOBAL CSS
-# -------------------------------------------------------------
+# ---------------------------------------------------------
+# GLOBAL CSS (IDENTISK MED v78)
+# ---------------------------------------------------------
 st.markdown(
     """
     <style>
@@ -86,11 +85,6 @@ st.markdown(
         font-weight:700;
     }
 
-    @media (max-width:420px) {
-        .scale-row { padding:0 3%; }
-        .scale-row a { padding:8px 2px; font-size:0.9rem; }
-    }
-
     .stButton > button, .stDownloadButton > button {
         background-color: #C62828 !important;
         color: white !important;
@@ -107,9 +101,9 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# -------------------------------------------------------------
-# LOGO + TITLE
-# -------------------------------------------------------------
+# ---------------------------------------------------------
+# LOGO + TITLE (uændret)
+# ---------------------------------------------------------
 st.markdown(
     """
     <div class="center-logo">
@@ -133,9 +127,9 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# -------------------------------------------------------------
+# ---------------------------------------------------------
 # QUESTIONS
-# -------------------------------------------------------------
+# ---------------------------------------------------------
 questions = [
     "Jeg bliver let overvældet af indtryk.",
     "Jeg opdager små detaljer, som andre ofte overser.",
@@ -161,40 +155,30 @@ questions = [
 
 labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
 
-# -------------------------------------------------------------
-# SESSION STATE
-# -------------------------------------------------------------
+# ---------------------------------------------------------
+# SESSION STATE (sikker)
+# ---------------------------------------------------------
 if "answers" not in st.session_state:
-    st.session_state.answers = [None] * len(questions)  # << ændret fra 0 til None
+    st.session_state.answers = [None] * len(questions)
 
-# -------------------------------------------------------------
-# QUERY PARAMS → SESSION
-# -------------------------------------------------------------
-qparams = st.experimental_get_query_params()
-for i in range(len(questions)):
-    key = f"q_{i}"
-    if key in qparams:
-        try:
-            v = int(qparams[key][0])
-            if 0 <= v <= 4:
-                st.session_state.answers[i] = v
-        except:
-            pass
+# ---------------------------------------------------------
+# PROCESS CLICK DATA (NO RELOAD METHOD)
+# ---------------------------------------------------------
+clicked = st.experimental_get_query_params()
 
-# -------------------------------------------------------------
-# BUILD HREF (NO CHANGE)
-# -------------------------------------------------------------
-def build_href(q_index, value):
-    params = {}
-    for idx, ans in enumerate(st.session_state.answers):
-        if ans is not None:  # kun eksisterende svar
-            params[f"q_{idx}"] = str(ans)
-    params[f"q_{q_index}"] = str(value)
-    return "?" + urlencode(params)
+if "click" in clicked:
+    raw = clicked["click"][0]  # eksempel: "3_2"
+    q_i, value = raw.split("_")
+    q_i = int(q_i)
+    value = int(value)
+    st.session_state.answers[q_i] = value
 
-# -------------------------------------------------------------
-# RENDER QUESTIONS
-# -------------------------------------------------------------
+    # Fjern query param instant
+    st.experimental_set_query_params()
+
+# ---------------------------------------------------------
+# RENDER QUESTIONS (HTML IDENTISK MED v78)
+# ---------------------------------------------------------
 for i, q in enumerate(questions):
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
@@ -205,25 +189,21 @@ for i, q in enumerate(questions):
         if st.session_state.answers[i] == v:
             selected = "selected"
 
-        html += f"<a class='{selected}' href='{build_href(i, v)}'>{lab}</a>"
+        html += f"<a class='{selected}' href='?click={i}_{v}'>{lab}</a>"
 
     html += "</div>"
     st.markdown(html, unsafe_allow_html=True)
 
-# -------------------------------------------------------------
-# RESET BUTTON (fix: set to None)
-# -------------------------------------------------------------
+# ---------------------------------------------------------
+# RESET BUTTON
+# ---------------------------------------------------------
 if st.button("Nulstil svar"):
     st.session_state.answers = [None] * len(questions)
+    st.experimental_set_query_params()
 
-    try:
-        st.experimental_set_query_params()
-    except:
-        pass
-
-# -------------------------------------------------------------
+# ---------------------------------------------------------
 # SCORE + PROFILE
-# -------------------------------------------------------------
+# ---------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
         return "Slow Processor"
@@ -232,7 +212,6 @@ def interpret_score(score):
     else:
         return "HSP"
 
-# None → 0 scoring
 safe_answers = [a if a is not None else 0 for a in st.session_state.answers]
 total_score = sum(safe_answers)
 profile = interpret_score(total_score)
@@ -264,9 +243,9 @@ PROFILE_TEXT = {
     ],
 }
 
-# -------------------------------------------------------------
+# ---------------------------------------------------------
 # RESULT
-# -------------------------------------------------------------
+# ---------------------------------------------------------
 st.header("Dit resultat")
 st.subheader(f"Score: {total_score} / 80")
 st.subheader(f"Profil: {profile}")
@@ -275,9 +254,9 @@ st.write("### Karakteristika for din profil:")
 for s in PROFILE_TEXT[profile]:
     st.write(f"- {s}")
 
-# -------------------------------------------------------------
+# ---------------------------------------------------------
 # PDF
-# -------------------------------------------------------------
+# ---------------------------------------------------------
 def generate_pdf(score, profile):
     buf = BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=letter)
