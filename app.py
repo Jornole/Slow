@@ -4,23 +4,22 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
 from datetime import datetime
-import pytz
 
 # -------------------------------------------------------------
 # BASIC SETUP
 # -------------------------------------------------------------
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
-# Dansk tid
-tz = pytz.timezone("Europe/Copenhagen")
-timestamp = datetime.now(tz).strftime("%Y-%m-%d %H:%M")
+# Timestamp med dansk tid (UTC+1 / +2)
+timestamp = datetime.utcnow().timestamp()
+timestamp = datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M")
 
-version = "v93"
+version = "v94"
 
 st.markdown(
     f"""
     <div style="font-size:0.85rem; background-color:#144d27;
-                padding:6px 14px; width:fit-content;
+                padding:6px 10px; width:fit-content;
                 border-radius:6px; margin-bottom:10px;">
         Version {version} — {timestamp}
     </div>
@@ -29,49 +28,21 @@ st.markdown(
 )
 
 # -------------------------------------------------------------
-# GLOBAL CSS
+# GLOBAL CSS (kun farver og layout, ikke knapper)
 # -------------------------------------------------------------
 st.markdown(
     """
     <style>
-
     html, body, .stApp {
-        background-color:#1A6333 !important;
-        color:white !important;
-        font-family:Arial, sans-serif !important;
+        background-color: #1A6333 !important;
+        color: white !important;
+        font-family: Arial, sans-serif !important;
     }
-
     .question-text {
-        font-size:1.15rem;
-        font-weight:600;
-        margin-top:22px;
-        margin-bottom:6px;
-    }
-
-    /* horisontal radio layout */
-    .horizontal-radio > div {
-        flex-direction: row !important;
-        gap: 35px !important;
-    }
-
-    /* radio text color */
-    .stRadio label {
-        color:white !important;
-        font-size:1.0rem !important;
-    }
-
-    /* reset button style */
-    .stButton > button {
-        background-color:#C62828 !important;
-        color:white !important;
-        border:none !important;
-        padding:0.6rem 1.3rem !important;
-        border-radius:8px !important;
-        font-weight:600 !important;
-        margin-top:10px !important;
-    }
-    .stButton > button:hover {
-        background-color:#B71C1C !important;
+        font-size: 1.18rem;
+        font-weight: 600;
+        margin-top: 22px;
+        margin-bottom: 6px;
     }
     </style>
     """,
@@ -105,37 +76,38 @@ questions = [
 ]
 
 labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
-label_to_value = {lab: i for i, lab in enumerate(labels)}
 
 # -------------------------------------------------------------
 # SESSION STATE
 # -------------------------------------------------------------
 if "answers" not in st.session_state:
-    st.session_state.answers = ["Vælg"] * len(questions)
+    st.session_state.answers = [None] * len(questions)
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS
+# RENDER QUESTIONS (SIKKER RADIO VERSION)
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    choice = st.radio(
-        "",
-        ["Vælg"] + labels,
-        key=f"radio_{i}",
+    selected = st.radio(
+        f"q_{i}",
+        options=labels,
         horizontal=True,
-        label_visibility="collapsed"
+        key=f"radio_{i}",
+        index=st.session_state.answers[i] if st.session_state.answers[i] is not None else None
     )
 
-    st.session_state.answers[i] = choice
+    # Gem i session_state
+    if selected in labels:
+        st.session_state.answers[i] = labels.index(selected)
 
 # -------------------------------------------------------------
 # RESET BUTTON
 # -------------------------------------------------------------
 if st.button("Nulstil svar"):
-    st.session_state.answers = ["Vælg"] * len(questions)
+    st.session_state.answers = [None] * len(questions)
     for i in range(len(questions)):
-        st.session_state[f"radio_{i}"] = "Vælg"
+        st.session_state[f"radio_{i}"] = None
 
 # -------------------------------------------------------------
 # SCORE + PROFILE
@@ -145,53 +117,19 @@ def interpret_score(score):
         return "Slow Processor"
     elif score <= 53:
         return "Mellemprofil"
-    return "HSP"
+    else:
+        return "HSP"
 
-numeric_answers = [label_to_value[a] if a in label_to_value else 0 for a in st.session_state.answers]
-
-total_score = sum(numeric_answers)
+safe = [a if a is not None else 0 for a in st.session_state.answers]
+total_score = sum(safe)
 profile = interpret_score(total_score)
 
-PROFILE_TEXT = {
-    "HSP": [
-        "Du registrerer flere nuancer i både indtryk og stemninger.",
-        "Du bearbejder oplevelser dybt og grundigt.",
-        "Du reagerer stærkt på stimuli og kan blive overstimuleret.",
-        "Du har en rig indre verden og et fintfølende nervesystem.",
-        "Du er empatisk og opmærksom på andre.",
-        "Du har brug for ro og pauser for at lade op.",
-    ],
-    "Slow Processor": [
-        "Du arbejder bedst i roligt tempo og med forudsigelighed.",
-        "Du bearbejder indtryk grundigt, men langsomt.",
-        "Du har brug for ekstra tid til omstilling og beslutninger.",
-        "Du trives med faste rammer og struktur.",
-        "Du kan føle dig presset, når tingene går hurtigt.",
-        "Du har god udholdenhed, når du arbejder i dit eget tempo.",
-    ],
-    "Mellemprofil": [
-        "Du veksler naturligt mellem hurtig og langsom bearbejdning.",
-        "Du håndterer de fleste stimuli uden at blive overvældet.",
-        "Du har en god balance mellem intuition og eftertænksomhed.",
-        "Du kan tilpasse dig forskellige miljøer og tempoer.",
-        "Du bliver påvirket i perioder, men finder hurtigt balancen igen.",
-        "Du fungerer bredt socialt og mentalt i mange typer situationer.",
-    ],
-}
-
-# -------------------------------------------------------------
-# RESULT
-# -------------------------------------------------------------
 st.header("Dit resultat")
 st.subheader(f"Score: {total_score} / 80")
 st.subheader(f"Profil: {profile}")
 
-st.write("### Karakteristika for din profil:")
-for s in PROFILE_TEXT[profile]:
-    st.write(f"- {s}")
-
 # -------------------------------------------------------------
-# PDF GENERATION
+# PDF
 # -------------------------------------------------------------
 def generate_pdf(score, profile):
     buf = BytesIO()
@@ -205,8 +143,8 @@ def generate_pdf(score, profile):
     story.append(Spacer(1, 12))
 
     for i, q in enumerate(questions):
-        ans = st.session_state.answers[i]
-        story.append(Paragraph(f"{i+1}. {q} – {ans}", styles["BodyText"]))
+        sel = safe[i]
+        story.append(Paragraph(f"{i+1}. {q} – {labels[sel]}", styles["BodyText"]))
 
     doc.build(story)
     buf.seek(0)
