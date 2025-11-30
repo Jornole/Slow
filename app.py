@@ -28,12 +28,11 @@ st.markdown(
 )
 
 # -------------------------------------------------------------
-# GLOBAL CSS  (ONLY CHANGE: smaller buttons)
+# GLOBAL CSS  (ONLY CHANGE FROM v106 = smaller buttons)
 # -------------------------------------------------------------
 st.markdown(
     """
     <style>
-
     html, body, .stApp {
         background-color: #1A6333 !important;
         color: white !important;
@@ -62,45 +61,23 @@ st.markdown(
         margin-bottom:6px;
     }
 
-    .choice-row {
-        display: grid;
-        grid-template-columns: repeat(5, 1fr);
-        gap: 6px;
-        width: 100%;
-        margin-bottom: 14px;
-    }
-
-    .choice-btn {
+    /* SMALLER BUTTONS – ONLY CHANGE FROM v106 */
+    .stButton > button {
         background-color: #C62828 !important;
         color: white !important;
         border-radius: 8px !important;
-        padding: 6px 4px !important;
+        padding: 0.30rem 0.6rem !important;
+        font-weight: 600 !important;
         border: none !important;
         font-size: 0.85rem !important;
-        font-weight: 600 !important;
-        text-align: center !important;
-        white-space: nowrap !important;
         width: 100% !important;
-        display: block !important;
+        min-width: 55px !important;
+        height: 38px !important;
     }
 
-    .choice-btn.selected {
-        background-color: #ffffff !important;
-        color: #C62828 !important;
-        font-weight: 800 !important;
-        padding: 6px 4px !important;
-        font-size: 0.85rem !important;
+    .stButton > button:hover {
+        background-color: #B71C1C !important;
     }
-
-    .stButton > button, .stDownloadButton > button {
-        background-color: #C62828 !important;
-        color: white !important;
-        border-radius: 8px !important;
-        padding: 0.65rem 1.4rem !important;
-        font-weight: 600 !important;
-        border: none !important;
-    }
-
     </style>
     """,
     unsafe_allow_html=True
@@ -167,57 +144,26 @@ if "answers" not in st.session_state:
     st.session_state.answers = [None] * len(questions)
 
 # -------------------------------------------------------------
-# QUERY PARAMS → SESSION
-# -------------------------------------------------------------
-qparams = st.experimental_get_query_params()
-for i in range(len(questions)):
-    key = f"q_{i}"
-    if key in qparams:
-        try:
-            v = int(qparams[key][0])
-            if 0 <= v <= 4:
-                st.session_state.answers[i] = v
-        except:
-            pass
-
-# -------------------------------------------------------------
-# RENDER QUESTIONS
+# RENDER QUESTIONS (same as v106)
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
-
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    row_html = "<div class='choice-row'>"
-    for v, lab in enumerate(labels):
-
-        selected = "selected" if st.session_state.answers[i] == v else ""
-
-        # Clicking simply updates query params, no reload
-        href = f"?q_{i}={v}"
-
-        row_html += f"""
-            <a class="choice-btn {selected}" href="{href}">{lab}</a>
-        """
-
-    row_html += "</div>"
-    st.markdown(row_html, unsafe_allow_html=True)
+    cols = st.columns(5)
+    for idx, col in enumerate(cols):
+        with col:
+            if st.button(labels[idx], key=f"q{i}_{idx}"):
+                st.session_state.answers[i] = idx
 
 # -------------------------------------------------------------
 # RESET BUTTON
 # -------------------------------------------------------------
 if st.button("Nulstil svar"):
     st.session_state.answers = [None] * len(questions)
-    try:
-        st.experimental_set_query_params()
-    except:
-        pass
 
 # -------------------------------------------------------------
 # SCORE + PROFILE
 # -------------------------------------------------------------
-safe_answers = [a if a is not None else 0 for a in st.session_state.answers]
-total_score = sum(safe_answers)
-
 def interpret_score(score):
     if score <= 26:
         return "Slow Processor"
@@ -226,6 +172,8 @@ def interpret_score(score):
     else:
         return "HSP"
 
+safe_answers = [a if a is not None else 0 for a in st.session_state.answers]
+total_score = sum(safe_answers)
 profile = interpret_score(total_score)
 
 PROFILE_TEXT = {
