@@ -1,19 +1,19 @@
-import streamlit as st
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-from reportlab.lib.pagesizes import letter
-from reportlab.lib.styles import getSampleStyleSheet
-from io import BytesIO
+import streamlit as st  
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer  
+from reportlab.lib.pagesizes import letter  
+from reportlab.lib.styles import getSampleStyleSheet  
+from io import BytesIO  
 from datetime import datetime
 
-# ---------------------------------------------------------
+# -------------------------------------------------------------
 # BASIC SETUP
-# ---------------------------------------------------------
+# -------------------------------------------------------------
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
-# ---------------------------------------------------------
+# -------------------------------------------------------------
 # VERSION + TIMESTAMP
-# ---------------------------------------------------------
-version = "v102"
+# -------------------------------------------------------------
+version = "v103"
 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
 
 st.markdown(
@@ -27,9 +27,9 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# ---------------------------------------------------------
-# GLOBAL CSS (IDENTISK MED v78)
-# ---------------------------------------------------------
+# -------------------------------------------------------------
+# GLOBAL CSS  (identisk med v78)
+# -------------------------------------------------------------
 st.markdown(
     """
     <style>
@@ -61,28 +61,23 @@ st.markdown(
         margin-bottom:6px;
     }
 
-    .scale-row {
-        display:flex;
-        justify-content:space-between;
-        align-items:center;
-        width:100%;
-        margin-bottom:12px;
-        padding:0 6%;
-        box-sizing:border-box;
-    }
-
-    .scale-row a {
-        color: #ffffff;
-        text-decoration: none;
-        font-size:0.95rem;
-        display:inline-block;
-        padding:10px 6px;
+    .answer-btn {
+        background-color: transparent;
+        border: 1px solid white;
+        color: white;
+        padding: 10px 6px;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        width: 100%;
         text-align:center;
     }
 
-    .scale-row a.selected {
-        color: #ff4444;
-        font-weight:700;
+    .answer-selected {
+        background-color: #ff4444 !important;
+        color: white !important;
+        border-radius: 8px !important;
+        padding: 10px 6px;
+        font-weight: 700 !important;
     }
 
     .stButton > button, .stDownloadButton > button {
@@ -93,6 +88,7 @@ st.markdown(
         font-weight: 600 !important;
         border: none !important;
     }
+
     .stButton > button:hover, .stDownloadButton > button:hover {
         background-color: #B71C1C !important;
     }
@@ -101,9 +97,9 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# ---------------------------------------------------------
-# LOGO + TITLE (uændret)
-# ---------------------------------------------------------
+# -------------------------------------------------------------
+# LOGO + TITLE
+# -------------------------------------------------------------
 st.markdown(
     """
     <div class="center-logo">
@@ -127,9 +123,9 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# ---------------------------------------------------------
+# -------------------------------------------------------------
 # QUESTIONS
-# ---------------------------------------------------------
+# -------------------------------------------------------------
 questions = [
     "Jeg bliver let overvældet af indtryk.",
     "Jeg opdager små detaljer, som andre ofte overser.",
@@ -155,55 +151,38 @@ questions = [
 
 labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
 
-# ---------------------------------------------------------
-# SESSION STATE (sikker)
-# ---------------------------------------------------------
+# -------------------------------------------------------------
+# SESSION STATE
+# -------------------------------------------------------------
 if "answers" not in st.session_state:
     st.session_state.answers = [None] * len(questions)
 
-# ---------------------------------------------------------
-# PROCESS CLICK DATA (NO RELOAD METHOD)
-# ---------------------------------------------------------
-clicked = st.experimental_get_query_params()
-
-if "click" in clicked:
-    raw = clicked["click"][0]  # eksempel: "3_2"
-    q_i, value = raw.split("_")
-    q_i = int(q_i)
-    value = int(value)
-    st.session_state.answers[q_i] = value
-
-    # Fjern query param instant
-    st.experimental_set_query_params()
-
-# ---------------------------------------------------------
-# RENDER QUESTIONS (HTML IDENTISK MED v78)
-# ---------------------------------------------------------
+# -------------------------------------------------------------
+# RENDER QUESTIONS (NO RELOAD VERSION)
+# -------------------------------------------------------------
 for i, q in enumerate(questions):
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    html = "<div class='scale-row'>"
+    cols = st.columns(5)
+
     for v, lab in enumerate(labels):
+        with cols[v]:
+            is_selected = (st.session_state.answers[i] == v)
 
-        selected = ""
-        if st.session_state.answers[i] == v:
-            selected = "selected"
+            button_label = f"**{lab}**" if is_selected else lab
 
-        html += f"<a class='{selected}' href='?click={i}_{v}'>{lab}</a>"
+            if st.button(button_label, key=f"btn_{i}_{v}", use_container_width=True):
+                st.session_state.answers[i] = v
 
-    html += "</div>"
-    st.markdown(html, unsafe_allow_html=True)
-
-# ---------------------------------------------------------
+# -------------------------------------------------------------
 # RESET BUTTON
-# ---------------------------------------------------------
+# -------------------------------------------------------------
 if st.button("Nulstil svar"):
     st.session_state.answers = [None] * len(questions)
-    st.experimental_set_query_params()
 
-# ---------------------------------------------------------
+# -------------------------------------------------------------
 # SCORE + PROFILE
-# ---------------------------------------------------------
+# -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
         return "Slow Processor"
@@ -243,9 +222,9 @@ PROFILE_TEXT = {
     ],
 }
 
-# ---------------------------------------------------------
+# -------------------------------------------------------------
 # RESULT
-# ---------------------------------------------------------
+# -------------------------------------------------------------
 st.header("Dit resultat")
 st.subheader(f"Score: {total_score} / 80")
 st.subheader(f"Profil: {profile}")
@@ -254,9 +233,9 @@ st.write("### Karakteristika for din profil:")
 for s in PROFILE_TEXT[profile]:
     st.write(f"- {s}")
 
-# ---------------------------------------------------------
-# PDF
-# ---------------------------------------------------------
+# -------------------------------------------------------------
+# PDF EXPORT
+# -------------------------------------------------------------
 def generate_pdf(score, profile):
     buf = BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=letter)
