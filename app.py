@@ -11,9 +11,9 @@ from datetime import datetime
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# VERSION + TIMESTAMP (v107)
+# VERSION + TIMESTAMP (v108)
 # -------------------------------------------------------------
-version = "v107"
+version = "v108"
 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
 
 st.markdown(
@@ -28,7 +28,7 @@ st.markdown(
 )
 
 # -------------------------------------------------------------
-# GLOBAL CSS  (ONLY CHANGE FROM v106 = smaller buttons)
+# GLOBAL CSS  (ONLY CHANGE = EVEN SMALLER BUTTONS)
 # -------------------------------------------------------------
 st.markdown(
     """
@@ -61,18 +61,24 @@ st.markdown(
         margin-bottom:6px;
     }
 
-    /* SMALLER BUTTONS – ONLY CHANGE FROM v106 */
+    /* SMALLER BUTTONS — ONLY CHANGE FROM v107 */
     .stButton > button {
         background-color: #C62828 !important;
         color: white !important;
         border-radius: 8px !important;
-        padding: 0.30rem 0.6rem !important;
+
+        padding: 0.25rem 0.3rem !important;
+        font-size: 0.78rem !important;
+
         font-weight: 600 !important;
         border: none !important;
-        font-size: 0.85rem !important;
+
         width: 100% !important;
-        min-width: 55px !important;
-        height: 38px !important;
+        min-width: 48px !important;
+        height: 34px !important;
+
+        line-height: 1.0rem !important;
+        white-space: nowrap !important;
     }
 
     .stButton > button:hover {
@@ -144,7 +150,7 @@ if "answers" not in st.session_state:
     st.session_state.answers = [None] * len(questions)
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS (same as v106)
+# RENDER QUESTIONS (unchanged)
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
