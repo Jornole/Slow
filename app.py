@@ -1,10 +1,11 @@
+# app.py (v92)
 import streamlit as st
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
 from datetime import datetime
-import pytz
+from zoneinfo import ZoneInfo
 
 # -------------------------------------------------------------
 # BASIC SETUP
@@ -12,11 +13,11 @@ import pytz
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# VERSION + TIMESTAMP (v91)
+# VERSION + TIMESTAMP (v92, København tid)
 # -------------------------------------------------------------
-version = "v91"
-tz = pytz.timezone("Europe/Copenhagen")
-timestamp = datetime.now(tz).strftime("%Y-%m-%d %H:%M")
+version = "v92"
+now = datetime.now(tz=ZoneInfo("Europe/Copenhagen"))
+timestamp = now.strftime("%Y-%m-%d %H:%M")
 
 st.markdown(
     f"""
@@ -30,7 +31,7 @@ st.markdown(
 )
 
 # -------------------------------------------------------------
-# GLOBAL CSS — v78 DESIGN (vandret skala, ingen knapfarver)
+# GLOBAL CSS (begrænset styling så vi ikke ødelægger widget-udseende)
 # -------------------------------------------------------------
 st.markdown(
     """
@@ -41,34 +42,64 @@ st.markdown(
         font-family: Arial, sans-serif !important;
     }
 
+    .center-logo {
+        display:flex;
+        justify-content:center;
+        margin-top:10px;
+        margin-bottom:5px;
+    }
+
+    .main-title {
+        font-size:2.3rem;
+        font-weight:800;
+        text-align:center;
+        margin-top:10px;
+        margin-bottom:25px;
+    }
+
     .question-text {
-        font-size: 1.15rem;
-        font-weight: 600;
-        margin-top: 22px;
-        margin-bottom: 8px;
+        font-size:1.15rem;
+        font-weight:600;
+        margin-top:22px;
+        margin-bottom:6px;
     }
 
-    .scale-row {
+    /* Radio-layout: gør radio-knapperne horisontale og pæne */
+    .stRadio > div { 
         display: flex;
-        gap: 26px;
-        margin-bottom: 25px;
-        font-size: 1.1rem;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 0.8rem;
+    }
+    .stRadio label {
+        background: transparent !important;
+        padding: 0.35rem 0.75rem !important;
+        border-radius: 10px;
+        border: none !important;
+        font-weight: 500;
+        color: #ffffff !important;
+    }
+    /* markeret radio får accent (browser default) - vi lader stremlit vise markering */
+    @media (max-width:420px) {
+        .main-title { font-size:1.8rem; }
+        .question-text { font-size:1.05rem; }
     }
 
-    .scale-item {
-        padding: 4px 6px;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: 0.15s;
+    /* Make download and reset buttons look consistent */
+    .stButton > button, .stDownloadButton > button {
+        background-color: #C62828 !important;
+        color: white !important;
+        border-radius: 8px !important;
+        padding: 0.65rem 1.2rem !important;
+        font-weight: 600 !important;
+        border: none !important;
     }
-
-    .selected {
-        color: #ff4444 !important;
-        font-weight: 700 !important;
+    .stButton > button:hover, .stDownloadButton > button:hover {
+        background-color: #B71C1C !important;
     }
     </style>
     """,
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
 
 # -------------------------------------------------------------
@@ -76,31 +107,29 @@ st.markdown(
 # -------------------------------------------------------------
 st.markdown(
     """
-    <div style="display:flex; justify-content:center; margin-top:5px; margin-bottom:5px;">
+    <div class="center-logo">
         <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="160">
     </div>
     """,
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
 
-st.markdown(
-    "<div style='font-size:2.3rem; font-weight:800; text-align:center;'>DIN PERSONLIGE PROFIL</div>",
-    unsafe_allow_html=True
-)
+st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
 
 st.markdown(
     """
-    Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige  
-    og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner.  
+    Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige
+    og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner.
 
-    Du besvarer 20 udsagn på en skala fra **Aldrig** til **Altid**.  
+    Du besvarer 20 udsagn på en skala fra **Aldrig** til **Altid**.
+
     Testen er <u><b>ikke en diagnose</b></u>, men et psykologisk værktøj til selvindsigt.
     """,
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
 
 # -------------------------------------------------------------
-# QUESTIONS
+# QUESTIONS + LABELS
 # -------------------------------------------------------------
 questions = [
     "Jeg bliver let overvældet af indtryk.",
@@ -127,44 +156,46 @@ questions = [
 
 labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
 
+# We present a placeholder first so nothing is preselected.
+radio_options = ["Vælg"] + labels
+label_to_value = {lab: i for i, lab in enumerate(labels)}  # map text->0..4
+
 # -------------------------------------------------------------
-# SESSION STATE
+# SESSION STATE: answers for each question (store string or "Vælg")
 # -------------------------------------------------------------
 if "answers" not in st.session_state:
-    st.session_state.answers = [None] * len(questions)
-
+    # initialize all to "Vælg"
+    st.session_state.answers = ["Vælg"] * len(questions)
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS — NO RELOAD
+# RENDER QUESTIONS using st.radio (safe, predictable; no hrefs)
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
-
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    cols = st.columns(len(labels))
-
-    for idx, (col, label) in enumerate(zip(cols, labels)):
-        with col:
-            is_selected = (st.session_state.answers[i] == idx)
-            css_class = "selected" if is_selected else ""
-            if st.button(label, key=f"q{i}_v{idx}"):
-                st.session_state.answers[i] = idx
-
-            st.markdown(
-                f"<div class='scale-item {css_class}'>{label}</div>",
-                unsafe_allow_html=True
-            )
-
+    # Use a unique key per radio so Streamlit keeps state
+    chosen = st.radio(
+        label="",
+        options=radio_options,
+        index=radio_options.index(st.session_state.answers[i]) if st.session_state.answers[i] in radio_options else 0,
+        key=f"radio_{i}",
+        horizontal=True,
+    )
+    # store canonical "Vælg" or the label
+    st.session_state.answers[i] = chosen
 
 # -------------------------------------------------------------
-# RESET BUTTON — WORKS PERFECTLY
+# RESET BUTTON
 # -------------------------------------------------------------
 if st.button("Nulstil svar"):
-    st.session_state.answers = [None] * len(questions)
-
+    st.session_state.answers = ["Vælg"] * len(questions)
+    # also reset each radio widget's key by setting them in session_state explicitly
+    # (we set the radios so that UI updates immediately)
+    for i in range(len(questions)):
+        st.session_state[f"radio_{i}"] = "Vælg"
 
 # -------------------------------------------------------------
-# SCORE + PROFILE
+# COMPUTE SCORE + PROFILE
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
@@ -174,13 +205,16 @@ def interpret_score(score):
     else:
         return "HSP"
 
-safe = [a if a is not None else 0 for a in st.session_state.answers]
-total = sum(safe)
-profile = interpret_score(total)
+# Convert answers to numeric (Vælg -> 0)
+numeric_answers = []
+for ans in st.session_state.answers:
+    if ans == "Vælg":
+        numeric_answers.append(0)
+    else:
+        numeric_answers.append(label_to_value.get(ans, 0))
 
-st.header("Dit resultat")
-st.subheader(f"Score: {total} / 80")
-st.subheader(f"Profil: {profile}")
+total_score = sum(numeric_answers)
+profile = interpret_score(total_score)
 
 PROFILE_TEXT = {
     "HSP": [
@@ -209,12 +243,19 @@ PROFILE_TEXT = {
     ],
 }
 
+# -------------------------------------------------------------
+# RESULT
+# -------------------------------------------------------------
+st.header("Dit resultat")
+st.subheader(f"Score: {total_score} / 80")
+st.subheader(f"Profil: {profile}")
+
 st.write("### Karakteristika for din profil:")
 for s in PROFILE_TEXT[profile]:
     st.write(f"- {s}")
 
 # -------------------------------------------------------------
-# PDF
+# PDF-GENERATION (same behavior)
 # -------------------------------------------------------------
 def generate_pdf(score, profile):
     buf = BytesIO()
@@ -228,8 +269,8 @@ def generate_pdf(score, profile):
     story.append(Spacer(1, 12))
 
     for i, q in enumerate(questions):
-        ans = safe[i]
-        story.append(Paragraph(f"{i+1}. {q} – {labels[ans]}", styles["BodyText"]))
+        label_text = st.session_state.answers[i] if st.session_state.answers[i] != "Vælg" else "Intet valgt"
+        story.append(Paragraph(f"{i+1}. {q} – {label_text}", styles["BodyText"]))
 
     doc.build(story)
     buf.seek(0)
@@ -237,7 +278,7 @@ def generate_pdf(score, profile):
 
 st.download_button(
     "Download PDF-rapport",
-    generate_pdf(total, profile),
+    generate_pdf(total_score, profile),
     file_name="HSP_SlowProcessor_Rapport.pdf",
     mime="application/pdf"
 )
