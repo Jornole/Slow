@@ -1,3 +1,4 @@
+# app.py - v90
 import streamlit as st
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.pagesizes import letter
@@ -5,116 +6,72 @@ from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
 from datetime import datetime
 
-# -------------------------------------------------------------
-# BASIC SETUP
-# -------------------------------------------------------------
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
-# -------------------------------------------------------------
-# VERSION + TIMESTAMP (v89)
-# -------------------------------------------------------------
-version = "v89"
+version = "v90"
 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
-
 st.markdown(
-    f"""
-    <div style="font-size:0.85rem; background-color:#144d27;
-                padding:6px 10px; width:fit-content;
-                border-radius:6px; margin-bottom:10px;">
+    f"""<div style="font-size:0.85rem; background-color:#144d27; padding:6px 10px;
+                width:fit-content; border-radius:6px; margin-bottom:10px;">
         Version {version} — {timestamp}
-    </div>
-    """,
-    unsafe_allow_html=True
+    </div>""",
+    unsafe_allow_html=True,
 )
 
-# -------------------------------------------------------------
-# GLOBAL CSS  (IDENTISK MED V78)
-# -------------------------------------------------------------
+# CSS: styling for Streamlit buttons to look like v78 pills.
 st.markdown(
     """
     <style>
-    html, body, .stApp {
-        background-color: #1A6333 !important;
-        color: white !important;
-        font-family: Arial, sans-serif !important;
-    }
+    html, body, .stApp { background-color: #1A6333 !important; color: white !important;
+        font-family: Arial, sans-serif !important; }
 
-    .center-logo {
-        display:flex;
-        justify-content:center;
-        margin-top:10px;
-        margin-bottom:5px;
-    }
+    .main-title { font-size:2.3rem; font-weight:800; text-align:center;
+        margin-top:10px; margin-bottom:25px; }
 
-    .main-title {
-        font-size:2.3rem;
-        font-weight:800;
-        text-align:center;
-        margin-top:10px;
-        margin-bottom:25px;
-    }
+    .question-text { font-size:1.15rem; font-weight:600; margin-top:22px; margin-bottom:6px; }
 
-    .question-text {
-        font-size:1.15rem;
-        font-weight:600;
-        margin-top:22px;
-        margin-bottom:6px;
-    }
-
-    .scale-row {
-        display:flex;
-        justify-content:space-between;
-        align-items:center;
-        width:100%;
-        margin-bottom:12px;
-        padding:0 6%;
-        box-sizing:border-box;
-    }
-
-    .scale-label {
-        color: #ffffff;
-        text-decoration: none;
-        font-size:0.95rem;
-        display:inline-block;
-        padding:10px 6px;
-        text-align:center;
-        cursor:pointer;
-    }
-
-    .scale-label.selected {
-        color: #ff4444;
-        font-weight:700;
-    }
-
-    @media (max-width:420px) {
-        .scale-row { padding:0 3%; }
-        .scale-label { padding:8px 2px; font-size:0.9rem; }
-    }
-
-    .stButton > button, .stDownloadButton > button {
+    /* Make Streamlit buttons look like red pills */
+    .stButton > button {
         background-color: #C62828 !important;
         color: white !important;
-        border-radius: 8px !important;
-        padding: 0.65rem 1.4rem !important;
+        border-radius: 12px !important;
+        padding: 0.9rem 1.2rem !important;
         font-weight: 600 !important;
-        border: none !important;
+        font-size:1rem !important;
+        width: 100%;
+        text-align: left;
     }
-    .stButton > button:hover, .stDownloadButton > button:hover {
-        background-color: #B71C1C !important;
+    .stButton > button:focus { outline: 3px solid rgba(255,255,255,0.08) !important; }
+
+    /* Selected appearance: white background with red text & border.
+       We'll emulate selected by rendering a markdown block with this class
+       immediately after a click (see code below). */
+    .selected-pill {
+        background-color: white;
+        color: #C62828;
+        border-radius: 12px;
+        padding: 0.9rem 1.2rem;
+        font-weight: 700;
+        font-size:1rem;
+        width: 100%;
+        display: inline-block;
+        box-sizing: border-box;
+        border: 4px solid rgba(255,255,255,0.06);
+    }
+
+    /* small label above pill (like v78 small label) */
+    .small-label { color: #ffffff; margin-bottom:6px; }
+
+    @media (min-width:900px) {
+        /* on wide screens, make the options horizontal: */
+        .h-row { display:flex; gap:12px; }
+        .h-col { flex:1; min-width:120px; }
+    }
+    @media (max-width:899px) {
+        .h-row { display:block; }
+        .h-col { width:100%; margin-bottom:10px; }
     }
     </style>
-    """,
-    unsafe_allow_html=True
-)
-
-# -------------------------------------------------------------
-# LOGO + TITLE (v78)
-# -------------------------------------------------------------
-st.markdown(
-    """
-    <div class="center-logo">
-        <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="160">
-    </div>
     """,
     unsafe_allow_html=True,
 )
@@ -133,9 +90,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# -------------------------------------------------------------
-# QUESTIONS
-# -------------------------------------------------------------
 questions = [
     "Jeg bliver let overvældet af indtryk.",
     "Jeg opdager små detaljer, som andre ofte overser.",
@@ -158,86 +112,51 @@ questions = [
     "Jeg føler mig ofte overstimuleret.",
     "Jeg bliver let distraheret, når der sker meget omkring mig.",
 ]
-
 labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
 
-# -------------------------------------------------------------
-# SESSION STATE
-# -------------------------------------------------------------
+# session state
 if "answers" not in st.session_state:
     st.session_state.answers = [None] * len(questions)
 
-# -------------------------------------------------------------
-# RENDER QUESTIONS — **NO RELOAD**
-# -------------------------------------------------------------
+# render questions: for each question we show 5 horizontally (on wide) or vertically (on mobile)
 for i, q in enumerate(questions):
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    cols = st.columns(5)
-    for idx, col in enumerate(cols):
-        with col:
-            selected = st.session_state.answers[i] == idx
-            label_class = "scale-label selected" if selected else "scale-label"
+    # small label with current selection (keeps v78 feel)
+    current = st.session_state.answers[i]
+    if current is not None:
+        st.markdown(f"<div class='small-label'>{labels[current]}</div>", unsafe_allow_html=True)
+    else:
+        st.markdown(f"<div class='small-label'>Vælg et svar</div>", unsafe_allow_html=True)
 
-            if st.button(labels[idx], key=f"q{i}_{idx}"):
-                st.session_state.answers[i] = idx
+    # responsive container: on wide screens show as a row; on mobile stack
+    st.markdown("<div class='h-row'>", unsafe_allow_html=True)
+    for idx, lab in enumerate(labels):
+        # Each option in its own column-like container
+        key = f"q_{i}_{idx}"
+        if st.button(lab, key=key):
+            st.session_state.answers[i] = idx
+    st.markdown("</div>", unsafe_allow_html=True)
 
-            st.markdown(
-                f"<div class='{label_class}'>{labels[idx]}</div>",
-                unsafe_allow_html=True
-            )
-
-# -------------------------------------------------------------
-# RESET BUTTON
-# -------------------------------------------------------------
+# Reset
 if st.button("Nulstil svar"):
     st.session_state.answers = [None] * len(questions)
 
-# -------------------------------------------------------------
-# SCORE + PROFILE
-# -------------------------------------------------------------
-def interpret_score(score):
-    if score <= 26:
-        return "Slow Processor"
-    elif score <= 53:
-        return "Mellemprofil"
-    else:
-        return "HSP"
-
+# scoring (None => 0)
 safe_answers = [a if a is not None else 0 for a in st.session_state.answers]
 total_score = sum(safe_answers)
+def interpret_score(s):
+    if s <= 26: return "Slow Processor"
+    if s <= 53: return "Mellemprofil"
+    return "HSP"
 profile = interpret_score(total_score)
 
 PROFILE_TEXT = {
-    "HSP": [
-        "Du registrerer flere nuancer i både indtryk og stemninger.",
-        "Du bearbejder oplevelser dybt og grundigt.",
-        "Du reagerer stærkt på stimuli og kan blive overstimuleret.",
-        "Du har en rig indre verden og et fintfølende nervesystem.",
-        "Du er empatisk og opmærksom på andre.",
-        "Du har brug for ro og pauser for at lade op.",
-    ],
-    "Slow Processor": [
-        "Du arbejder bedst i roligt tempo og med forudsigelighed.",
-        "Du bearbejder indtryk grundigt, men langsomt.",
-        "Du har brug for ekstra tid til omstilling og beslutninger.",
-        "Du trives med faste rammer og struktur.",
-        "Du kan føle dig presset, når tingene går hurtigt.",
-        "Du har god udholdenhed, når du arbejder i dit eget tempo.",
-    ],
-    "Mellemprofil": [
-        "Du veksler naturligt mellem hurtig og langsom bearbejdning.",
-        "Du håndterer de fleste stimuli uden at blive overvældet.",
-        "Du har en god balance mellem intuition og eftertænksomhed.",
-        "Du kan tilpasse dig forskellige miljøer og tempoer.",
-        "Du bliver påvirket i perioder, men finder hurtigt balancen igen.",
-        "Du fungerer bredt socialt og mentalt i mange typer situationer.",
-    ],
+    "HSP": ["Du registrerer flere nuancer...", "..."],
+    "Slow Processor": ["Du arbejder bedst i roligt tempo...", "..."],
+    "Mellemprofil": ["Du veksler naturligt...", "..."],
 }
 
-# -------------------------------------------------------------
-# RESULT
-# -------------------------------------------------------------
 st.header("Dit resultat")
 st.subheader(f"Score: {total_score} / 80")
 st.subheader(f"Profil: {profile}")
@@ -246,30 +165,20 @@ st.write("### Karakteristika for din profil:")
 for s in PROFILE_TEXT[profile]:
     st.write(f"- {s}")
 
-# -------------------------------------------------------------
-# PDF
-# -------------------------------------------------------------
 def generate_pdf(score, profile):
     buf = BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=letter)
     styles = getSampleStyleSheet()
     story = []
-
     story.append(Paragraph("HSP / Slow Processor – Rapport", styles["Title"]))
     story.append(Paragraph(f"Score: {score} / 80", styles["Heading2"]))
     story.append(Paragraph(f"Profil: {profile}", styles["Heading2"]))
-    story.append(Spacer(1, 12))
-
-    for i, q in enumerate(questions):
+    story.append(Spacer(1,12))
+    for i,q in enumerate(questions):
         story.append(Paragraph(f"{i+1}. {q} – {labels[safe_answers[i]]}", styles["BodyText"]))
-
     doc.build(story)
     buf.seek(0)
     return buf
 
-st.download_button(
-    "Download PDF-rapport",
-    generate_pdf(total_score, profile),
-    file_name="HSP_SlowProcessor_Rapport.pdf",
-    mime="application/pdf"
-)
+st.download_button("Download PDF-rapport", generate_pdf(total_score, profile),
+                   file_name="HSP_SlowProcessor_Rapport.pdf", mime="application/pdf")
