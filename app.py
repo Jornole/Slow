@@ -10,7 +10,10 @@ from datetime import datetime
 # -------------------------------------------------------------
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
-version = "v106"
+# -------------------------------------------------------------
+# VERSION + TIMESTAMP (v107)
+# -------------------------------------------------------------
+version = "v107"
 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
 
 st.markdown(
@@ -25,11 +28,12 @@ st.markdown(
 )
 
 # -------------------------------------------------------------
-# GLOBAL CSS (from v78)
+# GLOBAL CSS  (ONLY CHANGE: smaller buttons)
 # -------------------------------------------------------------
 st.markdown(
     """
     <style>
+
     html, body, .stApp {
         background-color: #1A6333 !important;
         color: white !important;
@@ -58,25 +62,34 @@ st.markdown(
         margin-bottom:6px;
     }
 
+    .choice-row {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 6px;
+        width: 100%;
+        margin-bottom: 14px;
+    }
+
     .choice-btn {
         background-color: #C62828 !important;
         color: white !important;
         border-radius: 8px !important;
-        padding: 10px 18px !important;
+        padding: 6px 4px !important;
         border: none !important;
-        width: 100%;
-        font-size: 1rem;
-        font-weight: 600;
-    }
-
-    .choice-btn:hover {
-        background-color: #B71C1C !important;
+        font-size: 0.85rem !important;
+        font-weight: 600 !important;
+        text-align: center !important;
+        white-space: nowrap !important;
+        width: 100% !important;
+        display: block !important;
     }
 
     .choice-btn.selected {
         background-color: #ffffff !important;
         color: #C62828 !important;
         font-weight: 800 !important;
+        padding: 6px 4px !important;
+        font-size: 0.85rem !important;
     }
 
     .stButton > button, .stDownloadButton > button {
@@ -87,9 +100,7 @@ st.markdown(
         font-weight: 600 !important;
         border: none !important;
     }
-    .stButton > button:hover, .stDownloadButton > button:hover {
-        background-color: #B71C1C !important;
-    }
+
     </style>
     """,
     unsafe_allow_html=True
@@ -106,6 +117,7 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
 st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
 
 st.markdown(
@@ -113,10 +125,11 @@ st.markdown(
     Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige
     og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner.
 
-    Du besvarer 20 udsagn på en skala fra Aldrig til Altid.
+    Du besvarer 20 udsagn på en skala fra **Aldrig** til **Altid**.
 
-    Testen er ikke en diagnose, men et psykologisk værktøj til selvindsigt.
-    """
+    Testen er <u><b>ikke en diagnose</b></u>, men et psykologisk værktøj til selvindsigt.
+    """,
+    unsafe_allow_html=True,
 )
 
 # -------------------------------------------------------------
@@ -148,36 +161,63 @@ questions = [
 labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
 
 # -------------------------------------------------------------
-# SESSION STATE (no reload behavior)
+# SESSION STATE
 # -------------------------------------------------------------
 if "answers" not in st.session_state:
     st.session_state.answers = [None] * len(questions)
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS (button-based, no reload)
+# QUERY PARAMS → SESSION
+# -------------------------------------------------------------
+qparams = st.experimental_get_query_params()
+for i in range(len(questions)):
+    key = f"q_{i}"
+    if key in qparams:
+        try:
+            v = int(qparams[key][0])
+            if 0 <= v <= 4:
+                st.session_state.answers[i] = v
+        except:
+            pass
+
+# -------------------------------------------------------------
+# RENDER QUESTIONS
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
+
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    cols = st.columns(5)
-
+    row_html = "<div class='choice-row'>"
     for v, lab in enumerate(labels):
-        selected = st.session_state.answers[i] == v
-        btn_style = "choice-btn selected" if selected else "choice-btn"
 
-        with cols[v]:
-            if st.button(lab, key=f"btn_{i}_{v}", use_container_width=True):
-                st.session_state.answers[i] = v
+        selected = "selected" if st.session_state.answers[i] == v else ""
+
+        # Clicking simply updates query params, no reload
+        href = f"?q_{i}={v}"
+
+        row_html += f"""
+            <a class="choice-btn {selected}" href="{href}">{lab}</a>
+        """
+
+    row_html += "</div>"
+    st.markdown(row_html, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
 # RESET BUTTON
 # -------------------------------------------------------------
 if st.button("Nulstil svar"):
     st.session_state.answers = [None] * len(questions)
+    try:
+        st.experimental_set_query_params()
+    except:
+        pass
 
 # -------------------------------------------------------------
 # SCORE + PROFILE
 # -------------------------------------------------------------
+safe_answers = [a if a is not None else 0 for a in st.session_state.answers]
+total_score = sum(safe_answers)
+
 def interpret_score(score):
     if score <= 26:
         return "Slow Processor"
@@ -186,8 +226,6 @@ def interpret_score(score):
     else:
         return "HSP"
 
-safe_answers = [a if a is not None else 0 for a in st.session_state.answers]
-total_score = sum(safe_answers)
 profile = interpret_score(total_score)
 
 PROFILE_TEXT = {
