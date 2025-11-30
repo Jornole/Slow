@@ -5,7 +5,6 @@ from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
 from urllib.parse import urlencode
 from datetime import datetime
-import pytz
 
 # -------------------------------------------------------------
 # BASIC SETUP
@@ -13,10 +12,10 @@ import pytz
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# VERSION + TIMESTAMP (v87)
+# VERSION + TIMESTAMP (v88 based on v78)
 # -------------------------------------------------------------
-version = "v87"
-timestamp = datetime.now(pytz.timezone("Europe/Copenhagen")).strftime("%Y-%m-%d %H:%M")
+version = "v88"
+timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
 
 st.markdown(
     f"""
@@ -30,7 +29,7 @@ st.markdown(
 )
 
 # -------------------------------------------------------------
-# GLOBAL CSS (ONLY STYLING – NO FUNCTIONAL CHANGE)
+# GLOBAL CSS — ONLY CHANGE: BUTTON STYLE
 # -------------------------------------------------------------
 st.markdown(
     """
@@ -60,37 +59,51 @@ st.markdown(
         font-size:1.15rem;
         font-weight:600;
         margin-top:22px;
-        margin-bottom:10px;
+        margin-bottom:6px;
     }
 
-    /* --- NEW: horizontal scale buttons without affecting logic --- */
-    .scale-row {
-        display:flex;
-        gap: 8px;
-        justify-content: space-between;
-        padding: 0 4%;
-        margin-bottom:20px;
-    }
-
+    /* ----------------------------
+       NEW BUTTON VISUAL STYLE ONLY
+       ---------------------------- */
     .scale-row a {
-        background-color:#C62828;
+        color: white !important;
+        background-color: #B3261E;
+        text-decoration: none;
+        font-size:0.92rem;
+        display:inline-block;
         padding:10px 14px;
-        border-radius:8px;
-        text-decoration:none;
-        color:white !important;
-        font-size:0.95rem;
-        flex:1;
+        border-radius:10px;
+        margin:2px;
+        min-width:80px;
         text-align:center;
-        display:flex;
-        justify-content:center;
-        align-items:center;
     }
 
     .scale-row a.selected {
-        background-color:white !important;
-        color:#C62828 !important;
+        background-color: white !important;
+        color: #B3261E !important;
         font-weight:700;
-        border:2px solid #C62828;
+        border:2px solid #B3261E;
+    }
+
+    .scale-row {
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        width:100%;
+        margin-bottom:12px;
+        padding:0 5%;
+        box-sizing:border-box;
+    }
+
+    @media (max-width:420px) {
+        .scale-row {
+            padding:0 2%;
+        }
+        .scale-row a {
+            padding:8px 10px;
+            min-width:60px;
+            font-size:0.85rem;
+        }
     }
 
     .stButton > button, .stDownloadButton > button {
@@ -101,7 +114,7 @@ st.markdown(
         font-weight: 600 !important;
         border: none !important;
     }
-    .stButton > button:hover, .stDownloadButton > button:hover {
+    .stButton > button:hover {
         background-color: #B71C1C !important;
     }
     </style>
@@ -170,7 +183,7 @@ if "answers" not in st.session_state:
     st.session_state.answers = [None] * len(questions)
 
 # -------------------------------------------------------------
-# QUERY PARAMS → SESSION
+# QUERY PARAMS
 # -------------------------------------------------------------
 qparams = st.experimental_get_query_params()
 for i in range(len(questions)):
@@ -205,6 +218,7 @@ for i, q in enumerate(questions):
         selected = "selected" if st.session_state.answers[i] == v else ""
         html += f"<a class='{selected}' href='{build_href(i, v)}'>{lab}</a>"
     html += "</div>"
+
     st.markdown(html, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
