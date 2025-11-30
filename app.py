@@ -213,4 +213,76 @@ def interpret_score(score):
     if score <= 26:
         return "Slow Processor"
     elif score <= 53:
-        return "Mellem
+        return "Mellemprofil"
+    else:
+        return "HSP"
+
+safe_answers = [a if a is not None else 0 for a in st.session_state.answers]
+total_score = sum(safe_answers)
+profile = interpret_score(total_score)
+
+PROFILE_TEXT = {
+    "HSP": [
+        "Du registrerer flere nuancer i både indtryk og stemninger.",
+        "Du bearbejder oplevelser dybt og grundigt.",
+        "Du reagerer stærkt på stimuli og kan blive overstimuleret.",
+        "Du har en rig indre verden og et fintfølende nervesystem.",
+        "Du er empatisk og opmærksom på andre.",
+        "Du har brug for ro og pauser for at lade op.",
+    ],
+    "Slow Processor": [
+        "Du arbejder bedst i roligt tempo og med forudsigelighed.",
+        "Du bearbejder indtryk grundigt, men langsomt.",
+        "Du har brug for ekstra tid til omstilling og beslutninger.",
+        "Du trives med faste rammer og struktur.",
+        "Du kan føle dig presset, når tingene går hurtigt.",
+        "Du har god udholdenhed, når du arbejder i dit eget tempo.",
+    ],
+    "Mellemprofil": [
+        "Du veksler naturligt mellem hurtig og langsom bearbejdning.",
+        "Du håndterer de fleste stimuli uden at blive overvældet.",
+        "Du har en god balance mellem intuition og eftertænksomhed.",
+        "Du kan tilpasse dig forskellige miljøer og tempoer.",
+        "Du bliver påvirket i perioder, men finder hurtigt balancen igen.",
+        "Du fungerer bredt socialt og mentalt i mange typer situationer.",
+    ],
+}
+
+# -------------------------------------------------------------
+# RESULT
+# -------------------------------------------------------------
+st.header("Dit resultat")
+st.subheader(f"Score: {total_score} / 80")
+st.subheader(f"Profil: {profile}")
+
+st.write("### Karakteristika for din profil:")
+for s in PROFILE_TEXT[profile]:
+    st.write(f"- {s}")
+
+# -------------------------------------------------------------
+# PDF GENERATOR
+# -------------------------------------------------------------
+def generate_pdf(score, profile):
+    buf = BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=letter)
+    styles = getSampleStyleSheet()
+
+    story = []
+    story.append(Paragraph("HSP / Slow Processor – Rapport", styles["Title"]))
+    story.append(Paragraph(f"Score: {score} / 80", styles["Heading2"]))  
+    story.append(Paragraph(f"Profil: {profile}", styles["Heading2"]))  
+    story.append(Spacer(1, 12))
+
+    for i, q in enumerate(questions):  
+        story.append(Paragraph(f"{i+1}. {q} – {labels[safe_answers[i]]}", styles["BodyText"]))
+
+    doc.build(story)
+    buf.seek(0)
+    return buf
+
+st.download_button(
+    "Download PDF-rapport",
+    generate_pdf(total_score, profile),
+    file_name="HSP_SlowProcessor_Rapport.pdf",
+    mime="application/pdf"
+)
