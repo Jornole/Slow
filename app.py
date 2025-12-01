@@ -11,9 +11,9 @@ from datetime import datetime
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# VERSION + TIMESTAMP (v108)
+# VERSION + TIMESTAMP (v109)
 # -------------------------------------------------------------
-version = "v108"
+version = "v109"
 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
 
 st.markdown(
@@ -28,7 +28,7 @@ st.markdown(
 )
 
 # -------------------------------------------------------------
-# GLOBAL CSS  (ONLY CHANGE = EVEN SMALLER BUTTONS)
+# GLOBAL CSS (ONLY CHANGE: BUTTON SIZE + INLINE DISPLAY)
 # -------------------------------------------------------------
 st.markdown(
     """
@@ -61,23 +61,19 @@ st.markdown(
         margin-bottom:6px;
     }
 
-    /* SMALLER BUTTONS — ONLY CHANGE FROM v107 */
+    /* --- ONLY CHANGE FOR v109: smaller & inline buttons --- */
     .stButton > button {
         background-color: #C62828 !important;
         color: white !important;
         border-radius: 8px !important;
-
-        padding: 0.25rem 0.3rem !important;
-        font-size: 0.78rem !important;
-
+        padding: 0.30rem 0.50rem !important;
         font-weight: 600 !important;
         border: none !important;
-
-        width: 100% !important;
-        min-width: 48px !important;
-        height: 34px !important;
-
-        line-height: 1.0rem !important;
+        font-size: 0.80rem !important;
+        width: auto !important;
+        min-width: 55px !important;
+        height: 36px !important;
+        display: inline-block !important;
         white-space: nowrap !important;
     }
 
@@ -150,7 +146,7 @@ if "answers" not in st.session_state:
     st.session_state.answers = [None] * len(questions)
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS (unchanged)
+# RENDER QUESTIONS – IDENTICAL TO v108
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
