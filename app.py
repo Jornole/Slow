@@ -5,11 +5,17 @@ from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
 from datetime import datetime
 
+# -------------------------------------------------------------
+# BASIC SETUP
+# -------------------------------------------------------------
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
-# Version badge
-version = "v126"
+# -------------------------------------------------------------
+# VERSION + TIMESTAMP
+# -------------------------------------------------------------
+version = "v127"
 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
+
 st.markdown(
     f"""
     <div style="font-size:0.85rem; background-color:#144d27;
@@ -22,39 +28,45 @@ st.markdown(
 )
 
 # -------------------------------------------------------------
-# GLOBAL CSS (v78 DESIGN)
+# GLOBAL CSS  (ONLY CHANGE FROM v106 = smaller width on buttons)
 # -------------------------------------------------------------
-st.markdown("""
-<style>
-html, body, .stApp {
-    background-color:#1A6333 !important;
-    color:white !important;
-    font-family: Arial, sans-serif;
-}
-.question-text {
-    font-size:1.15rem;
-    font-weight:600;
-    margin-top:22px;
-    margin-bottom:10px;
-}
-.choice-btn {
-    background-color:#C62828;
-    color:white;
-    padding:10px 14px;
-    border:none;
-    border-radius:8px;
-    font-size:0.95rem;
-    font-weight:600;
-    cursor:pointer;
-    margin-right:8px;
-    margin-bottom:8px;
-}
-.choice-btn.selected {
-    background-color:white !important;
-    color:#C62828 !important;
-}
-</style>
-""", unsafe_allow_html=True)
+st.markdown(
+    """
+    <style>
+    html, body, .stApp {
+        background-color: #1A6333 !important;
+        color: white !important;
+        font-family: Arial, sans-serif !important;
+    }
+
+    .question-text {
+        font-size:1.15rem;
+        font-weight:600;
+        margin-top:22px;
+        margin-bottom:6px;
+    }
+
+    /* SMALLER BUTTONS – ONLY CHANGE */
+    .stButton > button {
+        background-color: #C62828 !important;
+        color: white !important;
+        border-radius: 8px !important;
+        padding: 0.30rem 0.6rem !important;
+        font-weight: 600 !important;
+        border: none !important;
+        font-size: 0.85rem !important;
+
+        /* ONLY CHANGE FROM v106 */
+        width: 90px !important;
+    }
+
+    .stButton > button:hover {
+        background-color: #B71C1C !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 # -------------------------------------------------------------
 # QUESTIONS
@@ -79,104 +91,87 @@ questions = [
     "Jeg foretrækker dybe samtaler frem for smalltalk.",
     "Jeg kan have svært ved at skifte fokus hurtigt.",
     "Jeg føler mig ofte overstimuleret.",
-    "Jeg bliver let distraheret, når der sker meget omkring mig."
+    "Jeg bliver let distraheret, når der sker meget omkring mig.",
 ]
 
 labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
 
+# -------------------------------------------------------------
+# SESSION STATE
+# -------------------------------------------------------------
 if "answers" not in st.session_state:
     st.session_state.answers = [None] * len(questions)
 
 # -------------------------------------------------------------
-# JS → PYTHON kommunikation (fejlfri metode)
-# -------------------------------------------------------------
-# Lyt efter værdier sendt fra JavaScript
-if "incoming" in st.session_state:
-    q, v = st.session_state.incoming
-    st.session_state.answers[q] = v
-    del st.session_state.incoming
-
-# -------------------------------------------------------------
-# RENDER SPØRGSMÅL + KNAPPER
+# RENDER QUESTIONS  (IDENTICAL TO v106)
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    btn_html = ""
-    for v, label in enumerate(labels):
-        selected = "selected" if st.session_state.answers[i] == v else ""
-        btn_html += (
-            f"<button class='choice-btn {selected}' "
-            f"onclick='sendToStreamlit({i},{v})'>{label}</button>"
-        )
-
-    st.markdown(btn_html, unsafe_allow_html=True)
-
-# JS-kode (stabil til Streamlit Cloud)
-st.markdown("""
-<script>
-function sendToStreamlit(q, v){
-    const data = {isIncoming:true, q:q, v:v};
-    window.parent.postMessage({
-        type: "streamlit:renderEvent",
-        data: data
-    }, "*");
-}
-</script>
-""", unsafe_allow_html=True)
-
-# Catch browser messages
-st.markdown("""
-<script>
-window.addEventListener("message", (event) => {
-    if (event.data?.type === "streamlit:renderEvent" &&
-        event.data?.data?.isIncoming === true){
-
-        const pyData = {question: event.data.data.q,
-                        value: event.data.data.v};
-
-        // Send to Python session_state
-        window.parent.postMessage({
-            isStreamlitMessage: true,
-            type: "streamlit:setSessionState",
-            key: "incoming",
-            value: [pyData.question, pyData.value]
-        }, "*");
-
-        // Soft-rerun ONLY updates Python-state
-        window.parent.postMessage({
-            isStreamlitMessage: true,
-            type: "streamlit:rerun"
-        }, "*");
-    }
-});
-</script>
-""", unsafe_allow_html=True)
+    cols = st.columns(5)
+    for idx, col in enumerate(cols):
+        with col:
+            if st.button(labels[idx], key=f"q{i}_{idx}"):
+                st.session_state.answers[i] = idx
 
 # -------------------------------------------------------------
-# RESET
+# RESET BUTTON
 # -------------------------------------------------------------
 if st.button("Nulstil svar"):
     st.session_state.answers = [None] * len(questions)
 
 # -------------------------------------------------------------
-# SCORE
+# SCORE + PROFILE
 # -------------------------------------------------------------
-safe = [a if a is not None else 0 for a in st.session_state.answers]
-score = sum(safe)
-
-def interpret(s):
-    if s <= 26:
+def interpret_score(score):
+    if score <= 26:
         return "Slow Processor"
-    if s <= 53:
+    elif score <= 53:
         return "Mellemprofil"
-    return "HSP"
+    else:
+        return "HSP"
 
-profile = interpret(score)
+safe_answers = [a if a is not None else 0 for a in st.session_state.answers]
+total_score = sum(safe_answers)
+profile = interpret_score(total_score)
 
+PROFILE_TEXT = {
+    "HSP": [
+        "Du registrerer flere nuancer i både indtryk og stemninger.",
+        "Du bearbejder oplevelser dybt og grundigt.",
+        "Du reagerer stærkt på stimuli og kan blive overstimuleret.",
+        "Du har en rig indre verden og et fintfølende nervesystem.",
+        "Du er empatisk og opmærksom på andre.",
+        "Du har brug for ro og pauser for at lade op.",
+    ],
+    "Slow Processor": [
+        "Du arbejder bedst i roligt tempo og med forudsigelighed.",
+        "Du bearbejder indtryk grundigt, men langsomt.",
+        "Du har brug for ekstra tid til omstilling og beslutninger.",
+        "Du trives med faste rammer og struktur.",
+        "Du kan føle dig presset, når tingene går hurtigt.",
+        "Du har god udholdenhed, når du arbejder i dit eget tempo.",
+    ],
+    "Mellemprofil": [
+        "Du veksler naturligt mellem hurtig og langsom bearbejdning.",
+        "Du håndterer de fleste stimuli uden at blive overvældet.",
+        "Du har en god balance mellem intuition og eftertænksomhed.",
+        "Du kan tilpasse dig forskellige miljøer og tempoer.",
+        "Du bliver påvirket i perioder, men finder hurtigt balancen igen.",
+        "Du fungerer bredt socialt og mentalt i mange typer situationer.",
+    ],
+}
+
+# -------------------------------------------------------------
+# RESULT
+# -------------------------------------------------------------
 st.header("Dit resultat")
-st.subheader(f"Score: {score} / 80")
+st.subheader(f"Score: {total_score} / 80")
 st.subheader(f"Profil: {profile}")
+
+st.write("### Karakteristika for din profil:")
+for s in PROFILE_TEXT[profile]:
+    st.write(f"- {s}")
 
 # -------------------------------------------------------------
 # PDF
@@ -193,8 +188,7 @@ def generate_pdf(score, profile):
     story.append(Spacer(1, 12))
 
     for i, q in enumerate(questions):
-        story.append(Paragraph(f"{i+1}. {q} – {labels[safe[i]]}",
-                               styles["BodyText"]))
+        story.append(Paragraph(f"{i+1}. {q} – {labels[safe_answers[i]]}", styles["BodyText"]))
 
     doc.build(story)
     buf.seek(0)
@@ -202,7 +196,7 @@ def generate_pdf(score, profile):
 
 st.download_button(
     "Download PDF-rapport",
-    generate_pdf(score, profile),
+    generate_pdf(total_score, profile),
     file_name="HSP_SlowProcessor_Rapport.pdf",
     mime="application/pdf"
 )
