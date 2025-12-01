@@ -3,7 +3,6 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
-from urllib.parse import urlencode
 from datetime import datetime
 
 # -------------------------------------------------------------
@@ -12,9 +11,9 @@ from datetime import datetime
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# VERSION + TIMESTAMP (v78)
+# VERSION + TIMESTAMP (v117)
 # -------------------------------------------------------------
-version = "v78"
+version = "v117"
 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
 
 st.markdown(
@@ -29,7 +28,7 @@ st.markdown(
 )
 
 # -------------------------------------------------------------
-# GLOBAL CSS
+# GLOBAL CSS  (only changes: smaller button + inline layout)
 # -------------------------------------------------------------
 st.markdown(
     """
@@ -62,45 +61,17 @@ st.markdown(
         margin-bottom:6px;
     }
 
-    .scale-row {
-        display:flex;
-        justify-content:space-between;
-        align-items:center;
-        width:100%;
-        margin-bottom:12px;
-        padding:0 6%;
-        box-sizing:border-box;
-    }
-
-    .scale-row a {
-        color: #ffffff;
-        text-decoration: none;
-        font-size:0.95rem;
-        display:inline-block;
-        padding:10px 6px;
-        text-align:center;
-    }
-
-    .scale-row a.selected {
-        color: #ff4444;
-        font-weight:700;
-    }
-
-    @media (max-width:420px) {
-        .scale-row { padding:0 3%; }
-        .scale-row a { padding:8px 2px; font-size:0.9rem; }
-    }
-
-    .stButton > button, .stDownloadButton > button {
+    /* INLINE BUTTONS — only change from v112 */
+    .stButton > button {
         background-color: #C62828 !important;
         color: white !important;
-        border-radius: 8px !important;
-        padding: 0.65rem 1.4rem !important;
+        border-radius: 6px !important;
+        padding: 0.35rem 0.1rem !important;
         font-weight: 600 !important;
         border: none !important;
-    }
-    .stButton > button:hover, .stDownloadButton > button:hover {
-        background-color: #B71C1C !important;
+        font-size: 0.80rem !important;
+        width: 100% !important;
+        height: 32px !important;
     }
     </style>
     """,
@@ -165,61 +136,27 @@ labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
 # SESSION STATE
 # -------------------------------------------------------------
 if "answers" not in st.session_state:
-    st.session_state.answers = [None] * len(questions)  # << ændret fra 0 til None
+    st.session_state.answers = [None] * len(questions)
 
 # -------------------------------------------------------------
-# QUERY PARAMS → SESSION
-# -------------------------------------------------------------
-qparams = st.experimental_get_query_params()
-for i in range(len(questions)):
-    key = f"q_{i}"
-    if key in qparams:
-        try:
-            v = int(qparams[key][0])
-            if 0 <= v <= 4:
-                st.session_state.answers[i] = v
-        except:
-            pass
-
-# -------------------------------------------------------------
-# BUILD HREF (NO CHANGE)
-# -------------------------------------------------------------
-def build_href(q_index, value):
-    params = {}
-    for idx, ans in enumerate(st.session_state.answers):
-        if ans is not None:  # kun eksisterende svar
-            params[f"q_{idx}"] = str(ans)
-    params[f"q_{q_index}"] = str(value)
-    return "?" + urlencode(params)
-
-# -------------------------------------------------------------
-# RENDER QUESTIONS
+# RENDER QUESTIONS  (same logic as v112 — NO RELOAD)
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
+
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    html = "<div class='scale-row'>"
-    for v, lab in enumerate(labels):
+    cols = st.columns([1, 1, 1, 1, 1])  # IMPORTANT: makes them horizontal
 
-        selected = ""
-        if st.session_state.answers[i] == v:
-            selected = "selected"
-
-        html += f"<a class='{selected}' href='{build_href(i, v)}'>{lab}</a>"
-
-    html += "</div>"
-    st.markdown(html, unsafe_allow_html=True)
+    for idx, col in enumerate(cols):
+        with col:
+            if st.button(labels[idx], key=f"q{i}_{idx}"):
+                st.session_state.answers[i] = idx
 
 # -------------------------------------------------------------
-# RESET BUTTON (fix: set to None)
+# RESET BUTTON
 # -------------------------------------------------------------
 if st.button("Nulstil svar"):
     st.session_state.answers = [None] * len(questions)
-
-    try:
-        st.experimental_set_query_params()
-    except:
-        pass
 
 # -------------------------------------------------------------
 # SCORE + PROFILE
@@ -232,7 +169,6 @@ def interpret_score(score):
     else:
         return "HSP"
 
-# None → 0 scoring
 safe_answers = [a if a is not None else 0 for a in st.session_state.answers]
 total_score = sum(safe_answers)
 profile = interpret_score(total_score)
