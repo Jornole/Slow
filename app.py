@@ -11,9 +11,9 @@ from datetime import datetime
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# VERSION + TIMESTAMP (v115)
+# VERSION + TIMESTAMP (v116)
 # -------------------------------------------------------------
-version = "v115"
+version = "v116"
 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
 
 st.markdown(
@@ -28,7 +28,7 @@ st.markdown(
 )
 
 # -------------------------------------------------------------
-# GLOBAL CSS (ONLY CHANGE = width:15%)
+# GLOBAL CSS  (ONLY CHANGE = width:8%)
 # -------------------------------------------------------------
 st.markdown(
     """
@@ -61,7 +61,7 @@ st.markdown(
         margin-bottom:6px;
     }
 
-    /* ------- ONLY CHANGE FROM v114 → width:15% ------- */
+    /* ------- ONLY CHANGE FROM v115 → width:8% ------- */
     .stButton > button {
         background-color: #C62828 !important;
         color: white !important;
@@ -70,10 +70,11 @@ st.markdown(
         font-weight: 600 !important;
         border: none !important;
         font-size: 0.85rem !important;
-        width: 15% !important;     /* ← THE ONLY CHANGE */
+        width: 8% !important;        /* ← THE ONLY CHANGE */
         min-width: 55px !important;
         height: 38px !important;
     }
+
     .stButton > button:hover {
         background-color: #B71C1C !important;
     }
@@ -143,7 +144,7 @@ if "answers" not in st.session_state:
     st.session_state.answers = [None] * len(questions)
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS (same as v106/v107/v108)
+# RENDER QUESTIONS (unchanged)
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
