@@ -7,9 +7,9 @@ from datetime import datetime
 
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
-version = "v125"
+# Version badge
+version = "v126"
 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
-
 st.markdown(
     f"""
     <div style="font-size:0.85rem; background-color:#144d27;
@@ -22,45 +22,39 @@ st.markdown(
 )
 
 # -------------------------------------------------------------
-# STYLE 100% IDENTISK MED v78
+# GLOBAL CSS (v78 DESIGN)
 # -------------------------------------------------------------
-st.markdown(
-    """
-    <style>
-    html, body, .stApp {
-        background-color: #1A6333 !important;
-        color: white !important;
-        font-family: Arial, sans-serif !important;
-    }
-    .question-text {
-        font-size:1.15rem;
-        font-weight:600;
-        margin-top:22px;
-        margin-bottom:10px;
-    }
-
-    /* rød knap – v78 style */
-    .choice-btn {
-        background-color:#C62828;
-        color:white;
-        padding:10px 14px;
-        border:none;
-        border-radius:8px;
-        font-size:0.95rem;
-        font-weight:600;
-        cursor:pointer;
-        margin-right:8px;
-        margin-bottom:8px;
-    }
-    .choice-btn.selected {
-        background-color:white !important;
-        color:#C62828 !important;
-        font-weight:700 !important;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+st.markdown("""
+<style>
+html, body, .stApp {
+    background-color:#1A6333 !important;
+    color:white !important;
+    font-family: Arial, sans-serif;
+}
+.question-text {
+    font-size:1.15rem;
+    font-weight:600;
+    margin-top:22px;
+    margin-bottom:10px;
+}
+.choice-btn {
+    background-color:#C62828;
+    color:white;
+    padding:10px 14px;
+    border:none;
+    border-radius:8px;
+    font-size:0.95rem;
+    font-weight:600;
+    cursor:pointer;
+    margin-right:8px;
+    margin-bottom:8px;
+}
+.choice-btn.selected {
+    background-color:white !important;
+    color:#C62828 !important;
+}
+</style>
+""", unsafe_allow_html=True)
 
 # -------------------------------------------------------------
 # QUESTIONS
@@ -85,7 +79,7 @@ questions = [
     "Jeg foretrækker dybe samtaler frem for smalltalk.",
     "Jeg kan have svært ved at skifte fokus hurtigt.",
     "Jeg føler mig ofte overstimuleret.",
-    "Jeg bliver let distraheret, når der sker meget omkring mig.",
+    "Jeg bliver let distraheret, når der sker meget omkring mig."
 ]
 
 labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
@@ -94,52 +88,70 @@ if "answers" not in st.session_state:
     st.session_state.answers = [None] * len(questions)
 
 # -------------------------------------------------------------
-# HTML + JS KNAPPER (ingen reload)
+# JS → PYTHON kommunikation (fejlfri metode)
+# -------------------------------------------------------------
+# Lyt efter værdier sendt fra JavaScript
+if "incoming" in st.session_state:
+    q, v = st.session_state.incoming
+    st.session_state.answers[q] = v
+    del st.session_state.incoming
+
+# -------------------------------------------------------------
+# RENDER SPØRGSMÅL + KNAPPER
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    # Render buttons
     btn_html = ""
-    for v, lab in enumerate(labels):
+    for v, label in enumerate(labels):
         selected = "selected" if st.session_state.answers[i] == v else ""
         btn_html += (
             f"<button class='choice-btn {selected}' "
-            f"onclick='sendChoice({i},{v})'>{lab}</button>"
+            f"onclick='sendToStreamlit({i},{v})'>{label}</button>"
         )
 
     st.markdown(btn_html, unsafe_allow_html=True)
 
-# JS → Streamlit without rerun
-st.markdown(
-"""
+# JS-kode (stabil til Streamlit Cloud)
+st.markdown("""
 <script>
-function sendChoice(q, val){
-    const payload = {question:q, value:val};
-
+function sendToStreamlit(q, v){
+    const data = {isIncoming:true, q:q, v:v};
     window.parent.postMessage({
-        isStreamlitMessage: true,
-        type: "streamlit:setComponentValue",
-        value: payload
+        type: "streamlit:renderEvent",
+        data: data
     }, "*");
 }
 </script>
-""",
-unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
-# message listener
-msg = st.experimental_get_query_params()
+# Catch browser messages
+st.markdown("""
+<script>
+window.addEventListener("message", (event) => {
+    if (event.data?.type === "streamlit:renderEvent" &&
+        event.data?.data?.isIncoming === true){
 
-# component value via streamlit events
-def _streamlit_event_handler():
-    import streamlit.components.v1 as components
-    event = components.get_component_value()
-    if event and "question" in event:
-        q = event["question"]
-        v = event["value"]
-        st.session_state.answers[q] = v
+        const pyData = {question: event.data.data.q,
+                        value: event.data.data.v};
 
-_streamlit_event_handler()
+        // Send to Python session_state
+        window.parent.postMessage({
+            isStreamlitMessage: true,
+            type: "streamlit:setSessionState",
+            key: "incoming",
+            value: [pyData.question, pyData.value]
+        }, "*");
+
+        // Soft-rerun ONLY updates Python-state
+        window.parent.postMessage({
+            isStreamlitMessage: true,
+            type: "streamlit:rerun"
+        }, "*");
+    }
+});
+</script>
+""", unsafe_allow_html=True)
 
 # -------------------------------------------------------------
 # RESET
@@ -150,16 +162,17 @@ if st.button("Nulstil svar"):
 # -------------------------------------------------------------
 # SCORE
 # -------------------------------------------------------------
-def interpret_score(score):
-    if score <= 26:
+safe = [a if a is not None else 0 for a in st.session_state.answers]
+score = sum(safe)
+
+def interpret(s):
+    if s <= 26:
         return "Slow Processor"
-    elif score <= 53:
+    if s <= 53:
         return "Mellemprofil"
     return "HSP"
 
-safe = [a if a is not None else 0 for a in st.session_state.answers]
-score = sum(safe)
-profile = interpret_score(score)
+profile = interpret(score)
 
 st.header("Dit resultat")
 st.subheader(f"Score: {score} / 80")
@@ -180,10 +193,8 @@ def generate_pdf(score, profile):
     story.append(Spacer(1, 12))
 
     for i, q in enumerate(questions):
-        story.append(Paragraph(
-            f"{i+1}. {q} – {labels[safe[i]]}",
-            styles["BodyText"]
-        ))
+        story.append(Paragraph(f"{i+1}. {q} – {labels[safe[i]]}",
+                               styles["BodyText"]))
 
     doc.build(story)
     buf.seek(0)
