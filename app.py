@@ -11,9 +11,9 @@ from datetime import datetime
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# VERSION + TIMESTAMP (v111)
+# VERSION + TIMESTAMP (v112)
 # -------------------------------------------------------------
-version = "v111"
+version = "v112"
 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
 
 st.markdown(
@@ -28,7 +28,7 @@ st.markdown(
 )
 
 # -------------------------------------------------------------
-# GLOBAL CSS
+# GLOBAL CSS (ONLY change = smaller buttons to fit one row)
 # -------------------------------------------------------------
 st.markdown(
     """
@@ -58,31 +58,24 @@ st.markdown(
         font-size:1.15rem;
         font-weight:600;
         margin-top:22px;
-        margin-bottom:10px;
+        margin-bottom:6px;
     }
 
-    .choice-row {
-        display:flex;
-        flex-direction:row;
-        gap:10px;
-        flex-wrap:nowrap;
-        margin-bottom:8px;
+    /* SMALLER BUTTONS to fit one line */
+    .stButton > button {
+        background-color: #C62828 !important;
+        color: white !important;
+        border-radius: 8px !important;
+        padding: 0.25rem 0.4rem !important;
+        font-weight: 600 !important;
+        border: none !important;
+        font-size: 0.75rem !important;
+        width: 100% !important;
+        height: 34px !important;
     }
 
-    .choice-btn {
-        background:#C62828;
-        color:white !important;
-        border:none;
-        padding:6px 12px;
-        border-radius:8px;
-        font-size:0.85rem;
-        font-weight:600;
-        white-space:nowrap;
-        cursor:pointer;
-    }
-
-    .choice-btn:hover {
-        background:#B71C1C;
+    .stButton > button:hover {
+        background-color: #B71C1C !important;
     }
     </style>
     """,
@@ -150,38 +143,25 @@ if "answers" not in st.session_state:
     st.session_state.answers = [None] * len(questions)
 
 # -------------------------------------------------------------
-# HANDLE QUERY PARAMS (fixed version)
-# -------------------------------------------------------------
-params = st.experimental_get_query_params()
-
-for key, val in params.items():
-    if key.startswith("q") and key[1:].isdigit():
-        q_index = int(key[1:])
-        if 0 <= q_index < len(questions):
-            st.session_state.answers[q_index] = int(val[0])
-
-# -------------------------------------------------------------
-# RENDER QUESTIONS
+# RENDER QUESTIONS  (same as v108 = NO RELOAD)
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    row = "<div class='choice-row'>"
-    for idx, label in enumerate(labels):
-        row += f"<a href='?q{i}={idx}' class='choice-btn'>{label}</a>"
-    row += "</div>"
-
-    st.markdown(row, unsafe_allow_html=True)
+    cols = st.columns(5)
+    for idx, col in enumerate(cols):
+        with col:
+            if st.button(labels[idx], key=f"q{i}_{idx}"):
+                st.session_state.answers[i] = idx   # no reload
 
 # -------------------------------------------------------------
 # RESET BUTTON
 # -------------------------------------------------------------
 if st.button("Nulstil svar"):
     st.session_state.answers = [None] * len(questions)
-    st.experimental_set_query_params()
 
 # -------------------------------------------------------------
-# SCORE + PROFILE
+# RESULT + PROFILE
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
@@ -223,7 +203,7 @@ PROFILE_TEXT = {
 }
 
 # -------------------------------------------------------------
-# RESULTS
+# OUTPUT
 # -------------------------------------------------------------
 st.header("Dit resultat")
 st.subheader(f"Score: {total_score} / 80")
