@@ -11,9 +11,9 @@ from datetime import datetime
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# VERSION + TIMESTAMP (v117)
+# VERSION + TIMESTAMP (v118)
 # -------------------------------------------------------------
-version = "v117"
+version = "v118"
 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
 
 st.markdown(
@@ -28,7 +28,7 @@ st.markdown(
 )
 
 # -------------------------------------------------------------
-# GLOBAL CSS  (only changes: smaller button + inline layout)
+# GLOBAL CSS
 # -------------------------------------------------------------
 st.markdown(
     """
@@ -61,17 +61,35 @@ st.markdown(
         margin-bottom:6px;
     }
 
-    /* INLINE BUTTONS — only change from v112 */
+    /* -------------------------
+       Tving kolonner horisontale
+       ------------------------- */
+    [data-testid="stHorizontalBlock"] > div[role="list"] {
+        display:flex !important;
+        flex-wrap: nowrap !important;
+        gap: 8px !important;
+        align-items: center !important;
+    }
+
+    /* -------------------------
+       Small buttons
+       ------------------------- */
     .stButton > button {
         background-color: #C62828 !important;
         color: white !important;
-        border-radius: 6px !important;
-        padding: 0.35rem 0.1rem !important;
+        border-radius: 8px !important;
+        padding: 6px 8px !important;
         font-weight: 600 !important;
+        font-size: 0.82rem !important;
+        height: 36px !important;
+        min-width: 56px !important;
+        max-width: 80px !important;
+        white-space: nowrap !important;
         border: none !important;
-        font-size: 0.80rem !important;
-        width: 100% !important;
-        height: 32px !important;
+    }
+
+    .stButton > button:hover {
+        background-color: #B71C1C !important;
     }
     </style>
     """,
@@ -139,13 +157,13 @@ if "answers" not in st.session_state:
     st.session_state.answers = [None] * len(questions)
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS  (same logic as v112 — NO RELOAD)
+# RENDER QUESTIONS  (knapper nu i én linje)
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
 
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    cols = st.columns([1, 1, 1, 1, 1])  # IMPORTANT: makes them horizontal
+    cols = st.columns([1,1,1,1,1], gap="small")
 
     for idx, col in enumerate(cols):
         with col:
