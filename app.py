@@ -71,7 +71,7 @@ st.markdown(
         border: none !important;
         font-size: 0.85rem !important;
         width: 8% !important;        /* ← THE ONLY CHANGE */
-        min-width: 55px !important;
+        min-width: 10px !important;
         height: 38px !important;
     }
 
