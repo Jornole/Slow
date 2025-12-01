@@ -11,9 +11,9 @@ from datetime import datetime
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# VERSION + TIMESTAMP
+# VERSION + TIMESTAMP (v114)
 # -------------------------------------------------------------
-version = "v113"
+version = "v114"
 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
 
 st.markdown(
@@ -28,7 +28,8 @@ st.markdown(
 )
 
 # -------------------------------------------------------------
-# GLOBAL CSS — ONLY CHANGE = very small buttons
+# GLOBAL CSS  
+# ( eneste ændring fra v112 → width:100% er FJERNET )
 # -------------------------------------------------------------
 st.markdown(
     """
@@ -61,19 +62,17 @@ st.markdown(
         margin-bottom:6px;
     }
 
-    /* --- NEW: SUPER-SMALL BUTTONS FOR ONE LINE --- */
+    /* SMALLER BUTTONS — width:100% is REMOVED */
     .stButton > button {
         background-color: #C62828 !important;
         color: white !important;
-        border-radius: 6px !important;
-        padding: 0.15rem 0.25rem !important;
+        border-radius: 8px !important;
+        padding: 0.30rem 0.6rem !important;
         font-weight: 600 !important;
         border: none !important;
-        font-size: 0.70rem !important;
-        min-width: 40px !important;    /* tiny */
-        max-width: 60px !important;    /* prevents stretching */
-        height: 28px !important;
-        margin: 0 !important;
+        font-size: 0.85rem !important;
+        min-width: 55px !important;
+        height: 38px !important;
     }
 
     .stButton > button:hover {
@@ -145,12 +144,12 @@ if "answers" not in st.session_state:
     st.session_state.answers = [None] * len(questions)
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS — unchanged logic from v112
+# RENDER QUESTIONS ( same logic as v112 )
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    cols = st.columns([1,1,1,1,1])  # even slim columns
+    cols = st.columns(5)
     for idx, col in enumerate(cols):
         with col:
             if st.button(labels[idx], key=f"q{i}_{idx}"):
@@ -163,7 +162,7 @@ if st.button("Nulstil svar"):
     st.session_state.answers = [None] * len(questions)
 
 # -------------------------------------------------------------
-# SCORE + PROFILE (unchanged)
+# SCORE + PROFILE
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
