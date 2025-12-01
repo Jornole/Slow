@@ -5,15 +5,12 @@ from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
 from datetime import datetime
 
-# -------------------------------------------------------------
-# BASIC SETUP
-# -------------------------------------------------------------
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# VERSION + TIMESTAMP (v119)
+# VERSION
 # -------------------------------------------------------------
-version = "v119"
+version = "v120"
 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
 
 st.markdown(
@@ -28,7 +25,7 @@ st.markdown(
 )
 
 # -------------------------------------------------------------
-# GLOBAL CSS 
+# GLOBAL CSS
 # -------------------------------------------------------------
 st.markdown("""
 <style>
@@ -38,46 +35,28 @@ html, body, .stApp {
     font-family: Arial, sans-serif !important;
 }
 
-/* Vandrette knapper i én linje */
 .choice-row {
     display: flex;
     flex-direction: row;
     gap: 8px;
-    margin: 6px 0 16px 0;
+    margin: 6px 0 18px 0;
 }
 
 .choice-btn {
     background-color: #C62828;
-    border-radius: 8px;
-    padding: 5px 10px;
-    color: white;
-    font-size: 0.85rem;
-    font-weight: 600;
     border: none;
+    color: white;
+    padding: 8px 10px;
+    font-size: 0.85rem;
+    border-radius: 8px;
     cursor: pointer;
-    min-width: 72px;
-    text-align: center;
+    min-width: 62px;
 }
 
 .choice-btn.selected {
     background-color: #ffffff !important;
     color: #C62828 !important;
-}
-
-.choice-btn:hover {
-    background-color: #B71C1C;
-}
-
-.reset-btn {
-    background-color: #C62828 !important;
-    border-radius: 8px;
-    padding: 8px 18px;
-    font-weight: 600;
-    color: white !important;
-    border: none;
-    cursor: pointer;
-    margin-top: 15px;
-    font-size: 1rem;
+    font-weight: 700 !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -86,12 +65,12 @@ html, body, .stApp {
 # LOGO + TITLE
 # -------------------------------------------------------------
 st.markdown("""
-<div style="display:flex; justify-content:center; margin-top:10px;">
+<div style="display:flex;justify-content:center;">
     <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="160">
 </div>
 """, unsafe_allow_html=True)
 
-st.markdown('<div style="font-size:2.3rem; font-weight:800; text-align:center; margin-top:10px; margin-bottom:25px;">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
+st.markdown("<h1 style='text-align:center;'>DIN PERSONLIGE PROFIL</h1>", unsafe_allow_html=True)
 
 st.markdown("""
 Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige
@@ -136,68 +115,45 @@ labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
 if "answers" not in st.session_state:
     st.session_state.answers = [None] * len(questions)
 
-# -------------------------------------------------------------
-# HTML & JS BUTTONS
-# -------------------------------------------------------------
-js_blocks = []
-
-for i, q in enumerate(questions):
-
-    st.markdown(f"""
-        <div style="font-size:1.15rem; font-weight:600; margin-top:22px; margin-bottom:6px;">
-            {i+1}. {q}
-        </div>
-    """, unsafe_allow_html=True)
-
-    # Build row of buttons
-    html_buttons = ""
-    for v, label in enumerate(labels):
-        selected = "selected" if st.session_state.answers[i] == v else ""
-        html_buttons += f"""
-            <button class="choice-btn {selected}" id="q{i}_{v}" onclick="pickAnswer({i}, {v})">{label}</button>
-        """
-
-    st.markdown(f"""
-        <div class="choice-row">
-            {html_buttons}
-        </div>
-    """, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# JAVASCRIPT – store session state without reload
+# JS HANDLER (ingen reload)
 # -------------------------------------------------------------
-st.markdown("""
+st.html("""
 <script>
-function pickAnswer(qIndex, value) {
-    const buttons = document.querySelectorAll(`[id^="q${qIndex}_"]`);
-    buttons.forEach(btn => btn.classList.remove("selected"));
-
-    const active = document.getElementById(`q${qIndex}_${value}`);
-    active.classList.add("selected");
-
-    const payload = {index: qIndex, val: value};
-
-    fetch("/_stcore/set", {
+function setAnswer(q, v) {
+    const payload = {"qid": q, "val": v};
+    fetch("/_stcore/set_state", {
         method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        headers: {"Content-Type": "application/json"}
+    }).then(() => {
+        const btns = document.querySelectorAll(`[data-q='${q}']`);
+        btns.forEach(b => b.classList.remove("selected"));
+        document.getElementById(`btn_${q}_${v}`).classList.add("selected");
     });
 }
 </script>
-""", unsafe_allow_html=True)
+""")
 
 # -------------------------------------------------------------
-# Use Streamlit endpoint to store values
+# RENDER QUESTIONS
 # -------------------------------------------------------------
-def set_answer():
-    import json, sys
-    body = sys.stdin.read()
-    data = json.loads(body)
-    st.session_state.answers[data["index"]] = data["val"]
-    return "OK"
+for qi, q in enumerate(questions):
+    st.markdown(f"<div class='question-text'><b>{qi+1}. {q}</b></div>",
+                unsafe_allow_html=True)
 
-st.experimental_get_query_params()  # required for backend wiring
-st.experimental_connect("set", set_answer)
+    html_buttons = ""
+    for vi, lab in enumerate(labels):
+        sel = "selected" if st.session_state.answers[qi] == vi else ""
+        html_buttons += (
+            f"<button class='choice-btn {sel}' "
+            f"id='btn_{qi}_{vi}' "
+            f"data-q='{qi}' "
+            f"onclick='setAnswer({qi},{vi})'>{lab}</button>"
+        )
+
+    st.html(f"<div class='choice-row'>{html_buttons}</div>")
 
 # -------------------------------------------------------------
 # RESET BUTTON
@@ -206,7 +162,7 @@ if st.button("Nulstil svar"):
     st.session_state.answers = [None] * len(questions)
 
 # -------------------------------------------------------------
-# SCORE + PROFILE
+# SCORE
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
@@ -216,13 +172,47 @@ def interpret_score(score):
     else:
         return "HSP"
 
-safe = [a if a is not None else 0 for a in st.session_state.answers]
-score = sum(safe)
-profile = interpret_score(score)
+safe_answers = [a if a is not None else 0 for a in st.session_state.answers]
+total_score = sum(safe_answers)
+profile = interpret_score(total_score)
 
+# -------------------------------------------------------------
+# SHOW RESULT
+# -------------------------------------------------------------
 st.header("Dit resultat")
-st.subheader(f"Score: {score} / 80")
+st.subheader(f"Score: {total_score} / 80")
 st.subheader(f"Profil: {profile}")
+
+PROFILE_TEXT = {
+    "HSP": [
+        "Du registrerer flere nuancer i både indtryk og stemninger.",
+        "Du bearbejder oplevelser dybt og grundigt.",
+        "Du reagerer stærkt på stimuli og kan blive overstimuleret.",
+        "Du har en rig indre verden og et fintfølende nervesystem.",
+        "Du er empatisk og opmærksom på andre.",
+        "Du har brug for ro og pauser for at lade op.",
+    ],
+    "Slow Processor": [
+        "Du arbejder bedst i roligt tempo og med forudsigelighed.",
+        "Du bearbejder indtryk grundigt, men langsomt.",
+        "Du har brug for ekstra tid til omstilling og beslutninger.",
+        "Du trives med faste rammer og struktur.",
+        "Du kan føle dig presset, når tingene går hurtigt.",
+        "Du har god udholdenhed, når du arbejder i dit eget tempo.",
+    ],
+    "Mellemprofil": [
+        "Du veksler naturligt mellem hurtig og langsom bearbejdning.",
+        "Du håndterer de fleste stimuli uden at blive overvældet.",
+        "Du har en god balance mellem intuition og eftertænksomhed.",
+        "Du kan tilpasse dig forskellige miljøer og tempoer.",
+        "Du bliver påvirket i perioder, men finder hurtigt balancen igen.",
+        "Du fungerer bredt socialt og mentalt i mange typer situationer.",
+    ]
+}
+
+st.write("### Karakteristika for din profil:")
+for line in PROFILE_TEXT[profile]:
+    st.write(f"- {line}")
 
 # -------------------------------------------------------------
 # PDF GENERATION
@@ -239,12 +229,18 @@ def generate_pdf(score, profile):
     story.append(Spacer(1, 12))
 
     for i, q in enumerate(questions):
-        story.append(Paragraph(f"{i+1}. {q} – {labels[safe[i]]}", styles["BodyText"]))
+        story.append(Paragraph(
+            f"{i+1}. {q} – {labels[safe_answers[i]]}",
+            styles["BodyText"]
+        ))
 
     doc.build(story)
     buf.seek(0)
     return buf
 
-st.download_button("Download PDF-rapport", generate_pdf(score, profile),
-                    file_name="HSP_SlowProcessor_Rapport.pdf",
-                    mime="application/pdf")
+st.download_button(
+    "Download PDF-rapport",
+    generate_pdf(total_score, profile),
+    file_name="HSP_SlowProcessor_Rapport.pdf",
+    mime="application/pdf"
+)
