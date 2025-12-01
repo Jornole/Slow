@@ -11,9 +11,9 @@ from datetime import datetime
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# VERSION + TIMESTAMP (v110)
+# VERSION + TIMESTAMP (v111)
 # -------------------------------------------------------------
-version = "v110"
+version = "v111"
 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
 
 st.markdown(
@@ -61,7 +61,6 @@ st.markdown(
         margin-bottom:10px;
     }
 
-    /* Horizontal button row */
     .choice-row {
         display:flex;
         flex-direction:row;
@@ -151,29 +150,28 @@ if "answers" not in st.session_state:
     st.session_state.answers = [None] * len(questions)
 
 # -------------------------------------------------------------
-# HANDLE HTML BUTTON POSTS (NO RELOAD)
+# HANDLE QUERY PARAMS (fixed version)
 # -------------------------------------------------------------
-post = st.experimental_get_query_params()
+params = st.experimental_get_query_params()
 
-for key in post:
-    if key.startswith("q"):
+for key, val in params.items():
+    if key.startswith("q") and key[1:].isdigit():
         q_index = int(key[1:])
-        st.session_state.answers[q_index] = int(post[key][0])
+        if 0 <= q_index < len(questions):
+            st.session_state.answers[q_index] = int(val[0])
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS (horizontal buttons)
+# RENDER QUESTIONS
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    row_html = "<div class='choice-row'>"
+    row = "<div class='choice-row'>"
     for idx, label in enumerate(labels):
-        row_html += f"""
-        <a href='?q{i}={idx}' class='choice-btn'>{label}</a>
-        """
-    row_html += "</div>"
+        row += f"<a href='?q{i}={idx}' class='choice-btn'>{label}</a>"
+    row += "</div>"
 
-    st.markdown(row_html, unsafe_allow_html=True)
+    st.markdown(row, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
 # RESET BUTTON
