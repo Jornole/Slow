@@ -11,9 +11,9 @@ from datetime import datetime
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# VERSION + TIMESTAMP (v109)
+# VERSION + TIMESTAMP (v110)
 # -------------------------------------------------------------
-version = "v109"
+version = "v110"
 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
 
 st.markdown(
@@ -28,7 +28,7 @@ st.markdown(
 )
 
 # -------------------------------------------------------------
-# GLOBAL CSS (ONLY CHANGE: BUTTON SIZE + INLINE DISPLAY)
+# GLOBAL CSS
 # -------------------------------------------------------------
 st.markdown(
     """
@@ -58,27 +58,32 @@ st.markdown(
         font-size:1.15rem;
         font-weight:600;
         margin-top:22px;
-        margin-bottom:6px;
+        margin-bottom:10px;
     }
 
-    /* --- ONLY CHANGE FOR v109: smaller & inline buttons --- */
-    .stButton > button {
-        background-color: #C62828 !important;
-        color: white !important;
-        border-radius: 8px !important;
-        padding: 0.30rem 0.50rem !important;
-        font-weight: 600 !important;
-        border: none !important;
-        font-size: 0.80rem !important;
-        width: auto !important;
-        min-width: 55px !important;
-        height: 36px !important;
-        display: inline-block !important;
-        white-space: nowrap !important;
+    /* Horizontal button row */
+    .choice-row {
+        display:flex;
+        flex-direction:row;
+        gap:10px;
+        flex-wrap:nowrap;
+        margin-bottom:8px;
     }
 
-    .stButton > button:hover {
-        background-color: #B71C1C !important;
+    .choice-btn {
+        background:#C62828;
+        color:white !important;
+        border:none;
+        padding:6px 12px;
+        border-radius:8px;
+        font-size:0.85rem;
+        font-weight:600;
+        white-space:nowrap;
+        cursor:pointer;
+    }
+
+    .choice-btn:hover {
+        background:#B71C1C;
     }
     </style>
     """,
@@ -146,22 +151,36 @@ if "answers" not in st.session_state:
     st.session_state.answers = [None] * len(questions)
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS – IDENTICAL TO v108
+# HANDLE HTML BUTTON POSTS (NO RELOAD)
+# -------------------------------------------------------------
+post = st.experimental_get_query_params()
+
+for key in post:
+    if key.startswith("q"):
+        q_index = int(key[1:])
+        st.session_state.answers[q_index] = int(post[key][0])
+
+# -------------------------------------------------------------
+# RENDER QUESTIONS (horizontal buttons)
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    cols = st.columns(5)
-    for idx, col in enumerate(cols):
-        with col:
-            if st.button(labels[idx], key=f"q{i}_{idx}"):
-                st.session_state.answers[i] = idx
+    row_html = "<div class='choice-row'>"
+    for idx, label in enumerate(labels):
+        row_html += f"""
+        <a href='?q{i}={idx}' class='choice-btn'>{label}</a>
+        """
+    row_html += "</div>"
+
+    st.markdown(row_html, unsafe_allow_html=True)
 
 # -------------------------------------------------------------
 # RESET BUTTON
 # -------------------------------------------------------------
 if st.button("Nulstil svar"):
     st.session_state.answers = [None] * len(questions)
+    st.experimental_set_query_params()
 
 # -------------------------------------------------------------
 # SCORE + PROFILE
@@ -174,8 +193,8 @@ def interpret_score(score):
     else:
         return "HSP"
 
-safe_answers = [a if a is not None else 0 for a in st.session_state.answers]
-total_score = sum(safe_answers)
+safe = [a if a is not None else 0 for a in st.session_state.answers]
+total_score = sum(safe)
 profile = interpret_score(total_score)
 
 PROFILE_TEXT = {
@@ -206,7 +225,7 @@ PROFILE_TEXT = {
 }
 
 # -------------------------------------------------------------
-# RESULT
+# RESULTS
 # -------------------------------------------------------------
 st.header("Dit resultat")
 st.subheader(f"Score: {total_score} / 80")
@@ -231,7 +250,7 @@ def generate_pdf(score, profile):
     story.append(Spacer(1, 12))
 
     for i, q in enumerate(questions):
-        story.append(Paragraph(f"{i+1}. {q} – {labels[safe_answers[i]]}", styles["BodyText"]))
+        story.append(Paragraph(f"{i+1}. {q} – {labels[safe[i]]}", styles["BodyText"]))
 
     doc.build(story)
     buf.seek(0)
