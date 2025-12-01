@@ -11,9 +11,9 @@ from datetime import datetime
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# VERSION + TIMESTAMP (v112)
+# VERSION + TIMESTAMP
 # -------------------------------------------------------------
-version = "v112"
+version = "v113"
 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
 
 st.markdown(
@@ -28,7 +28,7 @@ st.markdown(
 )
 
 # -------------------------------------------------------------
-# GLOBAL CSS (ONLY change = smaller buttons to fit one row)
+# GLOBAL CSS — ONLY CHANGE = very small buttons
 # -------------------------------------------------------------
 st.markdown(
     """
@@ -61,17 +61,19 @@ st.markdown(
         margin-bottom:6px;
     }
 
-    /* SMALLER BUTTONS to fit one line */
+    /* --- NEW: SUPER-SMALL BUTTONS FOR ONE LINE --- */
     .stButton > button {
         background-color: #C62828 !important;
         color: white !important;
-        border-radius: 8px !important;
-        padding: 0.25rem 0.4rem !important;
+        border-radius: 6px !important;
+        padding: 0.15rem 0.25rem !important;
         font-weight: 600 !important;
         border: none !important;
-        font-size: 0.75rem !important;
-        width: 100% !important;
-        height: 34px !important;
+        font-size: 0.70rem !important;
+        min-width: 40px !important;    /* tiny */
+        max-width: 60px !important;    /* prevents stretching */
+        height: 28px !important;
+        margin: 0 !important;
     }
 
     .stButton > button:hover {
@@ -143,16 +145,16 @@ if "answers" not in st.session_state:
     st.session_state.answers = [None] * len(questions)
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS  (same as v108 = NO RELOAD)
+# RENDER QUESTIONS — unchanged logic from v112
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    cols = st.columns(5)
+    cols = st.columns([1,1,1,1,1])  # even slim columns
     for idx, col in enumerate(cols):
         with col:
             if st.button(labels[idx], key=f"q{i}_{idx}"):
-                st.session_state.answers[i] = idx   # no reload
+                st.session_state.answers[i] = idx
 
 # -------------------------------------------------------------
 # RESET BUTTON
@@ -161,7 +163,7 @@ if st.button("Nulstil svar"):
     st.session_state.answers = [None] * len(questions)
 
 # -------------------------------------------------------------
-# RESULT + PROFILE
+# SCORE + PROFILE (unchanged)
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
@@ -171,8 +173,8 @@ def interpret_score(score):
     else:
         return "HSP"
 
-safe = [a if a is not None else 0 for a in st.session_state.answers]
-total_score = sum(safe)
+safe_answers = [a if a is not None else 0 for a in st.session_state.answers]
+total_score = sum(safe_answers)
 profile = interpret_score(total_score)
 
 PROFILE_TEXT = {
@@ -203,7 +205,7 @@ PROFILE_TEXT = {
 }
 
 # -------------------------------------------------------------
-# OUTPUT
+# RESULT
 # -------------------------------------------------------------
 st.header("Dit resultat")
 st.subheader(f"Score: {total_score} / 80")
@@ -228,7 +230,7 @@ def generate_pdf(score, profile):
     story.append(Spacer(1, 12))
 
     for i, q in enumerate(questions):
-        story.append(Paragraph(f"{i+1}. {q} – {labels[safe[i]]}", styles["BodyText"]))
+        story.append(Paragraph(f"{i+1}. {q} – {labels[safe_answers[i]]}", styles["BodyText"]))
 
     doc.build(story)
     buf.seek(0)
