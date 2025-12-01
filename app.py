@@ -11,9 +11,9 @@ from datetime import datetime
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# VERSION + TIMESTAMP (v118)
+# VERSION + TIMESTAMP (v119)
 # -------------------------------------------------------------
-version = "v118"
+version = "v119"
 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
 
 st.markdown(
@@ -28,99 +28,79 @@ st.markdown(
 )
 
 # -------------------------------------------------------------
-# GLOBAL CSS
+# GLOBAL CSS 
 # -------------------------------------------------------------
-st.markdown(
-    """
-    <style>
-    html, body, .stApp {
-        background-color: #1A6333 !important;
-        color: white !important;
-        font-family: Arial, sans-serif !important;
-    }
+st.markdown("""
+<style>
+html, body, .stApp {
+    background-color: #1A6333 !important;
+    color: white !important;
+    font-family: Arial, sans-serif !important;
+}
 
-    .center-logo {
-        display:flex;
-        justify-content:center;
-        margin-top:10px;
-        margin-bottom:5px;
-    }
+/* Vandrette knapper i én linje */
+.choice-row {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    margin: 6px 0 16px 0;
+}
 
-    .main-title {
-        font-size:2.3rem;
-        font-weight:800;
-        text-align:center;
-        margin-top:10px;
-        margin-bottom:25px;
-    }
+.choice-btn {
+    background-color: #C62828;
+    border-radius: 8px;
+    padding: 5px 10px;
+    color: white;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    min-width: 72px;
+    text-align: center;
+}
 
-    .question-text {
-        font-size:1.15rem;
-        font-weight:600;
-        margin-top:22px;
-        margin-bottom:6px;
-    }
+.choice-btn.selected {
+    background-color: #ffffff !important;
+    color: #C62828 !important;
+}
 
-    /* -------------------------
-       Tving kolonner horisontale
-       ------------------------- */
-    [data-testid="stHorizontalBlock"] > div[role="list"] {
-        display:flex !important;
-        flex-wrap: nowrap !important;
-        gap: 8px !important;
-        align-items: center !important;
-    }
+.choice-btn:hover {
+    background-color: #B71C1C;
+}
 
-    /* -------------------------
-       Small buttons
-       ------------------------- */
-    .stButton > button {
-        background-color: #C62828 !important;
-        color: white !important;
-        border-radius: 8px !important;
-        padding: 6px 8px !important;
-        font-weight: 600 !important;
-        font-size: 0.82rem !important;
-        height: 36px !important;
-        min-width: 56px !important;
-        max-width: 80px !important;
-        white-space: nowrap !important;
-        border: none !important;
-    }
-
-    .stButton > button:hover {
-        background-color: #B71C1C !important;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+.reset-btn {
+    background-color: #C62828 !important;
+    border-radius: 8px;
+    padding: 8px 18px;
+    font-weight: 600;
+    color: white !important;
+    border: none;
+    cursor: pointer;
+    margin-top: 15px;
+    font-size: 1rem;
+}
+</style>
+""", unsafe_allow_html=True)
 
 # -------------------------------------------------------------
 # LOGO + TITLE
 # -------------------------------------------------------------
-st.markdown(
-    """
-    <div class="center-logo">
-        <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="160">
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+st.markdown("""
+<div style="display:flex; justify-content:center; margin-top:10px;">
+    <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="160">
+</div>
+""", unsafe_allow_html=True)
 
-st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
+st.markdown('<div style="font-size:2.3rem; font-weight:800; text-align:center; margin-top:10px; margin-bottom:25px;">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
 
-st.markdown(
-    """
-    Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige
-    og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner.
+st.markdown("""
+Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige
+og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner.
 
-    Du besvarer 20 udsagn på en skala fra **Aldrig** til **Altid**.
+Du besvarer 20 udsagn på en skala fra **Aldrig** til **Altid**.
 
-    Testen er <u><b>ikke en diagnose</b></u>, men et psykologisk værktøj til selvindsigt.
-    """,
-    unsafe_allow_html=True,
-)
+Testen er <u><b>ikke en diagnose</b></u>, men et psykologisk værktøj til selvindsigt.
+""", unsafe_allow_html=True)
 
 # -------------------------------------------------------------
 # QUESTIONS
@@ -157,18 +137,67 @@ if "answers" not in st.session_state:
     st.session_state.answers = [None] * len(questions)
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS  (knapper nu i én linje)
+# HTML & JS BUTTONS
 # -------------------------------------------------------------
+js_blocks = []
+
 for i, q in enumerate(questions):
 
-    st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
+    st.markdown(f"""
+        <div style="font-size:1.15rem; font-weight:600; margin-top:22px; margin-bottom:6px;">
+            {i+1}. {q}
+        </div>
+    """, unsafe_allow_html=True)
 
-    cols = st.columns([1,1,1,1,1], gap="small")
+    # Build row of buttons
+    html_buttons = ""
+    for v, label in enumerate(labels):
+        selected = "selected" if st.session_state.answers[i] == v else ""
+        html_buttons += f"""
+            <button class="choice-btn {selected}" id="q{i}_{v}" onclick="pickAnswer({i}, {v})">{label}</button>
+        """
 
-    for idx, col in enumerate(cols):
-        with col:
-            if st.button(labels[idx], key=f"q{i}_{idx}"):
-                st.session_state.answers[i] = idx
+    st.markdown(f"""
+        <div class="choice-row">
+            {html_buttons}
+        </div>
+    """, unsafe_allow_html=True)
+
+# -------------------------------------------------------------
+# JAVASCRIPT – store session state without reload
+# -------------------------------------------------------------
+st.markdown("""
+<script>
+function pickAnswer(qIndex, value) {
+    const buttons = document.querySelectorAll(`[id^="q${qIndex}_"]`);
+    buttons.forEach(btn => btn.classList.remove("selected"));
+
+    const active = document.getElementById(`q${qIndex}_${value}`);
+    active.classList.add("selected");
+
+    const payload = {index: qIndex, val: value};
+
+    fetch("/_stcore/set", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(payload)
+    });
+}
+</script>
+""", unsafe_allow_html=True)
+
+# -------------------------------------------------------------
+# Use Streamlit endpoint to store values
+# -------------------------------------------------------------
+def set_answer():
+    import json, sys
+    body = sys.stdin.read()
+    data = json.loads(body)
+    st.session_state.answers[data["index"]] = data["val"]
+    return "OK"
+
+st.experimental_get_query_params()  # required for backend wiring
+st.experimental_connect("set", set_answer)
 
 # -------------------------------------------------------------
 # RESET BUTTON
@@ -187,50 +216,16 @@ def interpret_score(score):
     else:
         return "HSP"
 
-safe_answers = [a if a is not None else 0 for a in st.session_state.answers]
-total_score = sum(safe_answers)
-profile = interpret_score(total_score)
+safe = [a if a is not None else 0 for a in st.session_state.answers]
+score = sum(safe)
+profile = interpret_score(score)
 
-PROFILE_TEXT = {
-    "HSP": [
-        "Du registrerer flere nuancer i både indtryk og stemninger.",
-        "Du bearbejder oplevelser dybt og grundigt.",
-        "Du reagerer stærkt på stimuli og kan blive overstimuleret.",
-        "Du har en rig indre verden og et fintfølende nervesystem.",
-        "Du er empatisk og opmærksom på andre.",
-        "Du har brug for ro og pauser for at lade op.",
-    ],
-    "Slow Processor": [
-        "Du arbejder bedst i roligt tempo og med forudsigelighed.",
-        "Du bearbejder indtryk grundigt, men langsomt.",
-        "Du har brug for ekstra tid til omstilling og beslutninger.",
-        "Du trives med faste rammer og struktur.",
-        "Du kan føle dig presset, når tingene går hurtigt.",
-        "Du har god udholdenhed, når du arbejder i dit eget tempo.",
-    ],
-    "Mellemprofil": [
-        "Du veksler naturligt mellem hurtig og langsom bearbejdning.",
-        "Du håndterer de fleste stimuli uden at blive overvældet.",
-        "Du har en god balance mellem intuition og eftertænksomhed.",
-        "Du kan tilpasse dig forskellige miljøer og tempoer.",
-        "Du bliver påvirket i perioder, men finder hurtigt balancen igen.",
-        "Du fungerer bredt socialt og mentalt i mange typer situationer.",
-    ],
-}
-
-# -------------------------------------------------------------
-# RESULT
-# -------------------------------------------------------------
 st.header("Dit resultat")
-st.subheader(f"Score: {total_score} / 80")
+st.subheader(f"Score: {score} / 80")
 st.subheader(f"Profil: {profile}")
 
-st.write("### Karakteristika for din profil:")
-for s in PROFILE_TEXT[profile]:
-    st.write(f"- {s}")
-
 # -------------------------------------------------------------
-# PDF
+# PDF GENERATION
 # -------------------------------------------------------------
 def generate_pdf(score, profile):
     buf = BytesIO()
@@ -244,15 +239,12 @@ def generate_pdf(score, profile):
     story.append(Spacer(1, 12))
 
     for i, q in enumerate(questions):
-        story.append(Paragraph(f"{i+1}. {q} – {labels[safe_answers[i]]}", styles["BodyText"]))
+        story.append(Paragraph(f"{i+1}. {q} – {labels[safe[i]]}", styles["BodyText"]))
 
     doc.build(story)
     buf.seek(0)
     return buf
 
-st.download_button(
-    "Download PDF-rapport",
-    generate_pdf(total_score, profile),
-    file_name="HSP_SlowProcessor_Rapport.pdf",
-    mime="application/pdf"
-)
+st.download_button("Download PDF-rapport", generate_pdf(score, profile),
+                    file_name="HSP_SlowProcessor_Rapport.pdf",
+                    mime="application/pdf")
