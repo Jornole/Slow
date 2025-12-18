@@ -7,7 +7,7 @@ from io import BytesIO
 from datetime import datetime
 
 # -------------------------------------------------------------
-# BASIC SETUP
+# BASIC SETU
 # -------------------------------------------------------------
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
