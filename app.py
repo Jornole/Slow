@@ -1,147 +1,32 @@
-# app.py - Version v130
 import streamlit as st
+import streamlit.components.v1 as components
+from datetime import datetime
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
-from datetime import datetime
+import json
 
 # -------------------------------------------------------------
-# BASIC SETU
+# BASIC SETUP
 # -------------------------------------------------------------
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# VERSION + TIMESTAMP (v130)
+# VERSION
 # -------------------------------------------------------------
-version = "v130"
+version = "v131"
 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
+
 st.markdown(
     f"""
     <div style="font-size:0.85rem; background-color:#144d27;
                 padding:6px 10px; width:fit-content;
-                border-radius:6px; margin-bottom:10px;">
+                border-radius:6px; margin-bottom:10px; color:white;">
         Version {version} — {timestamp}
     </div>
     """,
-    unsafe_allow_html=True,
-)
-
-# -------------------------------------------------------------
-# GLOBAL CSS (match v78 look; tweak for buttons-as-labels)
-# -------------------------------------------------------------
-st.markdown(
-    """
-    <style>
-    html, body, .stApp {
-        background-color: #1A6333 !important;
-        color: white !important;
-        font-family: Arial, sans-serif !important;
-    }
-
-    .center-logo {
-        display:flex;
-        justify-content:center;
-        margin-top:10px;
-        margin-bottom:5px;
-    }
-
-    .main-title {
-        font-size:2.3rem;
-        font-weight:800;
-        text-align:center;
-        margin-top:10px;
-        margin-bottom:25px;
-    }
-
-    .question-text {
-        font-size:1.15rem;
-        font-weight:600;
-        margin-top:22px;
-        margin-bottom:6px;
-    }
-
-    /* scale row wrapper */
-    .scale-row {
-        display:flex;
-        justify-content:space-between;
-        align-items:center;
-        width:100%;
-        margin-bottom:12px;
-        padding:0 6%;
-        box-sizing:border-box;
-    }
-
-    /* style for the Streamlit buttons (these apply to all buttons; reset/pdf keep red) */
-    .scale-btn {
-        background: transparent;
-        color: #ffffff;
-        border: none;
-        font-size: 0.95rem;
-        padding: 8px 6px;
-        width: 100%;
-        text-align: center;
-    }
-
-    /* Selected appearance */
-    .scale-btn-selected {
-        color: #ff4444 !important;
-        font-weight: 700;
-    }
-
-    /* Keep the red look for reset/download */
-    .stButton > button, .stDownloadButton > button {
-        background-color: #C62828 !important;
-        color: white !important;
-        border-radius: 8px !important;
-        padding: 0.65rem 1.4rem !important;
-        font-weight: 600 !important;
-        border: none !important;
-    }
-    .stButton > button:hover, .stDownloadButton > button:hover {
-        background-color: #B71C1C !important;
-    }
-
-    /* Make Streamlit column buttons compact so 5 can fit on one line */
-    .stButton > button {
-        min-width: 60px !important;
-        padding: 0.25rem 0.4rem !important;
-        height: 38px !important;
-        font-size: 0.9rem !important;
-    }
-
-    @media (max-width:420px) {
-        .scale-row { padding:0 3%; }
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
-# -------------------------------------------------------------
-# LOGO + TITLE + INTRO (kept same)
-# -------------------------------------------------------------
-st.markdown(
-    """
-    <div class="center-logo">
-        <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="160">
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
-
-st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
-
-st.markdown(
-    """
-    Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige
-    og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner.
-
-    Du besvarer 20 udsagn på en skala fra **Aldrig** til **Altid**.
-
-    Testen er <u><b>ikke en diagnose</b></u>, men et psykologisk værktøj til selvindsigt.
-    """,
-    unsafe_allow_html=True,
+    unsafe_allow_html=True
 )
 
 # -------------------------------------------------------------
@@ -179,44 +64,109 @@ if "answers" not in st.session_state:
     st.session_state.answers = [None] * len(questions)
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS
+# COMPONENT (NO RELOAD UI)
 # -------------------------------------------------------------
-for i, q in enumerate(questions):
-    st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
+component_html = f"""
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+body {{
+    background:#1A6333;
+    color:white;
+    font-family:Arial, sans-serif;
+    margin:0;
+    padding:0;
+}}
+.container {{
+    padding:16px;
+}}
+.question {{
+    font-size:1.15rem;
+    font-weight:600;
+    margin:22px 0 8px 0;
+}}
+.row {{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+}}
+.btn {{
+    background:#C62828;
+    color:white;
+    padding:10px 14px;
+    border-radius:10px;
+    font-weight:600;
+    cursor:pointer;
+    user-select:none;
+    text-align:center;
+}}
+.btn.selected {{
+    outline:3px solid rgba(255,255,255,0.25);
+}}
+</style>
+</head>
+<body>
+<div class="container" id="app"></div>
 
-    # Create 5 narrow columns so buttons sit side-by-side
-    cols = st.columns([1,1,1,1,1])
+<script>
+const questions = {json.dumps(questions)};
+const labels = {json.dumps(labels)};
+let answers = {json.dumps(st.session_state.answers)};
 
-    for v, (col, lab) in enumerate(zip(cols, labels)):
-        # Build a key for the button
-        key = f"q{i}_{v}"
+function send() {{
+    window.parent.postMessage({{
+        type: "answers",
+        value: answers
+    }}, "*");
+}}
 
-        # Visual: we will render a compact Streamlit button inside the column.
-        # When clicked, it stores the value in session_state.
-        with col:
-            clicked = st.button(lab, key=key)
-            if clicked:
-                st.session_state.answers[i] = v
+function render() {{
+    const app = document.getElementById("app");
+    app.innerHTML = "";
+    questions.forEach((q, qi) => {{
+        const qd = document.createElement("div");
+        qd.className = "question";
+        qd.innerText = (qi+1) + ". " + q;
+        app.appendChild(qd);
 
-    # After the buttons, re-render a small label row (so spacing/text matches v78)
-    # We render it via markdown but the primary interaction is via buttons above.
-    selected_index = st.session_state.answers[i]
-    # build html for the label row, matching styles: selected label gets red
-    html = "<div class='scale-row'>"
-    for v, lab in enumerate(labels):
-        cls = "scale-btn-selected" if selected_index == v else ""
-        html += f"<div style='flex:1; text-align:center; font-size:0.95rem; padding:4px 6px; color: {'#ff4444' if cls else '#ffffff'}; font-weight: {'700' if cls else '400'}'>{lab}</div>"
-    html += "</div>"
-    st.markdown(html, unsafe_allow_html=True)
+        const row = document.createElement("div");
+        row.className = "row";
+
+        labels.forEach((lab, li) => {{
+            const b = document.createElement("div");
+            b.className = "btn" + (answers[qi] === li ? " selected" : "");
+            b.innerText = lab;
+            b.onclick = () => {{
+                answers[qi] = li;
+                render();
+                send();
+            }};
+            row.appendChild(b);
+        }});
+        app.appendChild(row);
+    }});
+}}
+
+render();
+send();
+</script>
+</body>
+</html>
+"""
+
+result = components.html(component_html, height=1200)
 
 # -------------------------------------------------------------
-# RESET BUTTON
+# RECEIVE ANSWERS (NO UI RERUN CAUSED BY CLICKS)
 # -------------------------------------------------------------
-if st.button("Nulstil svar"):
-    st.session_state.answers = [None] * len(questions)
+if isinstance(result, dict) and "value" in result:
+    st.session_state.answers = result["value"]
 
 # -------------------------------------------------------------
-# SCORE + PROFILE (unchanged)
+# SCORE + PROFILE
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
@@ -257,14 +207,10 @@ PROFILE_TEXT = {
     ],
 }
 
-# -------------------------------------------------------------
-# RESULT
-# -------------------------------------------------------------
 st.header("Dit resultat")
 st.subheader(f"Score: {total_score} / 80")
 st.subheader(f"Profil: {profile}")
 
-st.write("### Karakteristika for din profil:")
 for s in PROFILE_TEXT[profile]:
     st.write(f"- {s}")
 
@@ -283,7 +229,9 @@ def generate_pdf(score, profile):
     story.append(Spacer(1, 12))
 
     for i, q in enumerate(questions):
-        story.append(Paragraph(f"{i+1}. {q} – {labels[safe_answers[i]]}", styles["BodyText"]))
+        story.append(
+            Paragraph(f"{i+1}. {q} – {labels[safe_answers[i]]}", styles["BodyText"])
+        )
 
     doc.build(story)
     buf.seek(0)
