@@ -13,7 +13,7 @@ st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 # -------------------------------------------------------------
 # VERSION + TIMESTAMP
 # -------------------------------------------------------------
-version = "v78.2"
+version = "v78.3"
 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
 
 st.markdown(
@@ -61,15 +61,11 @@ st.markdown(
         margin-bottom:6px;
     }
 
-    .scale-row {
-        padding:0 4%;
-        margin-bottom:12px;
-    }
-
+    /* ---------- SCALE BUTTONS ---------- */
     .scale-btn button {
         width:100%;
-        font-size:0.85rem !important;
-        padding:6px 0 !important;
+        font-size:0.8rem !important;
+        padding:5px 0 !important;
         border-radius:6px !important;
         background-color:#2E7D32 !important;
         color:white !important;
@@ -92,10 +88,6 @@ st.markdown(
         padding:0.6rem 1.2rem !important;
         font-weight:600 !important;
         border:none !important;
-    }
-
-    .stButton > button:hover, .stDownloadButton > button:hover {
-        background-color:#B71C1C !important;
     }
     </style>
     """,
