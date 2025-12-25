@@ -10,19 +10,27 @@ import json
 # -------------------------------------------------------------
 # BASIC SETUP
 # -------------------------------------------------------------
-st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
+st.set_page_config(
+    page_title="HSP / Slow Processor Test",
+    layout="centered"
+)
 
 # -------------------------------------------------------------
 # VERSION
 # -------------------------------------------------------------
-version = "v133"
+version = "v1.0"
 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
 
 st.markdown(
     f"""
-    <div style="font-size:0.85rem; background-color:#144d27;
-                padding:6px 10px; width:fit-content;
-                border-radius:6px; margin-bottom:10px; color:white;">
+    <div style="
+        font-size:0.85rem;
+        background-color:#144d27;
+        padding:6px 10px;
+        width:fit-content;
+        border-radius:6px;
+        margin-bottom:14px;
+        color:white;">
         Version {version} — {timestamp}
     </div>
     """,
@@ -64,7 +72,7 @@ if "answers" not in st.session_state:
     st.session_state.answers = [None] * len(questions)
 
 # -------------------------------------------------------------
-# COMPONENT (NO RELOAD UI)
+# HTML COMPONENT (NO RELOAD)
 # -------------------------------------------------------------
 component_html = f"""
 <!DOCTYPE html>
@@ -80,34 +88,42 @@ body {{
     margin:0;
     padding:0;
 }}
+
 .container {{
     padding:16px;
 }}
+
 .question {{
     font-size:1.15rem;
     font-weight:600;
     margin:22px 0 8px 0;
 }}
+
 .row {{
     display:flex;
     gap:10px;
-    flex-wrap:wrap;
+    flex-wrap:nowrap;
 }}
+
 .btn {{
+    flex:1;
+    min-width:90px;
     background:#C62828;
     color:white;
-    padding:10px 14px;
+    padding:10px 0;
     border-radius:10px;
     font-weight:600;
     cursor:pointer;
     user-select:none;
     text-align:center;
 }}
+
 .btn.selected {{
-    outline:3px solid rgba(255,255,255,0.25);
+    outline:3px solid rgba(255,255,255,0.35);
 }}
 </style>
 </head>
+
 <body>
 <div class="container" id="app"></div>
 
@@ -126,10 +142,11 @@ function send() {{
 function render() {{
     const app = document.getElementById("app");
     app.innerHTML = "";
+
     questions.forEach((q, qi) => {{
         const qd = document.createElement("div");
         qd.className = "question";
-        qd.innerText = (qi+1) + ". " + q;
+        qd.innerText = (qi + 1) + ". " + q;
         app.appendChild(qd);
 
         const row = document.createElement("div");
@@ -146,6 +163,7 @@ function render() {{
             }};
             row.appendChild(b);
         }});
+
         app.appendChild(row);
     }});
 }}
@@ -157,16 +175,16 @@ send();
 </html>
 """
 
-result = components.html(component_html, height=1200)
+result = components.html(component_html, height=1250)
 
 # -------------------------------------------------------------
-# RECEIVE ANSWERS (NO UI RERUN CAUSED BY CLICKS)
+# RECEIVE ANSWERS
 # -------------------------------------------------------------
 if isinstance(result, dict) and "value" in result:
     st.session_state.answers = result["value"]
 
 # -------------------------------------------------------------
-# SCORE + PROFILE
+# SCORE
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
@@ -182,28 +200,20 @@ profile = interpret_score(total_score)
 
 PROFILE_TEXT = {
     "HSP": [
-        "Du registrerer flere nuancer i både indtryk og stemninger.",
+        "Du registrerer mange nuancer i både indtryk og stemninger.",
         "Du bearbejder oplevelser dybt og grundigt.",
-        "Du reagerer stærkt på stimuli og kan blive overstimuleret.",
-        "Du har en rig indre verden og et fintfølende nervesystem.",
-        "Du er empatisk og opmærksom på andre.",
-        "Du har brug for ro og pauser for at lade op.",
+        "Du kan blive overstimuleret af for mange input.",
+        "Du har et fintfølende nervesystem.",
     ],
     "Slow Processor": [
-        "Du arbejder bedst i roligt tempo og med forudsigelighed.",
-        "Du bearbejder indtryk grundigt, men langsomt.",
-        "Du har brug for ekstra tid til omstilling og beslutninger.",
-        "Du trives med faste rammer og struktur.",
-        "Du kan føle dig presset, når tingene går hurtigt.",
-        "Du har god udholdenhed, når du arbejder i dit eget tempo.",
+        "Du arbejder bedst i et roligt tempo.",
+        "Du har brug for ekstra tid til beslutninger.",
+        "Du trives med forudsigelighed og struktur.",
     ],
     "Mellemprofil": [
-        "Du veksler naturligt mellem hurtig og langsom bearbejdning.",
-        "Du håndterer de fleste stimuli uden at blive overvældet.",
-        "Du har en god balance mellem intuition og eftertænksomhed.",
-        "Du kan tilpasse dig forskellige miljøer og tempoer.",
-        "Du bliver påvirket i perioder, men finder hurtigt balancen igen.",
-        "Du fungerer bredt socialt og mentalt i mange typer situationer.",
+        "Du har en god balance mellem tempo og fordybelse.",
+        "Du tilpasser dig de fleste situationer.",
+        "Du bliver sjældent overbelastet.",
     ],
 }
 
@@ -211,8 +221,8 @@ st.header("Dit resultat")
 st.subheader(f"Score: {total_score} / 80")
 st.subheader(f"Profil: {profile}")
 
-for s in PROFILE_TEXT[profile]:
-    st.write(f"- {s}")
+for line in PROFILE_TEXT[profile]:
+    st.write(f"- {line}")
 
 # -------------------------------------------------------------
 # PDF
@@ -230,7 +240,10 @@ def generate_pdf(score, profile):
 
     for i, q in enumerate(questions):
         story.append(
-            Paragraph(f"{i+1}. {q} – {labels[safe_answers[i]]}", styles["BodyText"])
+            Paragraph(
+                f"{i+1}. {q} – {labels[safe_answers[i]]}",
+                styles["BodyText"]
+            )
         )
 
     doc.build(story)
