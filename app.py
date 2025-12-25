@@ -18,7 +18,7 @@ st.set_page_config(
 # -------------------------------------------------------------
 # VERSION
 # -------------------------------------------------------------
-version = "v1.1"
+version = "v1.11"
 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
 
 st.markdown(
