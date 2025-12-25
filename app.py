@@ -1,40 +1,147 @@
 import streamlit as st
-import streamlit.components.v1 as components
-from datetime import datetime
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
-import json
+from urllib.parse import urlencode
+from datetime import datetime
 
 # -------------------------------------------------------------
 # BASIC SETUP
 # -------------------------------------------------------------
-st.set_page_config(
-    page_title="HSP / Slow Processor Test",
-    layout="centered"
-)
+st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# VERSION
+# VERSION + TIMESTAMP
 # -------------------------------------------------------------
-version = "v1.11"
+version = "v78"
 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
 
 st.markdown(
     f"""
-    <div style="
-        font-size:0.85rem;
-        background-color:#144d27;
-        padding:6px 10px;
-        width:fit-content;
-        border-radius:6px;
-        margin-bottom:14px;
-        color:white;">
+    <div style="font-size:0.85rem; background-color:#144d27;
+                padding:6px 10px; width:fit-content;
+                border-radius:6px; margin-bottom:10px;">
         Version {version} — {timestamp}
     </div>
     """,
     unsafe_allow_html=True
+)
+
+# -------------------------------------------------------------
+# GLOBAL CSS
+# -------------------------------------------------------------
+st.markdown(
+    """
+    <style>
+    html, body, .stApp {
+        background-color: #1A6333 !important;
+        color: white !important;
+        font-family: Arial, sans-serif !important;
+    }
+
+    .center-logo {
+        display:flex;
+        justify-content:center;
+        margin-top:10px;
+        margin-bottom:5px;
+    }
+
+    .main-title {
+        font-size:2.3rem;
+        font-weight:800;
+        text-align:center;
+        margin-top:10px;
+        margin-bottom:25px;
+    }
+
+    .question-text {
+        font-size:1.15rem;
+        font-weight:600;
+        margin-top:22px;
+        margin-bottom:6px;
+    }
+
+    /* ---------- SCALE ROW ---------- */
+    .scale-row {
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        width:100%;
+        margin-bottom:12px;
+        padding:0 4%;
+        box-sizing:border-box;
+        flex-wrap:nowrap;
+    }
+
+    .scale-row a {
+        color:#ffffff;
+        text-decoration:none;
+        font-size:0.85rem;
+        display:inline-block;
+        padding:6px 4px;
+        min-width:52px;
+        text-align:center;
+        white-space:nowrap;
+        border-radius:6px;
+    }
+
+    .scale-row a.selected {
+        color:#ff4444;
+        font-weight:700;
+    }
+
+    @media (max-width:420px) {
+        .scale-row { padding:0 2%; }
+        .scale-row a {
+            font-size:0.8rem;
+            padding:5px 3px;
+            min-width:46px;
+        }
+    }
+
+    /* ---------- STREAMLIT BUTTONS ---------- */
+    .stButton > button, .stDownloadButton > button {
+        background-color:#C62828 !important;
+        color:white !important;
+        border-radius:8px !important;
+        padding:0.6rem 1.2rem !important;
+        font-weight:600 !important;
+        border:none !important;
+    }
+
+    .stButton > button:hover, .stDownloadButton > button:hover {
+        background-color:#B71C1C !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+# -------------------------------------------------------------
+# LOGO + TITLE
+# -------------------------------------------------------------
+st.markdown(
+    """
+    <div class="center-logo">
+        <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="160">
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
+
+st.markdown(
+    """
+    Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige
+    og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner.
+
+    Du besvarer 20 udsagn på en skala fra **Aldrig** til **Altid**.
+
+    Testen er <u><b>ikke en diagnose</b></u>, men et psykologisk værktøj til selvindsigt.
+    """,
+    unsafe_allow_html=True,
 )
 
 # -------------------------------------------------------------
@@ -72,119 +179,56 @@ if "answers" not in st.session_state:
     st.session_state.answers = [None] * len(questions)
 
 # -------------------------------------------------------------
-# HTML COMPONENT (NO RELOAD)
+# QUERY PARAMS → SESSION
 # -------------------------------------------------------------
-component_html = f"""
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<style>
-body {{
-    background:#1A6333;
-    color:white;
-    font-family:Arial, sans-serif;
-    margin:0;
-    padding:0;
-}}
-
-.container {{
-    padding:16px;
-}}
-
-.question {{
-    font-size:1.15rem;
-    font-weight:600;
-    margin:22px 0 8px 0;
-}}
-
-.row {{
-    display:flex;
-    gap:10px;
-    flex-wrap:nowrap;
-}}
-
-.btn {{
-    flex:1;
-    min-width:90px;
-    background:#C62828;
-    color:white;
-    padding:10px 0;
-    border-radius:10px;
-    font-weight:600;
-    cursor:pointer;
-    user-select:none;
-    text-align:center;
-}}
-
-.btn.selected {{
-    outline:3px solid rgba(255,255,255,0.35);
-}}
-</style>
-</head>
-
-<body>
-<div class="container" id="app"></div>
-
-<script>
-const questions = {json.dumps(questions)};
-const labels = {json.dumps(labels)};
-let answers = {json.dumps(st.session_state.answers)};
-
-function send() {{
-    window.parent.postMessage({{
-        type: "answers",
-        value: answers
-    }}, "*");
-}}
-
-function render() {{
-    const app = document.getElementById("app");
-    app.innerHTML = "";
-
-    questions.forEach((q, qi) => {{
-        const qd = document.createElement("div");
-        qd.className = "question";
-        qd.innerText = (qi + 1) + ". " + q;
-        app.appendChild(qd);
-
-        const row = document.createElement("div");
-        row.className = "row";
-
-        labels.forEach((lab, li) => {{
-            const b = document.createElement("div");
-            b.className = "btn" + (answers[qi] === li ? " selected" : "");
-            b.innerText = lab;
-            b.onclick = () => {{
-                answers[qi] = li;
-                render();
-                send();
-            }};
-            row.appendChild(b);
-        }});
-
-        app.appendChild(row);
-    }});
-}}
-
-render();
-send();
-</script>
-</body>
-</html>
-"""
-
-result = components.html(component_html, height=1250)
+qparams = st.experimental_get_query_params()
+for i in range(len(questions)):
+    key = f"q_{i}"
+    if key in qparams:
+        try:
+            v = int(qparams[key][0])
+            if 0 <= v <= 4:
+                st.session_state.answers[i] = v
+        except:
+            pass
 
 # -------------------------------------------------------------
-# RECEIVE ANSWERS
+# BUILD HREF
 # -------------------------------------------------------------
-if isinstance(result, dict) and "value" in result:
-    st.session_state.answers = result["value"]
+def build_href(q_index, value):
+    params = {}
+    for idx, ans in enumerate(st.session_state.answers):
+        if ans is not None:
+            params[f"q_{idx}"] = str(ans)
+    params[f"q_{q_index}"] = str(value)
+    return "?" + urlencode(params)
 
 # -------------------------------------------------------------
-# SCORE
+# RENDER QUESTIONS
+# -------------------------------------------------------------
+for i, q in enumerate(questions):
+    st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
+
+    html = "<div class='scale-row'>"
+    for v, lab in enumerate(labels):
+        selected = "selected" if st.session_state.answers[i] == v else ""
+        html += f"<a class='{selected}' href='{build_href(i, v)}'>{lab}</a>"
+    html += "</div>"
+
+    st.markdown(html, unsafe_allow_html=True)
+
+# -------------------------------------------------------------
+# RESET
+# -------------------------------------------------------------
+if st.button("Nulstil svar"):
+    st.session_state.answers = [None] * len(questions)
+    try:
+        st.experimental_set_query_params()
+    except:
+        pass
+
+# -------------------------------------------------------------
+# SCORE + PROFILE
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
@@ -200,29 +244,41 @@ profile = interpret_score(total_score)
 
 PROFILE_TEXT = {
     "HSP": [
-        "Du registrerer mange nuancer i både indtryk og stemninger.",
+        "Du registrerer flere nuancer i både indtryk og stemninger.",
         "Du bearbejder oplevelser dybt og grundigt.",
-        "Du kan blive overstimuleret af for mange input.",
-        "Du har et fintfølende nervesystem.",
+        "Du reagerer stærkt på stimuli og kan blive overstimuleret.",
+        "Du har en rig indre verden og et fintfølende nervesystem.",
+        "Du er empatisk og opmærksom på andre.",
+        "Du har brug for ro og pauser for at lade op.",
     ],
     "Slow Processor": [
-        "Du arbejder bedst i et roligt tempo.",
-        "Du har brug for ekstra tid til beslutninger.",
-        "Du trives med forudsigelighed og struktur.",
+        "Du arbejder bedst i roligt tempo og med forudsigelighed.",
+        "Du bearbejder indtryk grundigt, men langsomt.",
+        "Du har brug for ekstra tid til omstilling og beslutninger.",
+        "Du trives med faste rammer og struktur.",
+        "Du kan føle dig presset, når tingene går hurtigt.",
+        "Du har god udholdenhed, når du arbejder i dit eget tempo.",
     ],
     "Mellemprofil": [
-        "Du har en god balance mellem tempo og fordybelse.",
-        "Du tilpasser dig de fleste situationer.",
-        "Du bliver sjældent overbelastet.",
+        "Du veksler naturligt mellem hurtig og langsom bearbejdning.",
+        "Du håndterer de fleste stimuli uden at blive overvældet.",
+        "Du har en god balance mellem intuition og eftertænksomhed.",
+        "Du kan tilpasse dig forskellige miljøer og tempoer.",
+        "Du bliver påvirket i perioder, men finder hurtigt balancen igen.",
+        "Du fungerer bredt socialt og mentalt i mange typer situationer.",
     ],
 }
 
+# -------------------------------------------------------------
+# RESULT
+# -------------------------------------------------------------
 st.header("Dit resultat")
 st.subheader(f"Score: {total_score} / 80")
 st.subheader(f"Profil: {profile}")
 
-for line in PROFILE_TEXT[profile]:
-    st.write(f"- {line}")
+st.write("### Karakteristika for din profil:")
+for s in PROFILE_TEXT[profile]:
+    st.write(f"- {s}")
 
 # -------------------------------------------------------------
 # PDF
@@ -240,10 +296,7 @@ def generate_pdf(score, profile):
 
     for i, q in enumerate(questions):
         story.append(
-            Paragraph(
-                f"{i+1}. {q} – {labels[safe_answers[i]]}",
-                styles["BodyText"]
-            )
+            Paragraph(f"{i+1}. {q} – {labels[safe_answers[i]]}", styles["BodyText"])
         )
 
     doc.build(story)
@@ -254,5 +307,5 @@ st.download_button(
     "Download PDF-rapport",
     generate_pdf(total_score, profile),
     file_name="HSP_SlowProcessor_Rapport.pdf",
-    mime="application/pdf",
+    mime="application/pdf"
 )
