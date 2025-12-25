@@ -11,9 +11,9 @@ from datetime import datetime
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# VERSION
+# VERSION + TIMESTAMP
 # -------------------------------------------------------------
-version = "v78.4"
+version = "v78.5"
 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
 
 st.markdown(
@@ -28,7 +28,7 @@ st.markdown(
 )
 
 # -------------------------------------------------------------
-# CSS
+# GLOBAL CSS
 # -------------------------------------------------------------
 st.markdown(
     """
@@ -46,7 +46,7 @@ st.markdown(
         margin-bottom:6px;
     }
 
-    /* ----- SCALE BUTTONS (HORIZONTAL) ----- */
+    /* ---- SMALL HORIZONTAL SCALE BUTTONS ---- */
     .scale button {
         width:100%;
         font-size:0.78rem !important;
@@ -66,7 +66,7 @@ st.markdown(
         font-weight:700 !important;
     }
 
-    .stButton > button {
+    .stButton > button, .stDownloadButton > button {
         background-color:#C62828 !important;
         color:white !important;
         border-radius:8px !important;
@@ -142,7 +142,7 @@ if st.button("Nulstil svar"):
     st.session_state.answers = [None] * len(questions)
 
 # -------------------------------------------------------------
-# SCORE
+# SCORE + PROFILE
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
