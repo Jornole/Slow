@@ -14,7 +14,7 @@ st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 # -------------------------------------------------------------
 # VERSION + TIMESTAMP (v78)
 # -------------------------------------------------------------
-version = "v78"
+version = "v78.1"
 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
 
 st.markdown(
