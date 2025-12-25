@@ -242,4 +242,4 @@ st.download_button(
     generate_pdf(total_score, profile),
     file_name="HSP_SlowProcessor_Rapport.pdf",
     mime="application/pdf",
-)
+)ķ
