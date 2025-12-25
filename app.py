@@ -11,9 +11,9 @@ from datetime import datetime
 st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 
 # -------------------------------------------------------------
-# VERSION + TIMESTAMP
+# VERSION
 # -------------------------------------------------------------
-version = "v78.3"
+version = "v78.4"
 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
 
 st.markdown(
@@ -28,7 +28,7 @@ st.markdown(
 )
 
 # -------------------------------------------------------------
-# GLOBAL CSS
+# CSS
 # -------------------------------------------------------------
 st.markdown(
     """
@@ -39,21 +39,6 @@ st.markdown(
         font-family:Arial,sans-serif !important;
     }
 
-    .center-logo {
-        display:flex;
-        justify-content:center;
-        margin-top:10px;
-        margin-bottom:5px;
-    }
-
-    .main-title {
-        font-size:2.3rem;
-        font-weight:800;
-        text-align:center;
-        margin-top:10px;
-        margin-bottom:25px;
-    }
-
     .question-text {
         font-size:1.15rem;
         font-weight:600;
@@ -61,27 +46,27 @@ st.markdown(
         margin-bottom:6px;
     }
 
-    /* ---------- SCALE BUTTONS ---------- */
-    .scale-btn button {
+    /* ----- SCALE BUTTONS (HORIZONTAL) ----- */
+    .scale button {
         width:100%;
-        font-size:0.8rem !important;
-        padding:5px 0 !important;
+        font-size:0.78rem !important;
+        padding:4px 0 !important;
         border-radius:6px !important;
         background-color:#2E7D32 !important;
         color:white !important;
         border:none !important;
     }
 
-    .scale-btn button:hover {
+    .scale button:hover {
         background-color:#388E3C !important;
     }
 
-    .scale-selected button {
+    .scale.selected button {
         background-color:#C62828 !important;
         font-weight:700 !important;
     }
 
-    .stButton > button, .stDownloadButton > button {
+    .stButton > button {
         background-color:#C62828 !important;
         color:white !important;
         border-radius:8px !important;
@@ -92,32 +77,6 @@ st.markdown(
     </style>
     """,
     unsafe_allow_html=True
-)
-
-# -------------------------------------------------------------
-# LOGO + TITLE
-# -------------------------------------------------------------
-st.markdown(
-    """
-    <div class="center-logo">
-        <img src="https://raw.githubusercontent.com/Jornole/Slow/main/logo.png" width="160">
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
-
-st.markdown('<div class="main-title">DIN PERSONLIGE PROFIL</div>', unsafe_allow_html=True)
-
-st.markdown(
-    """
-    Denne test giver dig et indblik i, hvordan du bearbejder både følelsesmæssige
-    og sansemæssige indtryk, og hvordan dit mentale tempo påvirker dine reaktioner.
-
-    Du besvarer 20 udsagn på en skala fra **Aldrig** til **Altid**.
-
-    Testen er <u><b>ikke en diagnose</b></u>, men et psykologisk værktøj til selvindsigt.
-    """,
-    unsafe_allow_html=True,
 )
 
 # -------------------------------------------------------------
@@ -154,19 +113,19 @@ labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
 if "answers" not in st.session_state:
     st.session_state.answers = [None] * len(questions)
 
-def set_answer(q_idx, value):
-    st.session_state.answers[q_idx] = value
+def set_answer(i, v):
+    st.session_state.answers[i] = v
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS (NO RELOAD)
+# RENDER QUESTIONS (HORIZONTAL – NO RELOAD)
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
 
-    cols = st.columns(5)
+    cols = st.columns(5, gap="small")
     for v, col in enumerate(cols):
         with col:
-            cls = "scale-selected" if st.session_state.answers[i] == v else "scale-btn"
+            cls = "scale selected" if st.session_state.answers[i] == v else "scale"
             st.markdown(f"<div class='{cls}'>", unsafe_allow_html=True)
             st.button(
                 labels[v],
@@ -183,7 +142,7 @@ if st.button("Nulstil svar"):
     st.session_state.answers = [None] * len(questions)
 
 # -------------------------------------------------------------
-# SCORE + PROFILE
+# SCORE
 # -------------------------------------------------------------
 def interpret_score(score):
     if score <= 26:
@@ -197,43 +156,12 @@ safe_answers = [a if a is not None else 0 for a in st.session_state.answers]
 total_score = sum(safe_answers)
 profile = interpret_score(total_score)
 
-PROFILE_TEXT = {
-    "HSP": [
-        "Du registrerer flere nuancer i både indtryk og stemninger.",
-        "Du bearbejder oplevelser dybt og grundigt.",
-        "Du reagerer stærkt på stimuli og kan blive overstimuleret.",
-        "Du har en rig indre verden og et fintfølende nervesystem.",
-        "Du er empatisk og opmærksom på andre.",
-        "Du har brug for ro og pauser for at lade op.",
-    ],
-    "Slow Processor": [
-        "Du arbejder bedst i roligt tempo og med forudsigelighed.",
-        "Du bearbejder indtryk grundigt, men langsomt.",
-        "Du har brug for ekstra tid til omstilling og beslutninger.",
-        "Du trives med faste rammer og struktur.",
-        "Du kan føle dig presset, når tingene går hurtigt.",
-        "Du har god udholdenhed, når du arbejder i dit eget tempo.",
-    ],
-    "Mellemprofil": [
-        "Du veksler naturligt mellem hurtig og langsom bearbejdning.",
-        "Du håndterer de fleste stimuli uden at blive overvældet.",
-        "Du har en god balance mellem intuition og eftertænksomhed.",
-        "Du kan tilpasse dig forskellige miljøer og tempoer.",
-        "Du bliver påvirket i perioder, men finder hurtigt balancen igen.",
-        "Du fungerer bredt socialt og mentalt i mange typer situationer.",
-    ],
-}
-
 # -------------------------------------------------------------
 # RESULT
 # -------------------------------------------------------------
 st.header("Dit resultat")
 st.subheader(f"Score: {total_score} / 80")
 st.subheader(f"Profil: {profile}")
-
-st.write("### Karakteristika for din profil:")
-for s in PROFILE_TEXT[profile]:
-    st.write(f"- {s}")
 
 # -------------------------------------------------------------
 # PDF
