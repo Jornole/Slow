@@ -13,7 +13,7 @@ st.set_page_config(page_title="HSP / Slow Processor Test", layout="centered")
 # -------------------------------------------------------------
 # VERSION
 # -------------------------------------------------------------
-version = "v79"
+version = "v78.1"
 timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
 
 st.markdown(
@@ -47,28 +47,35 @@ st.markdown(
     }
 
     .question-text {
-        font-size:1.1rem;
+        font-size:1.15rem;
         font-weight:600;
-        margin-top:20px;
-        margin-bottom:8px;
+        margin-top:22px;
+        margin-bottom:6px;
     }
 
-    /* ---------- SCALE BUTTONS ---------- */
-    div[data-testid="column"] button {
+    .scale-row {
+        display:flex;
+        justify-content:space-between;
+        gap:6px;
+        margin-bottom:12px;
+        padding:0 4%;
+    }
+
+    .scale-btn button {
         width:100%;
+        font-size:0.85rem !important;
         padding:6px 0 !important;
-        font-size:0.8rem !important;
         border-radius:6px !important;
         background-color:#2E7D32 !important;
         color:white !important;
         border:none !important;
     }
 
-    div[data-testid="column"] button:hover {
+    .scale-btn button:hover {
         background-color:#388E3C !important;
     }
 
-    .selected button {
+    .scale-selected button {
         background-color:#C62828 !important;
         font-weight:700 !important;
     }
@@ -125,14 +132,11 @@ labels = ["Aldrig", "Sjældent", "Nogle gange", "Ofte", "Altid"]
 if "answers" not in st.session_state:
     st.session_state.answers = [None] * len(questions)
 
-# -------------------------------------------------------------
-# CALLBACK
-# -------------------------------------------------------------
-def set_answer(q_idx, value):
-    st.session_state.answers[q_idx] = value
+def set_answer(i, v):
+    st.session_state.answers[i] = v
 
 # -------------------------------------------------------------
-# RENDER QUESTIONS (NO RELOAD)
+# RENDER QUESTIONS (NO RELOAD HERE)
 # -------------------------------------------------------------
 for i, q in enumerate(questions):
     st.markdown(f"<div class='question-text'>{i+1}. {q}</div>", unsafe_allow_html=True)
@@ -140,8 +144,8 @@ for i, q in enumerate(questions):
     cols = st.columns(5)
     for v, col in enumerate(cols):
         with col:
-            wrapper = "selected" if st.session_state.answers[i] == v else ""
-            st.markdown(f"<div class='{wrapper}'>", unsafe_allow_html=True)
+            cls = "scale-selected" if st.session_state.answers[i] == v else "scale-btn"
+            st.markdown(f"<div class='{cls}'>", unsafe_allow_html=True)
             st.button(
                 labels[v],
                 key=f"q{i}_{v}",
@@ -151,7 +155,7 @@ for i, q in enumerate(questions):
             st.markdown("</div>", unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# RESET
+# RESET (reload OK)
 # -------------------------------------------------------------
 if st.button("Nulstil svar"):
     st.session_state.answers = [None] * len(questions)
